@@ -1,0 +1,7 @@
+This is Cucumber.
+
+It doesn't do much yet. If you're browsing this right now, you should
+probably leave as there is nothing remotely interesting here to be seen - I
+just needed a repo to protect against data loss.
+
+But yeah. x86. Microkernel. Paged. 32-bit (for now). Pre-emptive multitasking. POSIX-compliant.

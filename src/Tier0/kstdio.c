@@ -1,6 +1,6 @@
-#include "Types.h"
-#include "kstdio.h"
-#include "kstdlib.h"
+#include "types.h"
+#include "Tier0/kstdio.h"
+#include "Tier0/kstdlib.h"
 #include <stdarg.h>
 
 #define va_start(v,l) __builtin_va_start(v,l)

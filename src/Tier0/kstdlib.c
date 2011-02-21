@@ -1,5 +1,5 @@
-#include "Types.h"
-#include "kstdlib.h"
+#include "types.h"
+#include "Tier0/kstdlib.h"
 
 void *kmemcpy(void* Destination, const void *Source, u32 Count)
 {

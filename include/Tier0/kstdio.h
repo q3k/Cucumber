@@ -1,7 +1,7 @@
 #ifndef __KSTDIO_H__
 #define __KSTDIO_H__
 
-#include "Types.h"
+#include "types.h"
 
 void koutb(u16 Port, u8 Data);
 u32 kstrlen(s8 *szString);

@@ -9,7 +9,7 @@
 # way. There are better way to do the hthings I do below, but who gives a
 # shit.
 
-default: emulate
+default: emulate-nohdd
 
 SHELL:=/bin/bash
 ENV:=/usr/xdev/bin
@@ -20,6 +20,7 @@ AS:=nasm
 LD:=$(ENV)/$(TARGET)-ld
 
 CFLAGS:=-Wall -Wextra -Werror -nostdlib -nostartfiles -nodefaultlibs -std=c99
+CFLAGS+=-I ./include
 LFLAGS:=-nostdlib -nostartfiles -nodefaultlibs
 
 .PHONY: all clean kernel.bin emulate hdd.img
@@ -29,7 +30,7 @@ obj/src/%.nao : src/%.asm
 	@$(AS) -f elf -o obj/src/$*.nao src/$*.asm
 
 obj/src/%.o : src/%.c
-	@echo "[i] Compining $*.c ..."
+	@echo "[i] Compiling $*.c ..."
 	@mkdir -p obj/src/$*.o
 	@rmdir obj/src/$*.o
 	@$(CC) $(CFLAGS) -c src/$*.c -o obj/src/$*.o
@@ -51,13 +52,17 @@ kernel.bin: Tier0
 hdd.img: kernel.bin
 	@echo "[i] Creating HDD image..."
 	@if [ -e hdd_temp.img ] ; then rm hdd_temp.img ; fi
-	@dd if=/dev/zero of=hdd_temp.img bs=4k count=4096 2> /dev/null
-	@mkfs.vfat hdd_temp.img > /dev/null
+	@dd if=/dev/zero of=hdd_temp.img bs=512 count=10240 2> /dev/null
+	@mkfs.vfat hdd_temp.img
 	@syslinux hdd_temp.img
 	@mcopy -i hdd_temp.img /usr/lib/syslinux/mboot.c32 ::mboot.c32
 	@mcopy -i hdd_temp.img kernel.bin ::kernel.bin
 	@mcopy -i hdd_temp.img dst/syslinux.cfg ::syslinux.cfg
 	@mv hdd_temp.img hdd.img
+
+emulate-nohdd: kernel.bin
+	@echo "[i] Starting QEmu..."
+	@qemu -kernel kernel.bin
 
 emulate: hdd.img
 	@echo "[i] Starting QEmu..."

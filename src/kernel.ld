@@ -1,24 +1,31 @@
-ENTRY (_start)
+OUTPUT_FORMAT("elf32-i386")
+ENTRY(_start)
 
-SECTIONS {
-    . = 0x00100000;
+SECTIONS
+{
+    . = 0x100000;
+    .setup :
+    {
+        *(.setup)
+    }
 
-    .text : {
+    . += 0xC0000000;
+
+    .text : AT(ADDR(.text) - 0xC0000000)
+    {
         *(.text)
     }
-
-    .rodata ALIGN (0x1000) : {
-        *(.rodata)
-    }
-
-    .data ALIGN (0x1000) : {
+    
+    .data ALIGN (4096) : AT(ADDR(.data) - 0xC0000000)
+    {
         *(.data)
+        *(.rodata*)
     }
-
-    .bss : {
-        sbss = .;
-        *(COMMON)
-        *(.bss)
-        ebss = .;
+    
+    .bss ALIGN (4096) : AT(ADDR(.bss) - 0xC0000000)
+    {
+        *(COMMON*)
+        *(.bss*)
     }
 }
+

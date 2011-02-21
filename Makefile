@@ -19,7 +19,7 @@ CX:=$(ENV)/$(TARGET)-g++
 AS:=nasm
 LD:=$(ENV)/$(TARGET)-ld
 
-CFLAGS:=-Wall -Wextra -Werror -nostdlib -nostartfiles -nodefaultlibs -std=c99
+CFLAGS:=-Wall -Werror -nostdlib -nostartfiles -nodefaultlibs -std=c99 -g
 CFLAGS+=-I ./include
 LFLAGS:=-nostdlib -nostartfiles -nodefaultlibs
 
@@ -60,8 +60,14 @@ hdd.img: kernel.bin
 	@mcopy -i hdd_temp.img dst/syslinux.cfg ::syslinux.cfg
 	@mv hdd_temp.img hdd.img
 
-emulate-nohdd: kernel.bin
+emulate-nohdd-debug: kernel.bin
+	@echo "[i] Starting GDB..."
+	@gnome-terminal -x /bin/bash -c "gdb"
 	@echo "[i] Starting QEmu..."
+	@qemu -kernel kernel.bin -S -gdb tcp::1234
+
+emulate-nohdd: kernel.bin
+	@echo "[i] Starting QEMU..."
 	@qemu -kernel kernel.bin
 
 emulate: hdd.img

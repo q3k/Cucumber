@@ -101,9 +101,9 @@ void kscroll_up(void)
    if (g_kstdio_cur_y >= 25)
    {
         Temp = g_kstdio_cur_y - 25 + 1;
-        kmemcpy((void*)0xB8000, (void*)(0xB8000 - Temp * 80 * 2), (25 - Temp) * 80 * 2);
+        kmemcpy((void*)0xC00B8000, (void*)(0xC00B8000 - Temp * 80 * 2), (25 - Temp) * 80 * 2);
 
-        kmemsetw((void*)(0xB8000 + (25 - Temp) * 80), Blank, 80);
+        kmemsetw((void*)(0xC00B8000 + (25 - Temp) * 80), Blank, 80);
         g_kstdio_cur_y = 25 - 1;
    }
 }
@@ -175,7 +175,7 @@ void kdump(u8 *bData, u32 Length)
 
 void kputch(s8 Character)
 {
-    volatile u8 *VideoMemory = (u8 *)0xB8000;
+    volatile u8 *VideoMemory = (u8 *)0xC00B8000;
     u16 Offset = (g_kstdio_cur_y * 80 + g_kstdio_cur_x) << 1;
 
     if (Character == '\n')
@@ -207,7 +207,7 @@ void kprint(s8 *szString)
 
 void kclear(void)
 {
-    volatile u8 *VideoMemory = (u8 *)0xB8000;
+    volatile u8 *VideoMemory = (u8 *)0xC00B8000;
     u32 Size = (80 * 25 ) << 1;
     for (u32 i = 0; i < Size; i += 2)
     {

@@ -1,31 +1,48 @@
 OUTPUT_FORMAT("elf32-i386")
 ENTRY(_start)
 
+Offset  = 0x00100000;
+LMA     = 0x00000000;
+VMA     = 0xC0000000;
+
 SECTIONS
 {
-    . = 0x100000;
-    .setup :
+    . = Offset;
+
+    g_setup_gdt_ptr = g_gdt_ptr - VMA;
+    g_setup_gdt_entries = g_gdt_entries - VMA;
+
+    .setup LMA + Offset : AT(LMA + Offset)
     {
         *(.setup)
+        . = ALIGN(0x1000);
     }
 
-    . += 0xC0000000;
+    . += VMA;
 
-    .text : AT(ADDR(.text) - 0xC0000000)
+    .text : AT(g_section_code)
     {
+        g_section_code = . - VMA;
         *(.text)
+        . = ALIGN(0x1000);
     }
     
-    .data ALIGN (4096) : AT(ADDR(.data) - 0xC0000000)
+    .data : AT(g_section_data)
     {
+        g_section_data = . - VMA;
         *(.data)
         *(.rodata*)
+        . = ALIGN(0x1000);
     }
     
-    .bss ALIGN (4096) : AT(ADDR(.bss) - 0xC0000000)
+    .bss : AT(g_section_bss)
     {
+        g_section_bss = . - VMA;
         *(COMMON*)
         *(.bss*)
+        . = ALIGN(0x1000);
     }
+
+    . = ALIGN(0x1000);
 }
 

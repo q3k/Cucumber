@@ -15,8 +15,10 @@ STACKSIZE equ 0x4000
 ; ############################## text segment #################################
 ; #############################################################################
 
-section .text
+section .setup
 align 4
+
+global g_before_gdt
 
 ; Multiboot header
 MultiBootHeader:
@@ -27,14 +29,17 @@ MultiBootHeader:
 ; Actual entry point
 _start:
     lgdt [falsegdt]
-    mov ax, 0x10
-    mov ds, ax
-    mov es, ax
-    mov fs, ax
-    mov gs, ax
-    mov ss, ax
-
+    mov cx, 0x10
+    mov ds, cx
+    mov es, cx
+    mov fs, cx
+    mov gs, cx
+    mov ss, cx
+g_before_gdt:
     jmp 0x08:higherhalf
+
+section .text
+align 4
 
 higherhalf:    
     mov esp, kstack + STACKSIZE

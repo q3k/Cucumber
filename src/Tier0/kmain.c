@@ -6,8 +6,9 @@
 // Real kernel entry point, called from _start.asm
 void kmain(void *mbd, u32 magic)
 {
-    init_simple_paging();
-    gdt_create_flat();
+    kclear();
+    kprintf("[i] Welcome to Cucumber!\n\n");
+    kprintf("[i] Magic from bootloader: 0x%x.\n", magic);
 
     if (magic != 0x2BADB002)
     {
@@ -15,10 +16,7 @@ void kmain(void *mbd, u32 magic)
         return;
     }
 
-    char *szBootLoaderName = (char *)((u32 *)mbd)[16];
-
-    kclear();
-    kprintf("[i] Booting via %s.\n", szBootLoaderName);
-    
+    paging_init_simple();
+    gdt_create_flat();
 }
 

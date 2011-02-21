@@ -1,6 +1,6 @@
 #ifndef __PAGING_H__
 #define __PAGING_H__
 
-void init_simple_paging(void);
+void paging_init_simple(void);
 
 #endif

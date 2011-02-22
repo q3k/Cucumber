@@ -14,7 +14,19 @@ u8 g_kstdio_cur_x = 0, g_kstdio_cur_y = 0;
 
 void koutb(u16 Port, u8 Data)
 {
-    __asm__ __volatile__ ("outb %1, %0" : : "dN" (Port), "a" (Data));
+    __asm__ volatile("outb %1, %0" :: "dN" (Port), "a" (Data));
+}
+
+u8 kinb(u16 Port)
+{
+    u8 Return;
+    __asm__ volatile("inb %1, %0" :"=a"(Return):"Nd"(Port));
+    return Return;
+}
+
+void kio_wait(void)
+{
+    __asm__ volatile("jmp 1f;1:jmp 1f;1:");
 }
 
 void kputi(s32 Number)
@@ -215,4 +227,18 @@ void kclear(void)
         VideoMemory[i+1] = 0xF;
     }
     kmove_cursor(0, 0);
+}
+
+s32 kmemcmp(u8 *MemA, u8 *MemB, u32 Length)
+{
+    u32 Result = -1;
+    for (u32 Search = 0; Search < Length; Search++)
+    {
+        if (MemA[Search] != MemB[Search])
+        {
+            Result = Search;
+            break;
+        }
+    }
+    return Result;
 }

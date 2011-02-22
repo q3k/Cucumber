@@ -45,7 +45,6 @@ higherhalf:
     mov esp, kstack + STACKSIZE
     
     push eax
-    push ebx
     
     call kmain
 

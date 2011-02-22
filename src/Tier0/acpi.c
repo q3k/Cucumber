@@ -16,41 +16,37 @@ u32 acpi_find_rsdp(void)
     {
         if (kmemcmp((u8 *)Search, (u8 *)szMagic, 8) == 0)
         {
-            Address = Search;
-            break;
+            u8 ChecksumVerify = 0;
+            for (u8 i = 0; i < ACPI_10_RSDP_SIZE; i++)
+                ChecksumVerify += ((u8*)Search)[i];
+            
+            if (ChecksumVerify == 0)
+            {            
+                if (((T_ACPI_RSDP *)Search)->Revision == 1)
+                {
+                    ChecksumVerify = 0;
+                    for (u8 i = ACPI_10_RSDP_SIZE; i < ACPI_20_RSDP_SIZE; i++)
+                        ChecksumVerify += ((u8*)Search)[i];
+                    
+                    if (ChecksumVerify == 0)
+                    {
+                        Address = Search;
+                        break;
+                    }
+                }
+                else
+                {
+                    Address = Search;
+                    break;
+                }
+            }
         }
     }
 
     if (Address == 0)
         return 0;
-
-    T_ACPI_RSDP *RSDP = (T_ACPI_RSDP *)Address;
     
-    u8 ChecksumVerify = 0;
-    for (u8 i = 0; i < ACPI_10_RSDP_SIZE; i++)
-        ChecksumVerify += ((u8*)Address)[i];
-
-    if (ChecksumVerify != 0)
-    {
-        kprintf("[e] ACPI checksum failed. Memory failure? Weird PC? We may never " \
-                "know ...\n");
-        return 0;
-    }
-
-    if (RSDP->Revision == 1)
-    {
-        // ACPI 2.0...
-        ChecksumVerify = 0;
-        for (u8 i = ACPI_10_RSDP_SIZE; i < ACPI_20_RSDP_SIZE; i++)
-            ChecksumVerify += ((u8*)Address)[i];
-
-        if (ChecksumVerify != 0)
-        {
-            kprintf("[e] ACPI 2.0 checksum failed. Yet 1.0 succeeded? WTF.\n");
-            return 0;
-        }
-    }
-
+    T_ACPI_RSDP *RSDP = (T_ACPI_RSDP *)Address;
     g_acpi_version = RSDP->Revision + 1;
 
     kprintf("[i] Detected ACPI version %i.0.\n", RSDP->Revision + 1);

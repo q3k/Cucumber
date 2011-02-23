@@ -10,7 +10,6 @@ u32 acpi_find_rsdp(void)
 
     // Try to find the pointer... apparently it's 16byte-aligned...
     
-    kprintf("[i] Looking for the RSDP...\n");
     u32 Address = 0;
     for (u32 Search = 0x000E0000; Search <= 0x000FFFFF; Search += 4)
     {

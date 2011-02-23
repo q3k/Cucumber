@@ -53,11 +53,6 @@ void paging_init_simple(void)
         g_kernel_page_directory[i] = 0;
     }
 
-    kprintf("[i] Page Directory Physical: 0x%X, Virtual: 0x%X.\n", \
-            RealKernelPageDir, g_kernel_page_directory);
-    kprintf("[i] Low Page Table Physical: 0x%X, Virtual: 0x%X.\n", \
-            RealLowPageTable, g_low_page_table);
-
     g_kernel_page_directory[0] = (u32)RealLowPageTable | 0x03;
     g_kernel_page_directory[768] = (u32)RealLowPageTable | 0x03;
     

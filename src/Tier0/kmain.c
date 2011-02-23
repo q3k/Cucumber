@@ -4,7 +4,8 @@
 #include "Tier0/paging.h"
 #include "Tier0/acpi.h"
 #include "Tier0/interrupts.h"
-
+#include "Tier0/ps2.h"
+#include "Tier0/system.h"
 
 // Just to see whether this stuff actually works
 void sample_interrupt_0x2A(void)
@@ -14,7 +15,7 @@ void sample_interrupt_0x2A(void)
 }
 
 // Real kernel entry point, called from _start.asm
-void kmain(u32 Magic)
+void kmain(void *MultibootHeader, u32 Magic)
 {
     kclear();
     kprintf("                         _           \n"
@@ -31,8 +32,10 @@ void kmain(u32 Magic)
 
     paging_init_simple();
     gdt_create_flat();
-    
-    kprintf("[i] Paging and GDT set up correctly.\n");
+    system_parse_multiboot_header(MultibootHeader);
+
+    kprintf("[i] Booting via %s.\n", system_get_bootloader_name());
+    kprintf("[i] Memory available: %uk.\n", system_get_memory_upper());
 
     u32 RSDPAddress = acpi_find_rsdp();
     if (RSDPAddress == 0)
@@ -41,18 +44,5 @@ void kmain(u32 Magic)
         return;
     }
 
-    kprintf("[i] RSDP found at 0x%X.\n", RSDPAddress);
-
-    u32 PhysicalTest;
-    u8 Result = paging_get_physical(0xC00B8000, &PhysicalTest);
-    if (!Result || PhysicalTest != 0xB8000)
-    {
-        kprintf("[e] Paging self-test failed!\n");
-        return;
-    }
-
     interrupts_init_simple();
-    interrupts_setup_isr(0x2A, sample_interrupt_0x2A, E_INTERRUPTS_RING0);
-
-    __asm__ volatile("int $0x2a");
 }

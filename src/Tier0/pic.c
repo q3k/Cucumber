@@ -87,7 +87,6 @@ void pic_unmask_irq(u8 IRQ)
 
         u8 CurrentMask = kinb(PIC_1_DATA);
         u8 NewMask = ~((~CurrentMask) | Bit);
-
         koutb(PIC_1_DATA, NewMask);
     }
 }

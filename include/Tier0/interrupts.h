@@ -46,7 +46,7 @@ u8 interrupts_init_idt(void);
 void interrupts_setup_irq(u8 IRQ, void *Handler);
 void interrupts_setup_isr(u8 Interrupt, void *Handler, T_INTERRUPTS_RING Ring);
 void interrupts_init_simple(void);
-void interrupts_interrupt_finish(u8 IRQ);
+void interrupts_irq_finish(u8 IRQ);
 void interrupts_lidt(void);
 void interrupts_dump_idt_entry(u8 Interrupt);
 void interrupts_dump_idt_ptr(void);

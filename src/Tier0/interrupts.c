@@ -75,6 +75,7 @@ void interrupts_setup_irq(u8 IRQ, void *Handler)
     }
     
     u8 Interrupt = IRQ + PIC_IRQ_START;
+    kprintf("[i] New handler for IRQ %i (Interrupt %i).\n", IRQ, Interrupt);
     interrupts_setup_isr(Interrupt, Handler, E_INTERRUPTS_RING0);
 
     // We also need to set the IRQ mask
@@ -132,7 +133,7 @@ void interrupts_init_simple(void)
     pic_init(0, 0);
 }
 
-void interrupts_interrupt_finish(u8 IRQ)
+void interrupts_irq_finish(u8 IRQ)
 {
     if (g_interrupts_chip == E_INTERRUPTS_CHIP_PIC)
         pic_eoi(IRQ);

@@ -113,9 +113,9 @@ void kscroll_up(void)
    if (g_kstdio_cur_y >= 25)
    {
         Temp = g_kstdio_cur_y - 25 + 1;
-        kmemcpy((void*)0xC00B8000, (void*)(0xC00B8000 - Temp * 80 * 2), (25 - Temp) * 80 * 2);
+        kmemcpy((void*)0xC00B8000, (void*)(0xC00B8000 + Temp * 80 * 2), (25 - Temp) * 80 * 2);
 
-        kmemsetw((void*)(0xC00B8000 + (25 - Temp) * 80), Blank, 80);
+        kmemsetw((void*)(0xC00B8000 + (25 - Temp) * 160), Blank, 160);
         g_kstdio_cur_y = 25 - 1;
    }
 }

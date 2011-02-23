@@ -21,5 +21,6 @@ void system_parse_multiboot_header(void *Header);
 u32 system_get_memory_upper(void);
 u32 system_get_memory_lower(void);
 s8 *system_get_bootloader_name(void);
+u8 system_memory_available(u32 Start, u32 Length);
 
 #endif

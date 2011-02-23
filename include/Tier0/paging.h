@@ -5,4 +5,5 @@
 
 void paging_init_simple(void);
 u8 paging_get_physical(u32 Virtual, u32 *Physical);
+void paging_allocate_page(u32 Virtual);
 #endif

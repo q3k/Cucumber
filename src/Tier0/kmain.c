@@ -45,4 +45,10 @@ void kmain(void *MultibootHeader, u32 Magic)
     }
 
     interrupts_init_simple();
+
+    paging_allocate_page(0xDEADBEEF);
+    u32 *Beef = (u32*)0xDEADBEEF;
+    *Beef = 13371337;
+
+    kprintf("Beef: %u\n", *Beef);
 }

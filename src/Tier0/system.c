@@ -76,3 +76,25 @@ s8 *system_get_bootloader_name(void)
 {
     return g_system_bootloader;
 }
+
+u8 system_memory_available(u32 Start, u32 Length)
+{
+    for (u8 i = 0; i < g_system_num_invalid_areas; i++)
+    {
+        T_SYSTEM_INVALID_RAM Area = g_system_invalid_areas[i];
+
+        // If the start address is somwhere in the invalid area
+        if (Area.Base <= Start && Area.Base + Area.Size > Start)
+            return 0;
+
+        // If the end address is somewhere in the invalid area
+        if (Area.Base <= Start + Length && Area.Base + Area.Size > Start + Length)
+            return 0;
+
+        // If the request spans accross an invalid area
+        if (Area.Base >= Start && Start + Length < Area.Base + Area.Size)
+            return 0;
+    }
+    return 1;
+}
+

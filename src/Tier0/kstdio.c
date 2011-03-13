@@ -197,7 +197,7 @@ void kputch(s8 Character)
         VideoMemory[Offset] = Character;
         VideoMemory[Offset+1] = 0x0F;
         if (g_kstdio_cur_x + 1 >= 80)
-            kmove_cursor(0, g_kstdio_cur_y);
+            kmove_cursor(0, g_kstdio_cur_y + 1);
         else
             kmove_cursor(g_kstdio_cur_x + 1, g_kstdio_cur_y);
     }

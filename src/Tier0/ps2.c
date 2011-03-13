@@ -5,6 +5,7 @@
 #include "Tier0/ps2.h"
 #include "Tier0/kstdio.h"
 #include "Tier0/interrupts.h"
+#include "Tier0/kbd_layout.h"
 
 #define PS2_KBD_IRQ 
 #define PS2_KBD_DATA 0x60
@@ -14,12 +15,23 @@
 #define PS2_D_TO_P(x) (x - 128)
 #define PS2_P_TO_D(x) (x | 128)
 
-u8 ps2_shift_pressed = 0;
-u8 ps2_ctrl_pressed = 0;
+u8 ps2_special = 0;
 u8 ps2_key_pressed = 0;
 u8 ps2_key = 0;
 
 u8 ps2_key_new = 0;
+
+s8 ps2_getc(void)
+{
+    while(1)
+    {
+        u8 Key = ps2_wait_key();
+        s8 Character = kbd_layout_translate(Key, ps2_special);
+        
+        if (Character != 0)
+            return Character;
+    }
+}
 
 u8 ps2_poll_key(void)
 {
@@ -30,8 +42,11 @@ u8 ps2_poll_key(void)
 
 u8 ps2_wait_key(void)
 {
-    while (!ps2_key_pressed && !ps2_key_new)
-    {}
+    while(1)
+    {
+        if (ps2_key_pressed && ps2_key_new)
+            break;
+    }
     ps2_key_new = 0;
     return ps2_key;
 }
@@ -39,8 +54,8 @@ u8 ps2_wait_key(void)
 void _ps2_keyboard_key_pressed(u8 Code)
 {
     if (Code == PS2_KEY_SHIFT)
-        ps2_shift_pressed = 1;
-    else if (ps2_key_pressed == 0)
+        ps2_special |= PS2_SPECIAL_SHIFT;
+    else// if (ps2_key_pressed == 0)
     {
         ps2_key_pressed = 1;
         ps2_key = Code;
@@ -51,8 +66,8 @@ void _ps2_keyboard_key_pressed(u8 Code)
 void _ps2_keyboard_key_depressed(u8 Code)
 {
     if (Code == PS2_KEY_SHIFT)
-        ps2_shift_pressed = 0;
-    else if (ps2_key_pressed == 1 && Code == ps2_key)
+        ps2_special &= ~PS2_SPECIAL_SHIFT;
+    else if (Code == ps2_key)
         ps2_key_pressed = 0;
 }
 

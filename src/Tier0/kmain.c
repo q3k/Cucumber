@@ -7,6 +7,7 @@
 #include "Tier0/ps2.h"
 #include "Tier0/system.h"
 #include "Tier0/pic.h"
+#include "Tier0/kbd_layout.h"
 
 void interrupts_irq_sample(void);
 
@@ -50,13 +51,16 @@ void kmain(void *MultibootHeader, u32 Magic)
     interrupts_init_simple();
     pic_init(0, 0);
     ps2_init_simple();
+    kbd_layout_set_default();
     
     __asm__ volatile("sti");
     
+    kprintf("[i] Hardware interrupts are now enabled.\n");
+    
     while(1)
     {
-        u8 Key = ps2_wait_key();
-        kprintf("[i] Received key %u.\n", Key);
+        s8 c = ps2_getc();
+        kprintf("%c", c);
     }
     
     LOOPFOREVER;

@@ -44,6 +44,8 @@ typedef struct S_ISR_STUB T_ISR_STUB;
 
 u8 interrupts_init_idt(void);
 void interrupts_setup_irq(u8 IRQ, void *Handler);
+void interrupts_setup_isr_raw(u8 Interrupt, void *ASMHandler, \
+                              T_INTERRUPTS_RING Ring);
 void interrupts_setup_isr(u8 Interrupt, void *Handler, T_INTERRUPTS_RING Ring);
 void interrupts_init_simple(void);
 void interrupts_irq_finish(u8 IRQ);

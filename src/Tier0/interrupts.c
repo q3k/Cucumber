@@ -106,22 +106,30 @@ void interrupts_dump_idt_entry(u8 Interrupt)
     kprintf("   Gate type: %u.\n", Entry.Type & 0b1111);
 }
 
-void interrupts_setup_isr(u8 Interrupt, void *Handler, T_INTERRUPTS_RING Ring)
+void interrupts_setup_isr_raw(u8 Interrupt, void *ASMHandler, \
+                              T_INTERRUPTS_RING Ring)
+{
+    u32 uASMHandler = (u32)ASMHandler;
+    g_idt_entries[Interrupt].OffsetLow = uASMHandler & 0xFFFF;
+    g_idt_entries[Interrupt].OffsetHigh = (uASMHandler >> 16) & 0xFFFF;
+    g_idt_entries[Interrupt].Selector = 0x08;
+    g_idt_entries[Interrupt].Zero = 0;
+    
+    u8 Type = 0;
+    Type |= (1 << 7);
+    Type |= (Ring << 5);
+    Type |= (0 << 4);
+    Type |= 0xE;
+    g_idt_entries[Interrupt].Type = Type;
+}
+
+void interrupts_setup_isr(u8 Interrupt, void *Handler, \
+                          T_INTERRUPTS_RING Ring)
 {
     interrupts_create_stub(&g_isr_stubs[Interrupt], (u32)Handler);
     
     u32 ASMHandler = (u32)&g_isr_stubs[Interrupt];
-    g_idt_entries[Interrupt].OffsetLow = ASMHandler & 0xFFFF;
-    g_idt_entries[Interrupt].OffsetHigh = (ASMHandler >> 16) & 0xFFFF;
-    g_idt_entries[Interrupt].Selector = 0x08; // Second segment, code.
-    g_idt_entries[Interrupt].Zero = 0;
-
-    u8 Type = 0;
-    Type |= (1 << 7);       // Present = 1
-    Type |= (Ring << 5);    // DPL = Ring
-    Type |= (0 << 4);       // Storage = 0
-    Type |= 0xE;            // Type = 0xE (32-bit interrupt gate)
-    g_idt_entries[Interrupt].Type = Type;
+    interrupts_setup_isr_raw(Interrupt, (void*)ASMHandler, Ring);
 }
 
 void interrupts_init_simple(void)
@@ -129,8 +137,6 @@ void interrupts_init_simple(void)
     interrupts_set_chip(E_INTERRUPTS_CHIP_PIC);
     interrupts_init_idt();
     interrupts_lidt();
-
-    pic_init(0, 0);
 }
 
 void interrupts_irq_finish(u8 IRQ)

@@ -3,6 +3,7 @@
 #include "types.h"
 #include "Tier0/system.h"
 #include "Tier0/kstdio.h"
+#include "Tier0/physical_alloc.h"
 
 u32 g_system_memory_lower = 0;
 u32 g_system_memory_upper = 0;
@@ -46,6 +47,7 @@ void system_parse_multiboot_header(void *Header)
                 AvailableMemory += Node->LengthLow;
             else
             {
+                // Not available!
                 T_SYSTEM_INVALID_RAM Area = \
                      g_system_invalid_areas[g_system_num_invalid_areas];
 
@@ -53,6 +55,10 @@ void system_parse_multiboot_header(void *Header)
                 Area.Size = Node->LengthLow;
 
                 g_system_num_invalid_areas++;
+                
+                u16 SuperPage = physmem_physical_to_superpage(Area.Base);
+                for (int i = 0; i <= Area.Size / (4 * 1024 * 1024); i++)
+                    physmem_mark_as_used(SuperPage + i);
             }
 
             Node = (T_SYSTEM_MLTBT_MMAP*)((u32)Node + Size + 4);
@@ -60,6 +66,15 @@ void system_parse_multiboot_header(void *Header)
 
         g_system_memory_upper = AvailableMemory / 1024;
     }
+    
+    // Mark all memory > memory size as used.
+    u16 StartPage = g_system_memory_upper / (1024 * 4);
+    u16 NumPages = (0xFFFFFFFF / 1024 - g_system_memory_upper) / (1024 * 4);
+    for (int i = 0; i < NumPages; i++)
+        physmem_mark_as_used(StartPage + i);
+    
+    if (g_system_memory_upper % (1024 * 4) != 0)
+        physmem_mark_as_used(0xFFFFFFFF / (1024 * 1024 * 4));
 }
 
 u32 system_get_memory_upper(void)

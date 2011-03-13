@@ -8,6 +8,7 @@
 #include "Tier0/system.h"
 #include "Tier0/pic.h"
 #include "Tier0/kbd_layout.h"
+#include "Tier0/physical_alloc.h"
 
 void interrupts_irq_sample(void);
 
@@ -36,7 +37,13 @@ void kmain(void *MultibootHeader, u32 Magic)
     
     paging_init_simple();
     gdt_create_flat();
+    
+    physmem_init();
     system_parse_multiboot_header(MultibootHeader);
+    
+    //Add kernel memory as reserved.
+    physmem_mark_as_used(0);
+    physmem_mark_as_used(1);
     
     kprintf("[i] Booting via %s.\n", system_get_bootloader_name());
     kprintf("[i] Memory available: %uk.\n", system_get_memory_upper());
@@ -57,11 +64,13 @@ void kmain(void *MultibootHeader, u32 Magic)
     
     kprintf("[i] Hardware interrupts are now enabled.\n");
     
-    while(1)
+    /*while(1)
     {
         s8 c = ps2_getc();
         kprintf("%c", c);
-    }
+    }*/
+    
+    physmem_dump_map();
     
     LOOPFOREVER;
 }

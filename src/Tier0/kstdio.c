@@ -54,7 +54,7 @@ void kputi(s32 Number)
     }
 }
 
-void kprintf(s8 *szFormat, ...)
+void kprintf(const s8 *szFormat, ...)
 {
     va_list ap;
     va_start(ap, szFormat);
@@ -120,7 +120,7 @@ void kscroll_up(void)
    }
 }
 
-u32 kstrlen(s8 *szString)
+u32 kstrlen(const s8 *szString)
 {
     const s8 *s;
     for (s = szString; *s; ++s)
@@ -203,7 +203,7 @@ void kputch(s8 Character)
     }
 }
 
-void kputs(s8 *szString)
+void kputs(const s8 *szString)
 {
     while (*szString != 0)
     {
@@ -212,7 +212,7 @@ void kputs(s8 *szString)
     }
 }
 
-void kprint(s8 *szString)
+void kprint(const s8 *szString)
 {
     kputs(szString);
 }

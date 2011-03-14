@@ -23,15 +23,25 @@ SECTIONS
     .text : AT(g_section_code)
     {
         g_section_code = . - VMA;
-        *(.text)
+        *(.text*)
+        *(.gnu.linkonce.t*)
+        
+        . = ALIGN(0x4);
+        g_start_ctors = .;
+		*(.ctors)
+		g_end_ctors = .;
+        
         . = ALIGN(0x1000);
     }
     
     .data : AT(g_section_data)
     {
         g_section_data = . - VMA;
-        *(.data)
+        *(.data*)        
+        *(.gnu.linkonce.d*)
         *(.rodata*)
+		*(.gnu.linkonce.r*)
+        
         . = ALIGN(0x1000);
     }
     
@@ -44,5 +54,11 @@ SECTIONS
     }
 
     . = ALIGN(0x1000);
+    
+    /DISCARD/ :
+    {
+        *(.comment)
+        *(.eh_frame)
+    }
 }
 

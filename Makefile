@@ -21,6 +21,8 @@ LD:=$(ENV)/$(TARGET)-ld
 
 CFLAGS:=-Wall -Werror -nostdlib -nostartfiles -nodefaultlibs -std=c99 -g
 CFLAGS+=-I ./include
+CXFLAGS:= -Wall -Werror -nostdlib -fno-builtin -nostartfiles -I ./include
+CXFLAGS+= -nodefaultlibs -fno-exceptions -fno-rtti -fno-stack-protector 
 LFLAGS:=-nostdlib -nostartfiles -nodefaultlibs
 
 .PHONY: all clean kernel.bin emulate hdd.img
@@ -34,20 +36,28 @@ obj/src/%.o : src/%.c
 	@mkdir -p obj/src/$*.o
 	@rmdir obj/src/$*.o
 	@$(CC) $(CFLAGS) -c src/$*.c -o obj/src/$*.o
+	
+obj/src/%.xo : src/%.cpp
+	@echo "[i] Compiling $*.cpp ..."
+	@mkdir -p obj/src/$*.xo
+	@rmdir obj/src/$*.xo
+	@$(CX) $(CXFLAGS) -c src/$*.cpp -o obj/src/$*.xo
 
 TIER0SRC := $(shell find src/Tier0 -mindepth 1 -maxdepth 3 -name "*.c")
 TIER0SRC += $(shell find src/Tier0 -mindepth 1 -maxdepth 3 -name "*.asm")
-
 TIER0OBJ := $(patsubst %.c,%.o,$(TIER0SRC))
 TIER0OBJ := $(patsubst %.asm,%.nao,$(TIER0OBJ))
-
 TIER0 := $(foreach i, $(TIER0OBJ), obj/$(i))
-
 Tier0: $(TIER0)
 
-kernel.bin: Tier0
+TIER1SRC := $(shell find src/Tier1 -mindepth 1 -maxdepth 3 -name "*.cpp")
+TIER1OBJ := $(patsubst %.cpp,%.xo,$(TIER1SRC))
+TIER1 := $(foreach i, $(TIER1OBJ), obj/$(i))
+Tier1: $(TIER1)
+
+kernel.bin: Tier0 Tier1
 	@echo "[i] Linking kernel.bin..."
-	@$(LD) -T src/kernel.ld -o kernel.bin $(TIER0)
+	@$(LD) -T src/kernel.ld -o kernel.bin $(TIER0) $(TIER1)
 
 hdd.img: kernel.bin
 	@echo "[i] Creating HDD image..."

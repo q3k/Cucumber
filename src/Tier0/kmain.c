@@ -10,6 +10,7 @@
 #include "Tier0/kbd_layout.h"
 #include "Tier0/physical_alloc.h"
 #include "Tier0/heap.h"
+#include "Tier0/cpp.h"
 
 void interrupts_irq_sample(void);
 
@@ -66,6 +67,10 @@ void kmain(void *MultibootHeader, u32 Magic)
     kprintf("[i] Hardware interrupts are now enabled.\n");
     
     heap_init_simple();
-
+    
+    cpp_call_ctors();
+    cpp_start_ckernel();
+    
+    kprintf("[i] Returned from Tier1, sleeping forever.\n");
     LOOPFOREVER;
 }

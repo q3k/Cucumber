@@ -1,4 +1,5 @@
 #include "Tier1/CKernel.h"
+#include "Tier1/Drivers/Misc/CDriverDummy.h"
 using namespace cb;
 
 CKernel g_Kernel;
@@ -33,9 +34,13 @@ void CKernel::Start(void)
     }
     
     m_Logger = new CLogger();
+    m_DriverManager = new CDriverManager(64, this);
     
-    Logger() << "FUCK YEAH C++!";
-    Logger().Flush();
+    IDriver *Dummy = new CDriverDummy();
+    m_DriverManager->AddDriver(Dummy);
+    
+    m_DriverManager->LoadNew();
+    
     
     for (;;) {}
 }

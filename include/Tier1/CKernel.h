@@ -3,10 +3,12 @@
 
 #include "types.h"
 #include "Tier1/CLogger.h"
+#include "Tier1/Drivers/CDriverManager.h"
 
 #define CKERNEL_MAGIC 0x8BA67FE9
 
 namespace cb {
+    class CDriverManager;
     class CKernel {
         public:
             CKernel(void);
@@ -15,6 +17,7 @@ namespace cb {
         private:
             u32 m_Magic;
             CLogger *m_Logger;
+            CDriverManager *m_DriverManager;
     };
 };
 

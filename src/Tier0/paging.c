@@ -3,13 +3,8 @@
 #include "Tier0/kstdio.h"
 #include "types.h"
 
-// 10 megabytes is safe guess, I guess.
-#define PAGING_FREEFORALL_START 0x00F00000
-
 u32 g_kernel_page_directory[1024] __attribute__ ((aligned (4096)));
 u32 g_kernel_page_tables[1024][1024] __attribute__ ((aligned (4096)));
-
-u32 g_paging_current_offset = PAGING_FREEFORALL_START;
 
 u8 paging_get_physical(u32 Virtual, u32 *Physical)
 {
@@ -112,20 +107,3 @@ void paging_init_simple(void)
                     "mov %%eax, %%cr0\n" :: "m" (PhysicalDirectory));
 }
 
-// This allocates a 4kb page for whatever reason
-void paging_allocate_page(u32 Virtual)
-{
-    u32 MaximumAddress = system_get_memory_upper();
-    while (!system_memory_available(g_paging_current_offset, 0x1000))
-    {
-        g_paging_current_offset += 0x1000;
-        if (g_paging_current_offset > MaximumAddress)
-        {
-            kprintf("[e] Fatal error: out of memory!\n");
-            for (;;) {}
-        }
-    }
-
-    paging_map_kernel_page(Virtual, g_paging_current_offset);
-    g_paging_current_offset += 0x1000;
-}

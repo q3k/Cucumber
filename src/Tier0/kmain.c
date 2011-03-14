@@ -9,6 +9,7 @@
 #include "Tier0/pic.h"
 #include "Tier0/kbd_layout.h"
 #include "Tier0/physical_alloc.h"
+#include "Tier0/heap.h"
 
 void interrupts_irq_sample(void);
 
@@ -64,13 +65,7 @@ void kmain(void *MultibootHeader, u32 Magic)
     
     kprintf("[i] Hardware interrupts are now enabled.\n");
     
-    /*while(1)
-    {
-        s8 c = ps2_getc();
-        kprintf("%c", c);
-    }*/
-    
-    physmem_dump_map();
-    
+    heap_init_simple();
+
     LOOPFOREVER;
 }

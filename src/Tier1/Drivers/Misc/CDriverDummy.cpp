@@ -34,8 +34,8 @@ bool CDriverDummy::CanUnload(void)
 u8 CDriverDummy::Load(CKernel *Kernel)
 {
     m_Kernel = Kernel;
-    Kernel->Logger() << "Dummy driver loaded!";
-    Kernel->Logger().Flush();
+    //Kernel->Logger() << "Dummy driver loaded!";
+    //Kernel->Logger().Flush();
     
     return 0;
 }

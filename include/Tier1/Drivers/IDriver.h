@@ -10,6 +10,7 @@ namespace cb {
     enum EDriverClass {
         EDC_NONE,
         EDC_FILESYSTEM,
+        EDC_DEVICE,
         BDC_BLOCKDEVICE
     };
     enum EDriverLoadMethod {

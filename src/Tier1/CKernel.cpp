@@ -1,11 +1,13 @@
 #include "Tier1/CKernel.h"
 #include "Tier1/Drivers/Misc/CDriverDummy.h"
+#include "Tier1/Drivers/Device/CDriverRamdisk.h"
 using namespace cb;
 
 CKernel g_Kernel;
 
 extern "C" {
     #include "Tier0/kstdio.h"
+    #include "Tier0/panic.h"
     
     void CKernelStart(void)
     {
@@ -39,8 +41,12 @@ void CKernel::Start(void)
     IDriver *Dummy = new CDriverDummy();
     m_DriverManager->AddDriver(Dummy);
     
+    IDriver *Ramdisk = new CDriverRamdisk();
+    m_DriverManager->AddDriver(Ramdisk);
+    
     m_DriverManager->LoadNew();
     
+    ASSERT(0);
     
     for (;;) {}
 }

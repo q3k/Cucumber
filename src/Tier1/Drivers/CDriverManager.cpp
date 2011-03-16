@@ -42,19 +42,18 @@ void CDriverManager::LoadNew(void)
 void CDriverManager::LoadDriver(u32 Index)
 {
     IDriver *Driver = m_aDrivers[Index].Driver;
-    m_Kernel->Logger() << "Loading driver " << Driver->GetName() << ".";
-    m_Kernel->Logger().Flush();
+    m_Kernel->Logger() << "Loading driver " << Driver->GetName() << "...";
     
     u8 Result = Driver->Load(m_Kernel);
     if (Result == 0)
     {
         m_aDrivers[Index].Loaded = true;
-        m_Kernel->Logger() << "Success.";
+        m_Kernel->Logger() << " Success.";
         m_Kernel->Logger().Flush();
     }
     else
     {
-        m_Kernel->Logger() << "Failure.";
+        m_Kernel->Logger() << " Failure.";
         m_Kernel->Logger().Flush();
     }
 }

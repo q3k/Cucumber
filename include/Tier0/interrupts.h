@@ -1,5 +1,8 @@
 #include "types.h"
 
+#ifndef __INTERRUPTS_H__
+#define __INTERRUPTS_H__
+
 struct S_IDT_PTR {
     u16 Limit;
     u32 Base;
@@ -42,6 +45,17 @@ struct S_ISR_STUB {
 } __attribute__ ((packed));
 typedef struct S_ISR_STUB T_ISR_STUB;
 
+typedef struct {
+    u32 edi, esi, ebp, esp, ebx, edx, ecx, eax;
+    u32 Error;
+    u32 eip, cs, eflags, useresp, ss;
+} T_ISR_REGISTERS_ERR;
+
+typedef struct {
+    u32 edi, esi, ebp, esp, ebx, edx, ecx, eax;
+    u32 eip, cs, eflags, useresp, ss;
+} T_ISR_REGISTERS;
+
 u8 interrupts_init_idt(void);
 void interrupts_setup_irq(u8 IRQ, void *Handler);
 void interrupts_setup_isr_raw(u8 Interrupt, void *ASMHandler, \
@@ -52,3 +66,6 @@ void interrupts_irq_finish(u8 IRQ);
 void interrupts_lidt(void);
 void interrupts_dump_idt_entry(u8 Interrupt);
 void interrupts_dump_idt_ptr(void);
+
+#endif
+

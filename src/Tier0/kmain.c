@@ -11,6 +11,7 @@
 #include "Tier0/physical_alloc.h"
 #include "Tier0/heap.h"
 #include "Tier0/cpp.h"
+#include "Tier0/exceptions.h"
 
 void interrupts_irq_sample(void);
 
@@ -58,6 +59,7 @@ void kmain(void *MultibootHeader, u32 Magic)
     }
     
     interrupts_init_simple();
+    exceptions_init_simple();
     pic_init(0, 0);
     ps2_init_simple();
     kbd_layout_set_default();

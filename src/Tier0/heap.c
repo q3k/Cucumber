@@ -168,6 +168,16 @@ u32 _heap_contract(T_HEAP *Heap, u32 Size)
     return (Heap->End - Heap->Start);
 }
 
+void *heap_alloc_p(T_HEAP *Heap, u32 Size, u8 Aligned, u32 *Physical)
+{
+    void *Address = heap_alloc(Heap, Size, Aligned);
+    
+    if (Physical != 0)
+        paging_get_physical((u32)Address, Physical);
+    
+    return Address;
+}
+
 void *heap_alloc(T_HEAP *Heap, u32 Size, u8 Aligned)
 {
     u32 RealSize = Size + sizeof(T_HEAP_HEADER) + sizeof(T_HEAP_FOOTER);
@@ -373,6 +383,11 @@ void heap_init_simple(void)
 void *kmalloc(u32 Size)
 {
     return heap_alloc(g_heap, Size, 0);
+}
+
+void *kmalloc_p(u32 Size, u8 Aligned, u32 *Physical)
+{
+    return heap_alloc_p(g_heap, Size, Aligned, Physical);
 }
 
 void kfree(void *Data)

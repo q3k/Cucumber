@@ -87,5 +87,4 @@ void ps2_keyboard_isr(void)
 void ps2_init_simple(void)
 {
     interrupts_setup_irq(0x01, ps2_keyboard_isr);
-    interrupts_dump_idt_entry(0xF1);
 }

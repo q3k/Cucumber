@@ -8,6 +8,7 @@ CKernel g_Kernel;
 extern "C" {
     #include "Tier0/kstdio.h"
     #include "Tier0/panic.h"
+    #include "Tier0/heap.h"
     
     void CKernelStart(void)
     {
@@ -46,7 +47,7 @@ void CKernel::Start(void)
     
     m_DriverManager->LoadNew();
     
-    ASSERT(0);
+    PANIC("the programmer is an idiot");
     
     for (;;) {}
 }

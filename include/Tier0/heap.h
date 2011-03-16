@@ -42,10 +42,12 @@ typedef struct {
 
 T_HEAP *heap_create(u32 Start, u32 End, u32 Max);
 void *heap_alloc(T_HEAP *Heap, u32 Size, u8 Aligned);
+void *heap_alloc_p(T_HEAP *Heap, u32 Size, u8 Aligned, u32 *Physical);
 void heap_free(T_HEAP *Heap, void *Address);
 
 void heap_init_simple(void);
 void *kmalloc(u32 Size);
+void *kmalloc_p(u32 Size, u8 Aligned, u32 *Physical);
 void kfree(void *Data);
 
 #endif

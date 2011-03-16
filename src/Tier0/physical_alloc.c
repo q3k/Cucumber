@@ -5,6 +5,7 @@
 
 #include "Tier0/physical_alloc.h"
 #include "Tier0/kstdio.h"
+#include "Tier0/panic.h"
 
 u32 g_physmem_directory[32];
 
@@ -42,6 +43,7 @@ u16 physmem_allocate_superpage(void)
             }
         }
     }
+    PANIC("Could not allocate superpage!");
     return 0;
 }
 

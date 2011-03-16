@@ -42,6 +42,13 @@ CLogger &CLogger::operator << (const s32 Data)
     return *this;
 }
 
+CLogger &CLogger::operator << (CHexNumber Data)
+{
+    Prefix();
+    kprintf("%x", Data.Get());
+    return *this;
+}
+
 void CLogger::Prefix(void)
 {
     if (m_Flushed)

@@ -17,7 +17,7 @@ namespace cb {
             CLogger &operator << (const s8 *Data);
             CLogger &operator << (const u32 Data);
             CLogger &operator << (const s32 Data);
-            CLogger &operator << (CHexNumber &Data);
+            CLogger &operator << (CHexNumber Data);
             void Flush(void);
         private:
             bool m_Flushed;

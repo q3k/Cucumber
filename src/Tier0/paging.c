@@ -1,6 +1,7 @@
 #include "Tier0/paging.h"
 #include "Tier0/system.h"
 #include "Tier0/kstdio.h"
+#include "Tier0/interrupts.h"
 #include "types.h"
 
 u32 g_kernel_page_directory[1024] __attribute__ ((aligned (4096)));

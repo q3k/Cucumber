@@ -47,7 +47,7 @@ void CKernel::Start(void)
     
     m_DriverManager->LoadNew();
     
-    PANIC("the programmer is an idiot");
+    //PANIC("the programmer is an idiot");
     
     for (;;) {}
 }

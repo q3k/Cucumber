@@ -19,16 +19,17 @@ namespace cb {
         EDLM_USBPRESENT = 4
     };
     class IDriver {
-        public:
-            virtual const s8 *GetName(void) = 0;
-            virtual const s8 *GetDescription(void) = 0;
-            virtual const s8 *GetAuthor(void) = 0;
-            virtual EDriverClass GetClass(void) = 0;
-            virtual EDriverLoadMethod GetLoadMethod(void) = 0;
-            virtual bool CanUnload(void) = 0;
-            
-            virtual u8 Load(CKernel *Kernel) = 0;
+        public:virtual u8 Load(CKernel *Kernel) = 0;
             virtual u8 Unload(void) = 0;
+            
+            const s8 *m_Name;
+            const s8 *m_Description;
+            const s8 *m_Author;
+            
+            EDriverClass m_Class;
+            EDriverLoadMethod m_LoadMethod;
+            
+            bool m_Unloadable;
     };
 };
 

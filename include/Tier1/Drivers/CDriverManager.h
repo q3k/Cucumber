@@ -10,7 +10,6 @@ namespace cb {
     class CKernel;
     
     typedef struct {
-        const s8 *Name;
         IDriver *Driver;
         bool New;
         bool Loaded;

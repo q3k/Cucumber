@@ -8,14 +8,6 @@
 namespace cb {
     class CDriverRamdisk : public IDriver, IDevice {
         public:
-            // Driver interface
-            const s8 *GetName(void);
-            const s8 *GetDescription(void);
-            const s8 *GetAuthor(void);
-            EDriverClass GetClass(void);
-            EDriverLoadMethod GetLoadMethod(void);
-            bool CanUnload(void);
-            
             u8 Load(CKernel *Kernel);
             u8 Unload(void);
             
@@ -23,7 +15,6 @@ namespace cb {
             u32 GetSize(void);
             const u8 *Read(u32 Offset, u32 Length);
             void Write(u32 Offset, u32 Length, const u8 *Data);
-            IDeviceOperations GetSupportedOperations(void);
         private:
             CKernel *m_Kernel;
     };

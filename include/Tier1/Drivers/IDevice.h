@@ -14,7 +14,8 @@ namespace cb {
             virtual u32 GetSize(void) = 0;
             virtual const u8 *Read(u32 Offset, u32 Length) = 0;
             virtual void Write(u32 Offset, u32 Length, const u8 *Data) = 0;
-            virtual IDeviceOperations GetSupportedOperations(void) = 0;
+            
+            IDeviceOperations m_DeviceOperations;
     };
 };
 

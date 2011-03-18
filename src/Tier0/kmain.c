@@ -57,7 +57,6 @@ void kmain(void *MultibootHeader, u32 Magic)
         kprintf("[e] Fatal! ACPI not found.\n");
         return;
     }
-    
     interrupts_init_simple();
     exceptions_init_simple();
     pic_init(0, 0);

@@ -7,7 +7,7 @@
 #include "Tier0/kstdio.h"
 #include "Tier0/panic.h"
 
-u32 g_physmem_directory[32];
+u32 g_physmem_directory[32 * 1024];
 
 void physmem_init(void)
 {
@@ -15,74 +15,52 @@ void physmem_init(void)
         g_physmem_directory[i] = 0;
 }
 
-void physmem_mark_as_used(u16 SuperPage)
+void physmem_mark_as_used(u32 Page)
 {
-    u8 Entry = SuperPage / 32;
-    u8 Bit = SuperPage - Entry * 32;
+    u32 Entry = Page / 32;
+    u8 Bit = Page % 32;
     
     g_physmem_directory[Entry] |= (1 << Bit);
 }
 
-u16 physmem_allocate_superpage(void)
+u32 physmem_allocate_page(void)
 {
-    for (int i = 0; i < 32; i++)
+    for (u32 i = 0; i < 32 * 1024; i++)
     {
         u32 Entry = g_physmem_directory[i];
         if (Entry != 0xFFFFFFFF)
         {
-            // Ooh, there's a superpage in this entry
+            // Ooh, there's a page in this entry
             for (int j = 0; j < 32; j++)
             {
                 u8 Available = (~Entry & (1 << j)) > 0;
                 if (Available)
                 {
-                    u16 SuperPage = i * 32 + j;
-                    physmem_mark_as_used(SuperPage);
-                    return SuperPage;
+                    u32 Page = i * 32 + j;
+                    physmem_mark_as_used(Page);
+                    return Page;
                 }
             }
         }
     }
-    PANIC("Could not allocate superpage!");
+    PANIC("Could not allocate page!");
     return 0;
 }
 
-void physmem_free_superpage(u16 SuperPage)
+void physmem_free_page(u32 Page)
 {
-    u8 Entry = SuperPage / 32;
-    u8 Bit = SuperPage - Entry * 32;
+    u8 Entry = Page / 32;
+    u8 Bit = Page % 32;
     
     g_physmem_directory[Entry] &= ~(1 << Bit);
 }
 
-u32 physmem_superpage_to_physical(u16 SuperPage)
+u32 physmem_page_to_physical(u32 Page)
 {
-    return SuperPage * 1024 * 1024 * 4;
+    return Page * 1024 * 4;
 }
 
-u16 physmem_physical_to_superpage(u32 Physical)
+u32 physmem_physical_to_page(u32 Physical)
 {
-    return Physical / (1024 * 1024 * 4);
-}
-
-void physmem_dump_map(void)
-{
-    for (int i = 0; i < 32; i++)
-    {
-        kprintf("%X:", i);
-        for (int j = 0; j < 32; j++)
-        {
-            u32 SuperPage = g_physmem_directory[i];
-            s8 c = (SuperPage & (1 << j)) > 0 ? 'X' : '_';
-            kprintf("%c", c);
-        }
-        i++;
-        for (int j = 0; j < 32; j++)
-        {
-            u32 SuperPage = g_physmem_directory[i];
-            s8 c = (SuperPage & (1 << j)) > 0 ? 'X' : '_';
-            kprintf("%c", c);
-        }
-        kprintf("\n");
-    }
+    return Physical / (1024 * 4);
 }

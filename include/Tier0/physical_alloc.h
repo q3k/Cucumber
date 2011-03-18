@@ -5,13 +5,11 @@
 
 void physmem_init(void);
 
-void physmem_mark_as_used(u16 SuperPage);
-u16 physmem_allocate_superpage(void);
-void physmem_free_superpage(u16 SuperPage);
+void physmem_mark_as_used(u32 Page);
+u32 physmem_allocate_page(void);
+void physmem_free_page(u32 Page);
 
-u32 physmem_superpage_to_physical(u16 SuperPage);
-u16 physmem_physical_to_superpage(u32 Physical);
-
-void physmem_dump_map(void);
+u32 physmem_page_to_physical(u32 Page);
+u32 physmem_physical_to_page(u32 Physical);
 
 #endif

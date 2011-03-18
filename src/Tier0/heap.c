@@ -12,8 +12,8 @@ T_HEAP_INDEX heap_index_initialize(void *Address, u32 MaxSize)
     Index.Array = (void**)Address;
     Index.MaxSize = MaxSize;
     Index.Size = 0;
-
-    kmemset(Address, 0, MaxSize * 4);
+        
+    kmemset(Address, 0, MaxSize);
     
     return Index;
 }
@@ -62,37 +62,37 @@ void heap_index_remove(T_HEAP_INDEX *Index, u32 Position)
 
 T_HEAP *heap_create(u32 Start, u32 End, u32 Max)
 {
-    u16 NumSuperPages = (End - Start ) / (1024 * 1024 * 4);
-    if ((End - Start) % (1024 * 1024 * 4) != 0)
-        NumSuperPages++;
+    u32 NumPages = (End - Start ) / (1024 * 4);
+    if ((End - Start) % (1024 * 4) != 0)
+        NumPages++;
 
-    kprintf("[i] Allocating %i superpages (%i MB) for heap.\n", 
-            NumSuperPages, (End - Start) / 0x100000);
-    for (int i = 0; i < NumSuperPages; i++)
+    kprintf("[i] Allocating %i pages (%i MB) for heap.\n", 
+            NumPages, (End - Start) / 0x100000);
+    for (int i = 0; i < NumPages; i++)
     {
-        u32 Physical = physmem_superpage_to_physical(
-            physmem_allocate_superpage()
-        );
-
-        paging_map_kernel_table(Start + i * 1024 * 1024 * 4, Physical);
+        u32 Page = physmem_allocate_page();
+        u32 Physical = physmem_page_to_physical(Page);
+        paging_map_kernel_page(Start + i * 1024 * 4, Physical);
     }
 
     T_HEAP* Heap = (T_HEAP *)Start;
     Start += sizeof(T_HEAP);
- 
-    Heap->Index = heap_index_initialize((void*)Start, HEAP_INDEX_SIZE);
-    Start += HEAP_INDEX_SIZE * sizeof(void*);
+    
+    Heap->Index = heap_index_initialize((void*)Start, HEAP_INDEX_SIZE / 4);
+    
+    Start += HEAP_INDEX_SIZE;
     
     Heap->Start = Start;
-    Heap->End = Start + NumSuperPages * 4 * 1024 * 1024;
+    Heap->End = Start + NumPages * 4 * 1024;
     Heap->Max = Max;
     
     T_HEAP_HEADER *Hole = (T_HEAP_HEADER *)Start;
     Hole->Size = End - Start;
     Hole->Magic = HEAP_HEADER_MAGIC;
     Hole->Hole = 1;
+    
     heap_index_insert(&Heap->Index, (void*)Hole);
-
+    
     return Heap;
 }
 
@@ -128,42 +128,42 @@ s32 _heap_find_smallest_hole(T_HEAP *Heap, u32 Size, u8 Aligned)
 
 void _heap_expand(T_HEAP *Heap, u32 Size)
 {
-    u16 NumSuperPages = Size / 0x400000; 
-    if (Size % 0x400000 != 0)
-        NumSuperPages++;
+    u16 NumPages = Size / 0x1000; 
+    if (Size % 0x1000 != 0)
+        NumPages++;
 
-    for (int i = 0; i < NumSuperPages; i++)
+    for (int i = 0; i < NumPages; i++)
     {
-        u16 SuperPage = physmem_allocate_superpage();
-        u32 Physical = physmem_superpage_to_physical(SuperPage);
-        paging_map_kernel_table(Heap->End + i * 0x400000, Physical);
+        u32 Page = physmem_allocate_page();
+        u32 Physical = physmem_page_to_physical(Page);
+        paging_map_kernel_page(Heap->End + i * 0x1000, Physical);
     }
 }
 
 u32 _heap_contract(T_HEAP *Heap, u32 Size)
 {
-    if (Size & 0x400000)
+    if (Size & 0x1000)
     {
-        Size &= 0x400000;
-        Size += 0x400000;
+        Size &= 0x1000;
+        Size += 0x1000;
     }
 
     if (Size < HEAP_MIN_SIZE)
         Size = HEAP_MIN_SIZE;
     
     u32 OldSize = Heap->End - Heap->Start;
-    u32 NumberToDelete = (OldSize - Size) / 0x400000;
+    u32 NumberToDelete = (OldSize - Size) / 0x1000;
 
     for (int i = 0; i < NumberToDelete; i++)
     {
-        u32 Virtual = Heap->End + i * 0x400000;
+        u32 Virtual = Heap->End + i * 0x1000;
         u32 Physical;
         paging_get_physical(Virtual, &Physical);
-        u16 SuperPage = Physical / 0x400000;
-        physmem_free_superpage(SuperPage);
+        u32 Page = Physical / 0x1000;
+        physmem_free_page(Page);
     }
 
-    Heap->End -= NumberToDelete * 0x400000;
+    Heap->End -= NumberToDelete * 0x1000;
 
     return (Heap->End - Heap->Start);
 }

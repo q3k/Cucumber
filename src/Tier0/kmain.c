@@ -38,6 +38,7 @@ void kmain(void *MultibootHeader, u32 Magic)
         return;
     }
     
+    
     paging_init_simple();
     gdt_create_flat();
     

@@ -4,35 +4,35 @@
 #include "Tier0/interrupts.h"
 #include "types.h"
 
-u32 g_kernel_page_directory[1024] __attribute__ ((aligned (4096)));
-u32 g_kernel_page_tables[1024][1024] __attribute__ ((aligned (4096)));
+T_PAGING_DIRECTORY g_kernel_page_directory __attribute__ ((aligned (4096)));
+T_PAGING_TABLE g_kernel_page_tables[1024] __attribute__ ((aligned (4096)));
 
-u8 paging_get_physical(u32 Virtual, u32 *Physical)
+u8 paging_get_physical_ex(u32 Virtual, u32 *Physical, 
+                          T_PAGING_DIRECTORY *Directory)
 {
     u16 DirectoryIndex = (Virtual >> 22) & 0x3FF;
-    u32 DirectoryEntry = g_kernel_page_directory[DirectoryIndex];
+    u32 DirectoryEntry = Directory->Entries[DirectoryIndex];
 
     u8 TablePresent = DirectoryEntry & 0b1;
     if (!TablePresent) 
         return 0;
 
-    u32 TableAddress = 0;
-    TableAddress |= (DirectoryEntry & 0xFFFFF000);
-    u32 *Table = (u32 *)TableAddress;
-
+    T_PAGING_TABLE *Table = Directory->Tables[DirectoryIndex];
 
     u16 TableIndex = (Virtual >> 12) & 0x3FF;
-    u32 TableEntry = Table[TableIndex];
-
-    u8 PagePresent = TableEntry &0b1;
-    if (!PagePresent)
+    T_PAGING_PAGE Page = (Table->Pages[TableIndex]);
+    if (!Page.Present)
         return 0;
 
-    *Physical = 0;
-    *Physical |= (TableEntry & 0xFFFFF000);
+    *Physical = (Page.Physical << 12);
     *Physical |= (Virtual & 0xFFF);
 
     return 1;
+}
+
+u8 paging_get_physical(u32 Virtual, u32 *Physical)
+{
+    return paging_get_physical_ex(Virtual, Physical, &g_kernel_page_directory);
 }
 
 void paging_dump_directory(void)
@@ -40,7 +40,7 @@ void paging_dump_directory(void)
     for (u32 i = 0; i < 10; i++)
     {
         kprintf("[i] Virtual 0x%X - 0x%X, Table 0x%X.\n", i * 4096 * 1024, \
-                (i + 1) * 4096 * 1024, g_kernel_page_directory[i]);
+                (i + 1) * 4096 * 1024, g_kernel_page_directory.Entries[i]);
     }
 }
 
@@ -62,19 +62,17 @@ void paging_map_kernel_page(u32 Virtual, u32 Physical)
     u16 DirectoryIndex = (Virtual >> 22) & 0x3FF;
 
     // Set directory entry to available
-    u32 *DirectoryEntry = &g_kernel_page_directory[DirectoryIndex];
+    u32 *DirectoryEntry = &g_kernel_page_directory.Entries[DirectoryIndex];
     *DirectoryEntry |= 0x03;
 
     u16 TableIndex = (Virtual >> 12) & 0x3FF;
 
-    u32 *TableEntry = &g_kernel_page_tables[DirectoryIndex][TableIndex];
+    T_PAGING_PAGE *Page = &g_kernel_page_tables[DirectoryIndex].Pages[TableIndex];
 
-
-    *TableEntry = 0;
-    // Set to present and writable
-    *TableEntry |= 0x3;
-    // Set to point to the physical address.
-    *TableEntry |= (Physical & 0xFFFFF000);
+    *((u32*)Page) = 0;
+    Page->Present = 1;
+    Page->RW = 1;
+    Page->Physical = (Physical & 0xFFFFF000) >> 12;
 }
 
 
@@ -89,8 +87,11 @@ void paging_init_simple(void)
 {
     // Initialize the directory
     for (u16 i  = 0; i < 1024; i++)
-        g_kernel_page_directory[i] = (((u32)g_kernel_page_tables[i]) \
+    {
+        g_kernel_page_directory.Entries[i] = (((u32)&g_kernel_page_tables[i])
                                     + 0x40000000); 
+        g_kernel_page_directory.Tables[i] = &g_kernel_page_tables[i];
+    }
 
     // Initialize the kernel mappings (0..8MB and 3072..3080MB
     paging_map_kernel_table(0x00000000, 0x00000000);
@@ -99,8 +100,7 @@ void paging_init_simple(void)
     paging_map_kernel_table(0xC0000000, 0x00000000);
     paging_map_kernel_table(0xC0400000, 0x00400000);
 
-    void *PhysicalDirectory = (u8 *)g_kernel_page_directory + \
-                                        0x40000000;
+    void *PhysicalDirectory = (u8 *)g_kernel_page_directory.Entries +0x40000000;
     __asm volatile (  "mov %0, %%eax\n"
                     "mov %%eax, %%cr3\n"
                     "mov %%cr0, %%eax\n"

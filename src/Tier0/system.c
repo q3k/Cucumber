@@ -67,8 +67,8 @@ void system_parse_multiboot_header(void *Header)
         g_system_memory_upper = AvailableMemory / 1024;
     }
     
-    // Mark first MB as used
-    for (u16 i = 0; i < 1024; i++)
+    // Mark first 8 MB as used (that's where our kernel binary is loaded)
+    for (u16 i = 0; i < 1024 * 8; i++)
         physmem_mark_as_used(i);
     
     // Mark all memory > memory size as used.

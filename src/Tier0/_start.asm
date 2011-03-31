@@ -9,7 +9,7 @@ MAGIC           equ 0x1BADB002
 CHECKSUM        equ -(MAGIC + FLAGS)
 
 ; Other constants
-STACKSIZE equ 0x4000
+STACKSIZE equ 0x10000
 
 ; #############################################################################
 ; ############################## text segment #################################
@@ -79,6 +79,6 @@ gdt_end:
 section .bss
 align 4
 
-; here be 16k stack
+; here be 64k stack
 kstack:
     resb STACKSIZE

@@ -132,12 +132,14 @@ void _heap_expand(T_HEAP *Heap, u32 Size)
     if (Size % 0x1000 != 0)
         NumPages++;
 
-    for (int i = 0; i < NumPages; i++)
+    for (u32 i = 0; i < NumPages; i++)
     {
         u32 Page = physmem_allocate_page();
         u32 Physical = physmem_page_to_physical(Page);
         paging_map_kernel_page(Heap->End + i * 0x1000, Physical);
     }
+    
+    Heap->End = Heap->Start + NumPages * 0x1000;
 }
 
 u32 _heap_contract(T_HEAP *Heap, u32 Size)
@@ -187,8 +189,7 @@ void *heap_alloc(T_HEAP *Heap, u32 Size, u8 Aligned)
     {
         u32 OldSize = Heap->End - Heap->Start;
         u32 OldEnd = Heap->End;
-
-        _heap_expand(Heap, RealSize);
+        _heap_expand(Heap, OldSize + RealSize);
         u32 NewSize = Heap->End - Heap->Start;
 
         Iterator = 0;

@@ -23,6 +23,7 @@ CFLAGS:=-Wall -Werror -nostdlib -nostartfiles -nodefaultlibs -std=c99 -g
 CFLAGS+=-I ./include -Wno-packed-bitfield-compat
 CXFLAGS:= -Wall -Werror -nostdlib -fno-builtin -nostartfiles -I ./include
 CXFLAGS+= -nodefaultlibs -fno-exceptions -fno-rtti -fno-stack-protector 
+CXFLAGS+= -Wno-packed-bitfield-compat
 LFLAGS:=-nostdlib -nostartfiles -nodefaultlibs
 
 .PHONY: all clean kernel.bin emulate hdd.img

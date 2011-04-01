@@ -12,6 +12,9 @@
 #include "Tier0/heap.h"
 #include "Tier0/cpp.h"
 #include "Tier0/exceptions.h"
+#include "Tier0/panic.h"
+
+#define STACK_SIZE 0x400000
 
 void interrupts_irq_sample(void);
 
@@ -21,6 +24,8 @@ void sample_interrupt_0x2A(void)
     kprintf("[i] Hello from ISR for interrupt 0x2A!\n");
     return;
 }
+
+void kmain_newstack(void);
 
 // Real kernel entry point, called from _start.asm
 void kmain(void *MultibootHeader, u32 Magic)
@@ -69,6 +74,24 @@ void kmain(void *MultibootHeader, u32 Magic)
     kprintf("[i] Hardware interrupts are now enabled.\n");
     
     heap_init_simple();
+    
+    // Let's create a new kernel stack... on the heap! :o
+    u32 StackAddress = (u32)kmalloc_p(STACK_SIZE, 1, 0);
+    ASSERT(StackAddress > 0);
+    StackAddress += STACK_SIZE;
+    
+    kprintf("[i] New stack at %x.\n", StackAddress);
+    
+    // And now let's use it and forget ebp because we can.
+    //__asm__ volatile("mov %0, %%esp" : : "r" (StackAddress));
+    
+    // This automagically creates a new usable stack
+    kmain_newstack();
+}
+
+void kmain_newstack(void)
+{
+    kprintf("[i] Now using real stack...\n");
     
     cpp_call_ctors();
     cpp_start_ckernel();

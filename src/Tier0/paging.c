@@ -101,7 +101,7 @@ void paging_map_page(u32 Virtual, u32 Physical, T_PAGING_DIRECTORY *Directory,
         u32 *Entry = &Directory->Entries[DirectoryIndex];
         *Entry = 1;
         *Entry |= (RW << 1);
-        *Entry |= (User << 1);
+        *Entry |= (User << 2);
         *Entry |= ((u32)NewTable);
         
         Directory->Tables[DirectoryIndex] = NewTable;

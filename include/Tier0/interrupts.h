@@ -58,6 +58,7 @@ typedef struct {
 
 u8 interrupts_init_idt(void);
 void interrupts_setup_irq(u8 IRQ, void *Handler);
+void interrupts_delete_isr(u8 Interrupt);
 void interrupts_setup_isr_raw(u8 Interrupt, void *ASMHandler, \
                               T_INTERRUPTS_RING Ring);
 void interrupts_setup_isr(u8 Interrupt, void *Handler, T_INTERRUPTS_RING Ring);

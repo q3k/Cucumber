@@ -1,6 +1,7 @@
 #include "Tier1/CKernel.h"
 #include "Tier1/Drivers/Misc/CDriverDummy.h"
 #include "Tier1/Drivers/Device/CDriverRamdisk.h"
+#include "Tier1/CPageFaultDispatcher.h"
 using namespace cb;
 
 CKernel g_Kernel;
@@ -48,6 +49,9 @@ void CKernel::Start(void)
     m_DriverManager->LoadNew();
     
     //PANIC("the programmer is an idiot");
+    new CPageFaultDispatcher();
+    u32 *a = (u32*)0x51515151;
+    *a = 1337;
     
     for (;;) {}
 }

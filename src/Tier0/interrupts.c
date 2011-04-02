@@ -48,6 +48,8 @@ u8 interrupts_init_idt(void)
     return 1; 
 }
 
+// This creates an ASM stub for 
+
 // This creates a 12-byte ASM stub for a handler
 void interrupts_create_stub(T_ISR_STUB *Destination, u32 Address)
 {
@@ -130,6 +132,11 @@ void interrupts_setup_isr(u8 Interrupt, void *Handler, \
     
     u32 ASMHandler = (u32)&g_isr_stubs[Interrupt];
     interrupts_setup_isr_raw(Interrupt, (void*)ASMHandler, Ring);
+}
+
+void interrupts_delete_isr(u8 Interrupt)
+{
+    *((u32*)&g_idt_entries[Interrupt]) = 0;
 }
 
 void interrupts_init_simple(void)

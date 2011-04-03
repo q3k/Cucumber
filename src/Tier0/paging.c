@@ -138,6 +138,14 @@ void paging_use_directory(T_PAGING_DIRECTORY *Directory)
                     "mov %%eax, %%cr0\n" :: "m" (Directory->PhysicalAddress));
 }
 
+T_PAGING_DIRECTORY *paging_get_directory(void)
+{
+    u32 Address;
+    __asm__ volatile("mov %%cr3, %%eax\n"
+                     "mov %%eax, %0\n" : "=r"(Address));
+    return (T_PAGING_DIRECTORY *)Address;
+}
+
 void paging_init_simple(void)
 {
     // Initialize the directory

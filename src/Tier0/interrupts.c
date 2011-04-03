@@ -26,12 +26,12 @@ u8 interrupts_init_idt(void)
 {
     g_idt_ptr.Limit = 256 * 8;
 
-     u32 Physical = 0;
-     u8 Result = paging_get_physical((u32)g_idt_entries, &Physical);
-     if (!Result)
-         return 0;
+    u32 Physical = 0;
+    u8 Result = paging_get_physical((u32)g_idt_entries, &Physical);
+    if (!Result)
+        return 0;
 
-     kprintf("[i] Setting up IDT at 0x%x (0x%x Virtual).\n", Physical, g_idt_entries);
+    kprintf("[i] Setting up IDT at 0x%x (0x%x Virtual).\n", Physical, g_idt_entries);
     
     g_idt_ptr.Base = Physical;
 
@@ -61,7 +61,7 @@ void interrupts_create_stub(T_ISR_STUB *Destination, u32 Address)
     //   popad
     //   sti
     //   iret
-    Destination->Code1 = 0x60FA;        // pishad, cli
+    Destination->Code1 = 0x60FA;        // pushad, cli
     Destination->Code2 = 0xB8;          // mov eax,
     Destination->Handler = Address;     // Address
     Destination->Code3 = 0xFB61D0FF;    // sti, popad, call eax

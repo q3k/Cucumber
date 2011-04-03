@@ -10,7 +10,7 @@
                            R.ecx = RERR.ecx; \
                            R.edx = RERR.edx; \
                            R.edi = RERR.edi; \
-                           R.esi = RERR.esi; \
+                           R.esi = RERR.eip; \
                            R.esp = RERR.esp; \
                            R.ebp = RERR.ebx; \
                            R.cs  = RERR.cs;
@@ -53,6 +53,7 @@ void exceptions_page_fault_isr(T_ISR_REGISTERS_ERR Registers)
         Error[o + 4] = 'x';
     
     T_ISR_REGISTERS R;
-    RERR_TO_R(Registers, R);        
-    PANIC_EX_HEX(Error, R, FaultAddress);
+    RERR_TO_R(Registers, R); 
+    for(;;){}       
+    //PANIC_EX_HEX(Error, R, FaultAddress);
 }

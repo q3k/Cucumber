@@ -2,6 +2,9 @@
 #include "Tier1/Drivers/Misc/CDriverDummy.h"
 #include "Tier1/Drivers/Device/CDriverRamdisk.h"
 #include "Tier1/CPageFaultDispatcher.h"
+#include "Tier1/CPageDirectory.h"
+#include "Tier1/CTask.h"
+#include "Tier1/CScheduler.h"
 using namespace cb;
 
 CKernel g_Kernel;
@@ -48,11 +51,59 @@ void CKernel::Start(void)
     
     m_DriverManager->LoadNew();
     
-    //PANIC("the programmer is an idiot");
-    new CPageFaultDispatcher();
-    u32 *a = (u32*)0x51515151;
-    *a = 1337;
+    CTask *KernelTask = CreateKernelTask();
+    CScheduler::AddTask(KernelTask);    
+    CScheduler::Enable();
     
-    for (;;) {}
+    CTask *ParentTask = CScheduler::GetCurrentTask();    
+    CTask *NewTask = ParentTask->Fork();
+    
+    if (NewTask == ParentTask)
+    {
+        for (;;) {
+            for (u32 i = 0; i < 65000; i++)
+            {
+                for (u32 j = 0; j < 65; j++){}
+            }
+            kprintf("[i] Hello! I'm the parent process.\n");
+        }
+    }
+    else
+    {
+        for (;;) {
+            for (u32 i = 0; i < 65000; i++)
+            {
+                for (u32 j = 0; j < 65; j++){}
+            }
+            kprintf("[i] Hello! I'm the child process.\n");
+        }
+    }
+}
+
+extern T_PAGING_DIRECTORY g_kernel_page_directory;
+extern CPageDirectory *g_KernelPageDirectory;
+CTask *CKernel::CreateKernelTask(void)
+{
+    // Create the directory wrapper
+    CPageDirectory *Directory = new CPageDirectory(true);
+    // Every table already exists.
+    for (u8 i = 0; i < 32; i++)
+        Directory->m_OwnerBitmap[i] = 1;
+    Directory->m_Directory = &g_kernel_page_directory;
+    g_KernelPageDirectory = Directory;
+    
+    // Create the task wrapper
+    CTask *Task = new CTask(false, true);
+    Task->m_Directory = Directory;
+    
+    // Just say a stack is here, as it already is -- see kmain.c
+    Task->m_StackStart = Directory->Translate(TASK_MAP_STACK_START);
+    Task->m_StackSize = TASK_MAP_STACK_SIZE;
+    
+    // Same goes for kernel memory
+    Task->m_KernelStart = 0xC0000000;
+    Task->m_KernelSize = 0x20000000;
+    
+    return Task;
 }
 

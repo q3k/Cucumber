@@ -5,38 +5,48 @@ extern "C" {
     #include "Tier0/heap.h"
     #include "Tier0/kstdlib.h"
     #include "Tier0/panic.h"
+    #include "Tier0/kstdlib.h"
+    #include "Tier0/physical_alloc.h"
+    #include "Tier0/kstdio.h"
 };
 
-CPageDirectory::CPageDirectory(void)
+CPageDirectory *g_KernelPageDirectory;
+
+CPageDirectory::CPageDirectory(bool Empty)
 {
-    for (u8 i = 0; i < 32; i++)
-        m_OwnerBitmap[i] = 0;
-    
-    u32 PhysicalDirectory;
-    m_Directory = (T_PAGING_DIRECTORY *)kmalloc_p(sizeof(T_PAGING_DIRECTORY),
-        1, &PhysicalDirectory);
-    
-    m_Directory->PhysicalAddress = PhysicalDirectory;
-    
-    
+    if (!Empty)
+    {
+        for (u8 i = 0; i < 32; i++)
+            m_OwnerBitmap[i] = 0;
+        
+        u32 PhysicalDirectory;
+        m_Directory = (T_PAGING_DIRECTORY *)kmalloc_p(sizeof(T_PAGING_DIRECTORY),
+            1, &PhysicalDirectory);
+        
+        m_Directory->PhysicalAddress = PhysicalDirectory;
+    }
+    m_CreatedEmpty = Empty;
 }
 
 CPageDirectory::~CPageDirectory(void)
 {
-    for (u16 Table = 0; Table < 1024; Table++)
+    if (!m_CreatedEmpty)
     {
-        u8 Index = Table / 32;
-        u8 Offset = Table % 32;
-        
-        u8 Owned = (m_OwnerBitmap[Index] & (1 << Offset)) > 0;
-        if (Owned)
+        for (u16 Table = 0; Table < 1024; Table++)
         {
-            u8 *TableMemory = (u8*)m_Directory->Tables[Table];
-            kfree(TableMemory);
+            u8 Index = Table / 32;
+            u8 Offset = Table % 32;
+            
+            u8 Owned = (m_OwnerBitmap[Index] & (1 << Offset)) > 0;
+            if (Owned)
+            {
+                u8 *TableMemory = (u8*)m_Directory->Tables[Table];
+                kfree(TableMemory);
+            }
         }
+        
+        kfree(m_Directory);
     }
-    
-    kfree(m_Directory);
 }
 
 void CPageDirectory::CreateTable(u32 Virtual, u8 User, u8 RW)
@@ -55,10 +65,10 @@ void CPageDirectory::CreateTable(u32 Virtual, u8 User, u8 RW)
     kmemsetw((void*)TableVirtual, 0, 1024);
     
     // Prepare the entry
-    u32 Entry = TablePhysical & (0xFFC00000);
+    u32 Entry = TablePhysical & (0xFFFFF000);
     Entry |= 1; //Present
     Entry |= (RW << 1);
-    Entry |= (User << 1);
+    Entry |= (User << 2);
     
     m_Directory->Entries[TableIndex] = Entry;
 }
@@ -86,9 +96,9 @@ void CPageDirectory::MapPage(u32 Virtual, u32 Physical, u8 User, u8 RW)
     u8 TablePresent = (Entry & 0x01) > 0;
     
     if (!TablePresent)
-        CreateTable(Virtual & 0xFFC00000, User, RW);
-    else if (!IsTableOurs(Virtual & 0xFFC00000))
-        CopyTable(Virtual & 0xFFC00000, this, false, User, RW);
+        CreateTable(Virtual & 0xFFFFF000, User, RW);
+    else if (!IsTableOurs(Virtual & 0xFFFFF000))
+        CopyTable(Virtual & 0xFFFFF000, this, false, User, RW);
     
     T_PAGING_TABLE *Table = m_Directory->Tables[DirectoryIndex];
     
@@ -128,11 +138,35 @@ void CPageDirectory::MapRange(u32 Virtual, u32 Physical, u32 Size, u8 User,
         MapTable(Virtual + i * 0x1000, Physical + i * 0x1000, User, RW);
 }
 
+void CPageDirectory::UnmapPage(u32 Virtual)
+{
+    u16 DirectoryIndex = (Virtual >> 22) & 0x3FF;
+    u32 Entry = m_Directory->Entries[DirectoryIndex];
+    
+    u8 TablePresent = (Entry & 0x01) > 0;
+    
+    if (!TablePresent)
+        PANIC("Unmapping from unexisting table!");
+    
+    T_PAGING_TABLE *Table = m_Directory->Tables[DirectoryIndex];
+    
+    u16 TableIndex = (Virtual >> 12) & 0x3FF;
+    
+    T_PAGING_PAGE *Page = &Table->Pages[TableIndex];
+    
+    *((u32*)Page) = 0;
+    
+    // Flush the TLB
+    __asm__ volatile("invlpg %0" :: "m" (Virtual));
+}
+
 void CPageDirectory::LinkTable(u32 Virtual, CPageDirectory *Source)
 {
     u16 TableIndex = Virtual / 0x400000;
+    m_Directory->Entries[TableIndex] = Source->m_Directory->Entries[TableIndex];
     T_PAGING_TABLE *Table = Source->m_Directory->Tables[TableIndex];
     m_Directory->Tables[TableIndex] = Table;
+    __asm__ volatile("invlpg %0" :: "m" (Virtual));
 }
 
 void CPageDirectory::CopyTable(u32 Virtual, CPageDirectory *Source, bool Deep,
@@ -159,36 +193,32 @@ void CPageDirectory::CopyTable(u32 Virtual, CPageDirectory *Source, bool Deep,
     }
 }
 
-void CPageDirectory::CopyPage(u32 Virtual, CPageDirectory *Source, u8 User,
+void CPageDirectory::CopyPage(u32 Virtual, CPageDirectory *Destination, u8 User,
                               u8 RW)
 {
-    // Our directory
-    u16 DirectoryIndex = (Virtual >> 22) & 0x3FF;
-    u32 Entry = m_Directory->Entries[DirectoryIndex];
-    u8 TablePresent = (Entry & 0x01) > 0;
-    
-    if (!TablePresent)
-        CreateTable(Virtual & 0xFFC00000, User, RW);
-    else if (!IsTableOurs(Virtual & 0xFFC00000))
-        CopyTable(Virtual & 0xFFC00000, this, false, User, RW);
-    
     // Foreign directory
-    Entry = Source->m_Directory->Entries[DirectoryIndex];
-    TablePresent = (Entry & 0x01) > 0;
+    u16 DirectoryIndex = (Virtual >> 22) & 0x3FF;
+    u32 Entry = Destination->m_Directory->Entries[DirectoryIndex];
+    u8 TablePresent = (Entry & 0x01) > 0;
     if (!TablePresent)
-        PANIC("Copying unexisting table!");
+        PANIC("Copying to unexisting table!");
         
-    T_PAGING_TABLE *Table = Source->m_Directory->Tables[DirectoryIndex];
+    T_PAGING_TABLE *Table = Destination->m_Directory->Tables[DirectoryIndex];
     u16 TableIndex = (Virtual >> 12) & 0x3FF;
     
     if (!Table->Pages[TableIndex].Present)
-        PANIC("Copying unexisting page!");
+        PANIC("Copying to unexisting page!");
     
-    u32 Page = *((u32*)&Table->Pages[TableIndex]);
+    // A new physical page reserved..
+    u32 DestinationPagePhysical = Destination->Translate(Virtual);
     
-    // Our directory again
-    Table = m_Directory->Tables[DirectoryIndex];
-    *((u32*)&Table->Pages[TableIndex]) = Page;
+    MapPage(0xB0000000, DestinationPagePhysical, 1, 1);
+    
+    // Copy the value
+    kmemcpy((void*)0xB0000000, (void*)Virtual, 4096);
+    
+    // Unmap the temporary page
+    UnmapPage(0xB0000000);
 }
 
 u32 CPageDirectory::Translate(u32 Virtual)

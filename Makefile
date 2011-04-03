@@ -52,7 +52,9 @@ TIER0 := $(foreach i, $(TIER0OBJ), obj/$(i))
 Tier0: $(TIER0)
 
 TIER1SRC := $(shell find src/Tier1 -mindepth 1 -maxdepth 3 -name "*.cpp")
+TIER1SRC += $(shell find src/Tier1 -mindepth 1 -maxdepth 3 -name "*.asm")
 TIER1OBJ := $(patsubst %.cpp,%.xo,$(TIER1SRC))
+TIER1OBJ := $(patsubst %.asm,%.nao,$(TIER1OBJ))
 TIER1 := $(foreach i, $(TIER1OBJ), obj/$(i))
 Tier1: $(TIER1)
 

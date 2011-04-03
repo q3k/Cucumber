@@ -33,5 +33,6 @@ void paging_map_kernel_table(u32 Virtual, u32 Physical);
 void paging_map_page(u32 Virtual, u32 Physical, T_PAGING_DIRECTORY *Directory, 
                      u8 User, u8 RW);
 void paging_use_directory(T_PAGING_DIRECTORY *Directory);
+T_PAGING_DIRECTORY *paging_get_directory(void);
 
 #endif

@@ -13,8 +13,7 @@
 #include "Tier0/cpp.h"
 #include "Tier0/exceptions.h"
 #include "Tier0/panic.h"
-
-#define STACK_SIZE 0x400000
+#include "Tier0/prng.h"
 
 void interrupts_irq_sample(void);
 
@@ -75,17 +74,27 @@ void kmain(void *MultibootHeader, u32 Magic)
     
     heap_init_simple();
     
-    // Let's create a new kernel stack... on the heap! :o
-    u32 StackAddress = (u32)kmalloc_p(STACK_SIZE, 1, 0);
-    ASSERT(StackAddress > 0);
-    StackAddress += STACK_SIZE;
+    kprintf("[i] Initializing PRNG...\n");
+    u16 RLow, RHigh;
+    __asm__ __volatile__ ("rdtsc" : "=a" (RLow), "=d" (RHigh));
+    u32 R = (RHigh << 16) | RLow;
+    kprintf("[i] %i\n", R);
+    kseed(R);
+    for (u32 Rl = 0; Rl < R; Rl++)
+    {
+        krand();
+        /*kseed(Rl);
+        krand();*/
+    }
     
-    kprintf("[i] New stack at %x.\n", StackAddress);
+    // Let's create a new kernel stack
+    u32 StackPhysical = physmem_allocate_page() * 1024 * 4;
+    paging_map_kernel_page(0xA0000000, StackPhysical);
     
     // And now let's use it and forget ebp because we can.
-    //__asm__ volatile("mov %0, %%esp" : : "r" (StackAddress));
+    __asm__ volatile("mov %0, %%esp" : : "r" (0xA0000000 + 4095));
     
-    // This automagically creates a new usable stack
+    // This automagically creates a new usable stack frame
     kmain_newstack();
 }
 

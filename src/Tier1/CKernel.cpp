@@ -33,7 +33,7 @@ CLogger &CKernel::Logger(void)
 void CKernel::Start(void)
 {
     kprintf("[i] Hello from C++ land!\n");
-    
+       
     if (m_Magic != CKERNEL_MAGIC)
     {
         kprintf("[e] Error! My constructor wasn't called properly.\n");
@@ -52,7 +52,7 @@ void CKernel::Start(void)
     m_DriverManager->LoadNew();
     
     CTask *KernelTask = CreateKernelTask();
-    CScheduler::AddTask(KernelTask);    
+    CScheduler::AddTask(KernelTask);
     CScheduler::Enable();
     
     CTask *ParentTask = CScheduler::GetCurrentTask();    
@@ -61,9 +61,9 @@ void CKernel::Start(void)
     if (NewTask == ParentTask)
     {
         for (;;) {
-            for (u32 i = 0; i < 65000; i++)
+            for (volatile u32 i = 0; i < 350; i++)
             {
-                for (u32 j = 0; j < 65; j++){}
+                for (volatile u32 j = 0; j < 650; j++){}
             }
             kprintf("[i] Hello! I'm the parent process.\n");
         }
@@ -71,9 +71,9 @@ void CKernel::Start(void)
     else
     {
         for (;;) {
-            for (u32 i = 0; i < 65000; i++)
+            for (volatile u32 i = 0; i < 350; i++)
             {
-                for (u32 j = 0; j < 65; j++){}
+                for (volatile u32 j = 0; j < 650; j++){}
             }
             kprintf("[i] Hello! I'm the child process.\n");
         }

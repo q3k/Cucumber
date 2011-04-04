@@ -101,10 +101,8 @@ void kmain(void *MultibootHeader, u32 Magic)
 void kmain_newstack(void)
 {
     kprintf("[i] Now using real stack...\n");
-    
     cpp_call_ctors();
     cpp_start_ckernel();
-    
     kprintf("[i] Returned from Tier1, sleeping forever.\n");
     LOOPFOREVER;
 }

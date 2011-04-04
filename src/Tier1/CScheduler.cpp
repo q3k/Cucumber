@@ -42,42 +42,25 @@ void CScheduler::AddTask(CTask *Task)
     __asm__ volatile("sti");
 }
 
-void CScheduler::NextTask(void)
+#pragma GCC optimize ("O0")
+
+__attribute__((optimize("O0"))) void CScheduler::NextTask(void)
 {   
-    u32 NewEBP, NewESP, NewEIP, EBP, ESP, Directory;
+    __asm__ volatile("cli");
+    volatile u32 NewEBP, NewESP, NewEIP, EBP, ESP, Directory;
     TTaskQueueNode *Next;
     
-    if (g_Scheduler.m_TaskQueueStart == 0)
+    /*if (g_Scheduler.m_TaskQueueStart == 0)
         PANIC("No tasks in queue!");
     
     if (g_Scheduler.m_TaskQueueCurrent == 0)
-        PANIC("Current task is null!");
-    
-    // Return point
-    volatile u32 ReturnPoint = ctask_geteip();
-    
-    if (ReturnPoint == 0xFEEDFACE)
-    {
-        //We are in the next task already
-        __asm__ volatile("mov %%esp, %0" : "=r"(ESP));
-        __asm__ volatile("mov %%ebp, %0" : "=r"(EBP));
-        return;
-    }
+        PANIC("Current task is null!");*/
     
     // Fetch next task.
     if (g_Scheduler.m_TaskQueueCurrent->Next == 0)
         Next = g_Scheduler.m_TaskQueueStart;
     else
         Next = g_Scheduler.m_TaskQueueCurrent->Next;
-    
-    // Save current task details
-    __asm__ volatile("mov %%esp, %0" : "=r"(ESP));
-    __asm__ volatile("mov %%ebp, %0" : "=r"(EBP));
-    g_Scheduler.m_CurrentTask->m_EBP = EBP;
-    g_Scheduler.m_CurrentTask->m_ESP = ESP;
-    g_Scheduler.m_CurrentTask->m_EIP = ReturnPoint;
-    
-    
     
     // Read task details    
     NewEBP = Next->Task->m_EBP;
@@ -89,6 +72,24 @@ void CScheduler::NextTask(void)
         kprintf("[i] no wai\n");
         return;
     }
+    
+    // Save current task details
+    __asm__ volatile("mov %%esp, %0" : "=r"(ESP));
+    __asm__ volatile("mov %%ebp, %0" : "=r"(EBP));
+    g_Scheduler.m_CurrentTask->m_EBP = EBP;
+    g_Scheduler.m_CurrentTask->m_ESP = ESP;
+    
+    // Return point
+    volatile u32 ReturnPoint = ctask_geteip();
+    //kprintf("return point %x\n", ReturnPoint);
+    
+    if (ReturnPoint == 0xFEEDFACE)
+    {
+        //We are in the next task already
+        return;
+    }
+    
+    g_Scheduler.m_CurrentTask->m_EIP = ReturnPoint;
     
     // Switch to next task
     g_Scheduler.m_TaskQueueCurrent = Next;

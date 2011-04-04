@@ -5,6 +5,7 @@
 
 #define LOOPFOREVER for(;;){}
 
+void kstdio_init(void);
 void koutb(u16 Port, u8 Data);
 u8 kinb(u16 Port);
 void kio_wait(void);

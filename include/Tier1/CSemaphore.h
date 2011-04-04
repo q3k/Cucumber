@@ -3,10 +3,14 @@
 
 #include "types.h"
 
+extern "C" {
+    #include "Tier0/atomic_operations.h"
+};
+
 namespace cb {
     class CSemaphore {
         private:
-            u32 m_Available;
+            T_ATOMIC m_Available;
         public:
             CSemaphore(u32 Available = 1);
             void Acquire(void);

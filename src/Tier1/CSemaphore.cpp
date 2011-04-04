@@ -3,7 +3,7 @@ using namespace cb;
 
 CSemaphore::CSemaphore(u32 Available)
 {
-    m_Available = Available;
+    atomic_set(&m_Available, Available);
 }
 
 void CSemaphore::Acquire(void)
@@ -11,9 +11,9 @@ void CSemaphore::Acquire(void)
     // Just spinlock...
     while (1)
     {
-        if (m_Available > 0)
+        if (atomic_read(&m_Available) > 0)
         {
-            m_Available--;
+            atomic_dec(&m_Available);
             break;
         }
     }
@@ -21,5 +21,5 @@ void CSemaphore::Acquire(void)
 
 void CSemaphore::Release(void)
 {
-    m_Available++;
+    atomic_inc(&m_Available);
 }

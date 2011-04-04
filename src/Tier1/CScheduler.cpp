@@ -120,7 +120,7 @@ CTask *CScheduler::GetCurrentTask(void)
 
 void CScheduler::Enable(void)
 {
-    u32 Divisor = 0xFFFF;
+    u32 Divisor = 100;
     koutb(0x43, 0x36);
     u8 Low = (u8)(Divisor & 0xFF);
     u8 High = (u8)((Divisor >> 8) & 0xFF);

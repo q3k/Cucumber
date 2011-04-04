@@ -1,6 +1,7 @@
 #include "types.h"
 #include "Tier0/kstdio.h"
 #include "Tier0/kstdlib.h"
+#include "Tier0/semaphore.h"
 #include <stdarg.h>
 
 #define va_start(v,l) __builtin_va_start(v,l)
@@ -11,6 +12,13 @@ typedef __builtin_va_list va_list;
 
 u8 g_kstdio_current_line = 0;
 u8 g_kstdio_cur_x = 0, g_kstdio_cur_y = 0;
+
+T_SEMAPHORE ScreenWriteLock;
+
+void kstdio_init(void)
+{
+    semaphore_init(&ScreenWriteLock);
+}
 
 void koutb(u16 Port, u8 Data)
 {
@@ -56,6 +64,7 @@ void kputi(s32 Number)
 
 void kprintf(const s8 *szFormat, ...)
 {
+    semaphore_acquire(&ScreenWriteLock);
     va_list ap;
     va_start(ap, szFormat);
     
@@ -101,12 +110,14 @@ void kprintf(const s8 *szFormat, ...)
             Offset++;
         }
     }
-
+    
     va_end(ap);
+    semaphore_release(&ScreenWriteLock);
 }
 
 void kscroll_up(void)
 {
+   //semaphore_acquire(&ScreenWriteLock);
    u16 Blank = 0x20 | (0x0F << 8);
    u16 Temp;
 
@@ -118,6 +129,7 @@ void kscroll_up(void)
         kmemsetw((void*)(0xC00B8000 + (25 - Temp) * 160), Blank, 160);
         g_kstdio_cur_y = 25 - 1;
    }
+   //semaphore_release(&ScreenWriteLock);
 }
 
 u32 kstrlen(const s8 *szString)

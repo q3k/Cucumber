@@ -29,6 +29,7 @@ void kmain_newstack(void);
 // Real kernel entry point, called from _start.asm
 void kmain(void *MultibootHeader, u32 Magic)
 {
+    kstdio_init();
     kclear();
     kprintf("                         _           \n"
             "   ___ _ _ ___ _ _ _____| |_ ___ ___ \n"

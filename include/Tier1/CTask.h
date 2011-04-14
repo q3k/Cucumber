@@ -129,7 +129,25 @@ namespace cb {
             // Equivalent of the POSIX fork() call.
             CTask *Fork(void);
             
-            u32 GetPID(void);
+            inline u32 GetPID(void) { return m_PID; }
+            inline u32 GetESP(void) { return m_ESP; }
+            inline u32 GetEIP(void) { return m_EIP; }
+            inline u32 GetEBP(void) { return m_EBP; }
+            
+            inline u32 GetPageDirectoryPhysicalAddress(void)
+            {
+                //return m_Directory->m_Directory->PhysicalAddress;
+                return 0;
+            }
+            
+            inline void SetESP(u32 ESP) { m_ESP = ESP; }
+            inline void SetEIP(u32 EIP) { m_EIP = EIP; }
+            inline void SetEBP(u32 EBP) { m_EBP = EBP; }
+            
+            inline void SetPageDirectory(CPageDirectory *Directory)
+            {
+                m_Directory = Directory;
+            }
             
             void Dump(void);
             

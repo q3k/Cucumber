@@ -5,6 +5,8 @@
 #include "Tier1/CPageDirectory.h"
 #include "Tier1/CTask.h"
 #include "Tier1/CScheduler.h"
+#include "Tier1/Util/CVector.h"
+#include "Tier1/Util/CLinearList.h"
 using namespace cb;
 
 CKernel g_Kernel;
@@ -54,6 +56,8 @@ void CKernel::Start(void)
     CTask *KernelTask = CreateKernelTask();
     CScheduler::AddTask(KernelTask);
     CScheduler::Enable();
+    
+    //PANIC("I LIKE THE COCK");
     
     CTask *ParentTask = CScheduler::GetCurrentTask();    
     CTask *NewTask = ParentTask->Fork();

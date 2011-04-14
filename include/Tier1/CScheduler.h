@@ -4,6 +4,7 @@
 #include "types.h"
 
 #include "Tier1/CTask.h"
+#include "Tier1/IScheduler.h"
 
 extern "C" {
     #include "Tier0/interrupts.h"
@@ -16,17 +17,13 @@ namespace cb {
     } TTaskQueueNode;
     class CScheduler {
         private:
-            CTask *m_CurrentTask;
-            
-            TTaskQueueNode *m_TaskQueueStart;
-            TTaskQueueNode *m_TaskQueueCurrent;
+            IScheduler *m_CurrentScheduler;
             
             static void TimerTick(T_ISR_REGISTERS R);
         public:
             CScheduler(void);
             static void Enable(void);
             static void AddTask(CTask *Task);
-            static void NextTask(void);
             static CTask *GetCurrentTask(void);
     };
 };

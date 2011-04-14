@@ -131,8 +131,3 @@ void CTask::Dump(void)
                                       m_ESP, m_EBP, m_EIP);
 }
 
-u32 CTask::GetPID(void)
-{
-    return m_PID;
-}
-

@@ -43,6 +43,7 @@ obj/src/%.o : src/%.c
 	
 obj/src/%.xo : src/%.cpp
 	@echo "[i] Compiling $*.cpp ..."
+	@if [ -e obj/src/$*.xo ] ; then rm obj/src/$*.xo ; fi
 	@mkdir -p obj/src/$*.xo
 	@rmdir obj/src/$*.xo
 	@$(CX) $(CXFLAGS) -c src/$*.cpp -o obj/src/$*.xo

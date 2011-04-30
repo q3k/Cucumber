@@ -64,7 +64,7 @@ void kputi(s32 Number)
 
 void kprintf(const s8 *szFormat, ...)
 {
-    semaphore_acquire(&ScreenWriteLock);
+    //semaphore_acquire(&ScreenWriteLock);
     va_list ap;
     va_start(ap, szFormat);
     
@@ -112,7 +112,7 @@ void kprintf(const s8 *szFormat, ...)
     }
     
     va_end(ap);
-    semaphore_release(&ScreenWriteLock);
+    //semaphore_release(&ScreenWriteLock);
 }
 
 void kscroll_up(void)
@@ -199,6 +199,7 @@ void kdump(u8 *bData, u32 Length)
 
 void kputch(s8 Character)
 {
+    semaphore_acquire(&ScreenWriteLock);
     volatile u8 *VideoMemory = (u8 *)0xC00B8000;
     u16 Offset = (g_kstdio_cur_y * 80 + g_kstdio_cur_x) << 1;
 
@@ -213,6 +214,7 @@ void kputch(s8 Character)
         else
             kmove_cursor(g_kstdio_cur_x + 1, g_kstdio_cur_y);
     }
+    semaphore_release(&ScreenWriteLock);
 }
 
 void kputs(const s8 *szString)

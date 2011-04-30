@@ -54,6 +54,7 @@ void CKernel::Start(void)
     m_DriverManager->LoadNew();
     
     CTask *KernelTask = CreateKernelTask();
+    kprintf("[i] Kernel task has TID %i.\n", KernelTask->GetPID());
     CScheduler::AddTask(KernelTask);
     CScheduler::Enable();
     
@@ -61,11 +62,10 @@ void CKernel::Start(void)
     
     CTask *ParentTask = CScheduler::GetCurrentTask();    
     CTask *NewTask = ParentTask->Fork();
-    
     if (NewTask == ParentTask)
     {
         for (;;) {
-            for (volatile u32 i = 0; i < 350; i++)
+            for (volatile u32 i = 0; i < 3500; i++)
             {
                 for (volatile u32 j = 0; j < 650; j++){}
             }
@@ -75,7 +75,7 @@ void CKernel::Start(void)
     else
     {
         for (;;) {
-            for (volatile u32 i = 0; i < 350; i++)
+            for (volatile u32 i = 0; i < 3500; i++)
             {
                 for (volatile u32 j = 0; j < 650; j++){}
             }

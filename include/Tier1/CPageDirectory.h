@@ -6,8 +6,6 @@ extern "C" {
     #include "Tier0/paging.h"
 };
 
-#include "Tier1/CKernel.h"
-
 // This is more-or less just a C++ wrapper for T_PGAE_DIRECTORY.
 namespace cb {
     class CPageDirectory {
@@ -20,7 +18,7 @@ namespace cb {
             
             // A bitmap precising whether a table is owned by the page directory
             // (== can we delete it when we delete the directory itself)
-            u32 m_OwnerBitmap[32];
+            volatile u32 m_OwnerBitmap[32];
             
             // Check whether a table is owned by us
             bool IsTableOurs(u32 Virtual);

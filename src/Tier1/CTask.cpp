@@ -84,14 +84,12 @@ CPageDirectory *CTask::GetPageDirectory(void)
 CTask *CTask::Fork(void)
 {
     __asm__ volatile("cli");
-    u32 ESP, EBP;
+    volatile u32 ESP, EBP;
     
     CTask *ParentTask = CScheduler::GetCurrentTask();
-    
     CTask *NewTask = new CTask(m_User);
     NewTask->m_Owner = m_Owner;
     NewTask->m_Ring = m_Ring;
-    
     if (m_User)
     {
         //TODO: Write code for userland
@@ -102,15 +100,16 @@ CTask *CTask::Fork(void)
     __asm__ volatile("mov %%ebp, %0" : "=r"(EBP));
     
     NewTask->CopyStack(this);
-    u32 ForkPoint = ctask_geteip();
+    volatile u32 ForkPoint = ctask_geteip();
+    
     
     if (CScheduler::GetCurrentTask() == ParentTask)
     {
         NewTask->m_ESP = ESP;
         NewTask->m_EBP = EBP;
         NewTask->m_EIP = ForkPoint;
-        kprintf("[i] Forked: TID %i, ESP %x, EBP %x...\n", NewTask->m_PID,
-                ESP, EBP);
+        kprintf("[i] Forked: TID %i, ESP %x, EBP %x, EIP %x...\n", NewTask->m_PID,
+                ESP, EBP, ForkPoint);
         CScheduler::AddTask(NewTask);
         
         __asm__ volatile("sti");
@@ -119,7 +118,7 @@ CTask *CTask::Fork(void)
     }
     else
     {
-        __asm__ volatile("sti");;
+        __asm__ volatile("sti");
         //for(;;){} 
         return NewTask;
     }

@@ -10,6 +10,8 @@ extern "C" {
     #include "Tier0/kstdio.h"
 };
 
+#include "Tier1/CKernel.h"
+
 CPageDirectory *g_KernelPageDirectory;
 
 CPageDirectory::CPageDirectory(bool Empty)

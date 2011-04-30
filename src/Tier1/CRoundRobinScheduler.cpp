@@ -14,7 +14,6 @@ void CRoundRobinScheduler::Enable(bool Enabled)
 
 __attribute__((optimize("O0"))) void CRoundRobinScheduler::NextTask(void)
 {
-    __asm__ volatile("cli");
     volatile u32 NewEBP, NewESP, NewEIP, EBP, ESP, Directory;
     
     if (m_TaskQueue.GetSize() == 0)
@@ -27,14 +26,18 @@ __attribute__((optimize("O0"))) void CRoundRobinScheduler::NextTask(void)
         m_TaskQueuePosition = 0;
     CTask *NextTask = m_TaskQueue[m_TaskQueuePosition];
     
-    // Read task details    
+    if (m_CurrentTask->GetPID() == NextTask->GetPID())
+        return;
+    
+    //kprintf("[i] %i -> %i (%x)\n", m_CurrentTask->GetPID(), NextTask->GetPID(), NextTask);
+    
+    // Read task details
     NewEBP = NextTask->GetEBP();
     NewESP = NextTask->GetESP();
     NewEIP = NextTask->GetEIP();
-    
     if (!NewEIP || !NewESP || !NewEBP)
     {
-        kprintf("[i] no wai\n");
+        //kprintf("null %x %x %x\n", NewEIP, NewESP, NewEBP);
         return;
     }
     
@@ -46,7 +49,6 @@ __attribute__((optimize("O0"))) void CRoundRobinScheduler::NextTask(void)
     
     // Return point
     volatile u32 ReturnPoint = ctask_geteip();
-    //kprintf("return point %x\n", ReturnPoint);
     
     if (ReturnPoint == 0xFEEDFACE)
     {
@@ -55,7 +57,6 @@ __attribute__((optimize("O0"))) void CRoundRobinScheduler::NextTask(void)
     }
     
     m_CurrentTask->SetEIP(ReturnPoint);
-    
     // Switch to next task
     m_CurrentTask = NextTask;
     
@@ -79,9 +80,9 @@ __attribute__((optimize("O0"))) void CRoundRobinScheduler::NextTask(void)
 
 void CRoundRobinScheduler::AddTask(CTask *Task)
 {
-    __asm__ volatile("cli");
     m_TaskQueue.Push(Task);
-    __asm__ volatile("sti");
+    if (m_TaskQueue.GetSize() == 1)
+        m_CurrentTask = Task;
 }
 
 CTask *CRoundRobinScheduler::GetCurrentTask(void)

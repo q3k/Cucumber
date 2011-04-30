@@ -2,8 +2,8 @@
 #define __CTASK_H__
 
 #include "types.h"
-#include "Tier1/CPageDirectory.h"
 #include "Tier1/CKernel.h"
+#include "Tier1/CPageDirectory.h"
 
 // Task memory map...
 //              _______________________
@@ -97,9 +97,9 @@ namespace cb {
             ETaskPriority m_Priority;
             ETaskRing m_Ring;
             bool m_User;
-            u32 m_PID;
+            volatile u32 m_PID;
             
-            u32 m_ESP, m_EIP, m_EBP;
+            volatile u32 m_ESP, m_EIP, m_EBP;
             
             u32 m_HeapStart;
             u32 m_HeapSize;
@@ -136,8 +136,7 @@ namespace cb {
             
             inline u32 GetPageDirectoryPhysicalAddress(void)
             {
-                //return m_Directory->m_Directory->PhysicalAddress;
-                return 0;
+                return m_Directory->m_Directory->PhysicalAddress;
             }
             
             inline void SetESP(u32 ESP) { m_ESP = ESP; }

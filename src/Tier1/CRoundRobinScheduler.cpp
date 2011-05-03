@@ -20,11 +20,16 @@ __attribute__((optimize("O0"))) void CRoundRobinScheduler::NextTask(void)
         PANIC("No tasks in queue!");
     
     // Fetch next task.
-    m_TaskQueuePosition++;
-    if (m_TaskQueuePosition >= m_TaskQueue.GetSize())
-        // Something happened - restart the queue
-        m_TaskQueuePosition = 0;
-    CTask *NextTask = m_TaskQueue[m_TaskQueuePosition];
+    CTask *NextTask;
+    do {
+        m_TaskQueuePosition++;
+        
+        if (m_TaskQueuePosition >= m_TaskQueue.GetSize())
+            // Something happened - restart the queue
+            m_TaskQueuePosition = 0;
+        NextTask = m_TaskQueue[m_TaskQueuePosition];
+    }
+    while (NextTask->GetStatus() != ETS_RUNNING);
     
     if (m_CurrentTask->GetPID() == NextTask->GetPID())
         return;
@@ -88,4 +93,19 @@ void CRoundRobinScheduler::AddTask(CTask *Task)
 CTask *CRoundRobinScheduler::GetCurrentTask(void)
 {
     return m_CurrentTask;
+}
+
+void CRoundRobinScheduler::DispatchAvailableSemaphore(CSemaphore *Semaphore)
+{
+    u32 Physical = GetCurrentTask()->GetPageDirectory()->
+                                                      Translate((u32)Semaphore);
+    for (u32 i = 0; i < m_TaskQueue.GetSize(); i++)
+    {
+        CTask *Task = m_TaskQueue[i];
+        if (Task->GetStatus() == ETS_WAITING_FOR_SEMAPHORE &&
+            Task->GetStatusData() == Physical)
+        {
+            Task->Enable();
+        }
+    }
 }

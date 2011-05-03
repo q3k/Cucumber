@@ -2,6 +2,7 @@
 using namespace cb;
 
 #include "Tier1/CRoundRobinScheduler.h"
+#include "Tier1/CTimer.h"
 
 extern "C" {
     #include "Tier0/heap.h"
@@ -32,20 +33,22 @@ CTask *CScheduler::GetCurrentTask(void)
 
 void CScheduler::Enable(void)
 {
-    u32 Divisor = 0xFFFFFFFF;
-    koutb(0x43, 0x36);
-    u8 Low = (u8)(Divisor & 0xFF);
-    u8 High = (u8)((Divisor >> 8) & 0xFF);
-    koutb(0x40, Low);
-    koutb(0x40, High);
-
-    interrupts_setup_irq(0x00, (void*)CScheduler::TimerTick);
+    // 20ms quntum
+    CTimer::Create(200, -1, TimerTick);
 }
 
-__attribute__((optimize("O0"))) void CScheduler::TimerTick(T_ISR_REGISTERS R)
+__attribute__((optimize("O0"))) bool CScheduler::TimerTick(u32 Extra)
 {
-    __asm__ volatile("cli");
     g_Scheduler.m_CurrentScheduler->NextTask();
-    interrupts_irq_finish(0);
-    __asm__ volatile("sti");
+    return true;
+}
+
+void CScheduler::NextTask(void)
+{
+    g_Scheduler.m_CurrentScheduler->NextTask();
+}
+
+void CScheduler::DispatchAvailableSemaphore(CSemaphore *Semaphore)
+{
+    g_Scheduler.m_CurrentScheduler->DispatchAvailableSemaphore(Semaphore);
 }

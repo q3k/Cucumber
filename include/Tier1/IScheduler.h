@@ -2,7 +2,7 @@
 #define __ISCHEDULER_H__
 
 #include "Tier1/CTask.h"
-#include "Tier0/semaphore.h"
+#include "Tier1/CSemaphore.h"
 
 namespace cb {
     class IScheduler {
@@ -11,8 +11,7 @@ namespace cb {
             virtual void AddTask(CTask *Task) = 0;
             virtual void NextTask(void) = 0;
             virtual CTask *GetCurrentTask(void) = 0;
-            virtual void AcquireSemaphore(T_SEMAPHORE *Semaphore) = 0;
-            virtual void ReleaseSemaphore(T_SEMAPHORE *Semaphore) = 0;
+            virtual void DispatchAvailableSemaphore(CSemaphore *Semaphore) = 0;
     };
 };
 

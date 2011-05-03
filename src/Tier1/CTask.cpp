@@ -9,6 +9,7 @@ extern "C" {
 };
 
 #include "Tier1/CScheduler.h"
+#include "Tier1/CTimer.h"
 
 extern CPageDirectory *g_KernelPageDirectory;
 u32 CTaskNextPID = 0;
@@ -27,10 +28,11 @@ CTask::CTask(bool User, bool Empty)
     else
         m_CreatedStack = false;
     
+    m_Status = ETS_RUNNING;
     m_PID = CTaskNextPID++;
     m_Priority = ETP_NORMAL;
     m_Owner = 0;
-    m_Ring = (User ? ETP_RING3 : ETP_RING0);
+    m_Ring = (User ? ETR_RING3 : ETR_RING0);
 }
 
 CTask::~CTask(void)
@@ -130,3 +132,58 @@ void CTask::Dump(void)
                                       m_ESP, m_EBP, m_EIP);
 }
 
+void CTask::CedeTimeSlice(void)
+{
+    CScheduler::NextTask();
+}
+
+void CTask::WaitForSemaphore(T_SEMAPHORE *Semaphore)
+{
+    __asm__ volatile ("cli");
+    m_Status = ETS_WAITING_FOR_SEMAPHORE;
+    m_StatusData = m_Directory->Translate((u32)Semaphore);
+    
+    CedeTimeSlice();
+    __asm__ volatile ("sti");
+}
+
+void CTask::WaitForSemaphore(CSemaphore *Semaphore)
+{
+    __asm__ volatile ("cli");
+    m_Status = ETS_WAITING_FOR_SEMAPHORE;
+    m_StatusData = m_Directory->Translate((u32)Semaphore);
+    
+    CedeTimeSlice();
+    __asm__ volatile ("sti");
+}
+
+void CTask::Disable(void)
+{
+    __asm__ volatile ("cli");
+    m_Status = ETS_DISABLED;
+    CedeTimeSlice();
+    __asm__ volatile ("sti");
+}
+
+void CTask::Enable(void)
+{
+    __asm__ volatile ("cli");
+    m_Status = ETS_RUNNING;
+    __asm__ volatile ("sti");
+}
+
+void CTask::Sleep(u32 Ticks)
+{
+    __asm__ volatile ("cli");
+    m_Status = ETS_DISABLED;
+    CTimer::Create(Ticks, 1, WakeUp, (u32)this);
+    CedeTimeSlice();
+    __asm__ volatile ("sti");
+}
+
+bool CTask::WakeUp(u32 Extra)
+{
+    CTask *Task = (CTask*)Extra;
+    Task->Enable();    
+    return true;
+}

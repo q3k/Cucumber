@@ -4,6 +4,7 @@
 extern "C" {
     #include "Tier0/heap.h"
     #include "Tier0/panic.h"
+    #include "Tier0/kstdlib.h"
 };
 
 namespace cb {
@@ -59,7 +60,7 @@ namespace cb {
         
         TLinearListNode *NewNode = 
                            (TLinearListNode *)kmalloc(sizeof(TLinearListNode));
-        NewNode->Data = Element;
+        kmemcpy(&NewNode->Data, &Element, sizeof(_T));
         NewNode->Next = 0;
         LastNode->Next = NewNode;
         
@@ -163,17 +164,17 @@ namespace cb {
             m_SizeCacheValid = false;
             return;
         }
-        ASSERT(m_Data);
+        ASSERT(m_Data != 0);
         
         TLinearListNode *NodeBefore = m_Data;
         for (u32 i = 0; i < Index - 1; i++)
         {
             NodeBefore = NodeBefore->Next;
-            ASSERT(NodeBefore);
+            ASSERT(NodeBefore != 0);
         }
         
         TLinearListNode *NodeToBeDeleted = NodeBefore->Next;
-        ASSERT(NodeToBeDeleted);
+        ASSERT(NodeToBeDeleted != 0);
         TLinearListNode *NodeAfter = NodeToBeDeleted->Next;
         kfree((void*)NodeToBeDeleted);
         NodeBefore->Next = NodeAfter;

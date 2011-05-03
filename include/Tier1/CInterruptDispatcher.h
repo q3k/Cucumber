@@ -6,6 +6,7 @@
 extern "C" {
     #include "Tier0/interrupts.h"
     #include "Tier0/panic.h"
+    #include "Tier0/kstdio.h"
 };
 
 // I am going to programmer hell for this
@@ -16,6 +17,7 @@ extern "C" {
 //CInterruptDispatcher StaticDispatcher Implementation
 #define CID_SDIS_IMP(n) void CInterruptDispatcher::d_Interrupt##n( \
                                                     T_ISR_REGISTERS_ERR R) { \
+    kprintf("oioi\naaaa\nbbbbb\n"); \
     if (m_Dispatchers[n] != 0) \
         m_Dispatchers[n]->Dispatch(&R); \
 }

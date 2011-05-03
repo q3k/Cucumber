@@ -11,6 +11,7 @@ namespace cb {
             void AddTask(CTask *Task);
             void NextTask(void);
             CTask *GetCurrentTask(void);
+            void DispatchAvailableSemaphore(CSemaphore *Semaphore);
         private:
             CTask *m_CurrentTask;
             CLinearList<CTask *> m_TaskQueue;

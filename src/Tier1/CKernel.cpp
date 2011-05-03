@@ -7,6 +7,8 @@
 #include "Tier1/CScheduler.h"
 #include "Tier1/Util/CVector.h"
 #include "Tier1/Util/CLinearList.h"
+#include "Tier1/CTimer.h"
+
 using namespace cb;
 
 CKernel g_Kernel;
@@ -52,33 +54,29 @@ void CKernel::Start(void)
     m_DriverManager->AddDriver(Ramdisk);
     
     m_DriverManager->LoadNew();
-    
     CTask *KernelTask = CreateKernelTask();
     kprintf("[i] Kernel task has TID %i.\n", KernelTask->GetPID());
     CScheduler::AddTask(KernelTask);
     CScheduler::Enable();
     
-    //PANIC("I LIKE THE COCK");
-    
     CTask *ParentTask = CScheduler::GetCurrentTask();    
     CTask *NewTask = ParentTask->Fork();
+    CTimer::GetTicks();
     if (NewTask == ParentTask)
     {
+    
         for (;;) {
-            for (volatile u32 i = 0; i < 3500; i++)
+            for (volatile u32 i = 0; i < 14000; i++)
             {
                 for (volatile u32 j = 0; j < 650; j++){}
             }
-            kprintf("[i] Hello! I'm the parent process.\n");
+            kprintf("[i] Hello! I'm the parent process %i.\n", CTimer::GetTicks());
         }
     }
     else
     {
         for (;;) {
-            for (volatile u32 i = 0; i < 3500; i++)
-            {
-                for (volatile u32 j = 0; j < 650; j++){}
-            }
+            CScheduler::GetCurrentTask()->Sleep(1000);
             kprintf("[i] Hello! I'm the child process.\n");
         }
     }

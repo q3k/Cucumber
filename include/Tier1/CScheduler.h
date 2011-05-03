@@ -5,6 +5,7 @@
 
 #include "Tier1/CTask.h"
 #include "Tier1/IScheduler.h"
+#include "Tier1/CSemaphore.h"
 
 extern "C" {
     #include "Tier0/interrupts.h"
@@ -19,12 +20,15 @@ namespace cb {
         private:
             IScheduler *m_CurrentScheduler;
             
-            static void TimerTick(T_ISR_REGISTERS R);
+            static bool TimerTick(u32 Extra);
         public:
             CScheduler(void);
             static void Enable(void);
             static void AddTask(CTask *Task);
             static CTask *GetCurrentTask(void);
+            static void NextTask(void);
+            
+            static void DispatchAvailableSemaphore(CSemaphore *Semaphore);
     };
 };
 

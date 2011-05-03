@@ -4,6 +4,8 @@
 #include "types.h"
 #include "Tier1/CKernel.h"
 #include "Tier1/CPageDirectory.h"
+#include "Tier1/CSemaphore.h"
+#include "Tier0/semaphore.h"
 
 // Task memory map...
 //              _______________________
@@ -82,10 +84,17 @@ namespace cb {
         ETP_REALTIME
     };
     enum ETaskRing {
-        ETP_RING0,
-        ETP_RING1,
-        ETP_RING2,
-        ETP_RING3
+        ETR_RING0,
+        ETR_RING1,
+        ETR_RING2,
+        ETR_RING3
+    };
+    enum ETaskStatus {
+        ETS_RUNNING,
+        ETS_DISABLED,
+        ETS_SLEEPING,
+        ETS_WAITING_FOR_SEMAPHORE,
+        ETS_WAITING_FOR_MESSAGE
     };
     class CPageDirectory;
     class CTask {
@@ -100,6 +109,8 @@ namespace cb {
             volatile u32 m_PID;
             
             volatile u32 m_ESP, m_EIP, m_EBP;
+            volatile ETaskStatus m_Status;
+            volatile u32 m_StatusData;
             
             u32 m_HeapStart;
             u32 m_HeapSize;
@@ -150,6 +161,29 @@ namespace cb {
             
             void Dump(void);
             
+            void CedeTimeSlice(void);
+            void WaitForSemaphore(T_SEMAPHORE *Semaphore);
+            void WaitForSemaphore(CSemaphore *Semaphore);
+            
+            // Makes the scheduler never give us a time slice
+            void Disable(void);
+            void Enable(void);
+            
+            // Like sleep(). Usually microseconds.
+            void Sleep(u32 Ticks);
+            
+            // Used for waking up via a CTimer
+            static bool WakeUp(u32 Extra); 
+            
+            inline ETaskStatus GetStatus(void)
+            {
+                return m_Status;
+            }
+            
+            inline u32 GetStatusData(void)
+            {
+                return m_StatusData;
+            }
     };
 };
 

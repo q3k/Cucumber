@@ -132,7 +132,7 @@ void CTask::Dump(void)
                                       m_ESP, m_EBP, m_EIP);
 }
 
-void CTask::CedeTimeSlice(void)
+void CTask::Yield(void)
 {
     CScheduler::NextTask();
 }
@@ -143,7 +143,7 @@ void CTask::WaitForSemaphore(T_SEMAPHORE *Semaphore)
     m_Status = ETS_WAITING_FOR_SEMAPHORE;
     m_StatusData = m_Directory->Translate((u32)Semaphore);
     
-    CedeTimeSlice();
+    Yield();
     __asm__ volatile ("sti");
 }
 
@@ -153,7 +153,7 @@ void CTask::WaitForSemaphore(CSemaphore *Semaphore)
     m_Status = ETS_WAITING_FOR_SEMAPHORE;
     m_StatusData = m_Directory->Translate((u32)Semaphore);
     
-    CedeTimeSlice();
+    Yield();
     __asm__ volatile ("sti");
 }
 
@@ -161,7 +161,7 @@ void CTask::Disable(void)
 {
     __asm__ volatile ("cli");
     m_Status = ETS_DISABLED;
-    CedeTimeSlice();
+    Yield();
     __asm__ volatile ("sti");
 }
 
@@ -177,7 +177,7 @@ void CTask::Sleep(u32 Ticks)
     __asm__ volatile ("cli");
     m_Status = ETS_DISABLED;
     CTimer::Create(Ticks, 1, WakeUp, (u32)this);
-    CedeTimeSlice();
+    Yield();
     __asm__ volatile ("sti");
 }
 

@@ -20,16 +20,16 @@ namespace cb {
                                                                  u32 Extra = 0);
             inline static u32 GetTicks(void)
             {
-                if (!m_Initialized)
+                if (!m_bInitialized)
                     Initialize();
-                return m_NumTicks;
+                return m_nTicks;
             }
         private:
             static CLinearList<TCallbackInfo> m_Callbacks;
-            volatile static u32 m_NumTicks;
+            volatile static u32 m_nTicks;
             static void Initialize(void);
             static void Dispatch(void *Registers);
-            static bool m_Initialized;
+            static bool m_bInitialized;
             
             // Called when the number of ticks is just about to overflow.
             // Reschedules all the callbacks.

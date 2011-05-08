@@ -9,7 +9,7 @@ extern "C" {
 
 void CRoundRobinScheduler::Enable(bool Enabled)
 {
-    m_TaskQueuePosition = 0;
+    m_iTaskQueuePosition = 0;
 }
 
 __attribute__((optimize("O0"))) void CRoundRobinScheduler::NextTask(void)
@@ -22,12 +22,12 @@ __attribute__((optimize("O0"))) void CRoundRobinScheduler::NextTask(void)
     // Fetch next task.
     CTask *NextTask;
     do {
-        m_TaskQueuePosition++;
+        m_iTaskQueuePosition++;
         
-        if (m_TaskQueuePosition >= m_TaskQueue.GetSize())
+        if (m_iTaskQueuePosition >= m_TaskQueue.GetSize())
             // Something happened - restart the queue
-            m_TaskQueuePosition = 0;
-        NextTask = m_TaskQueue[m_TaskQueuePosition];
+            m_iTaskQueuePosition = 0;
+        NextTask = m_TaskQueue[m_iTaskQueuePosition];
     }
     while (NextTask->GetStatus() != ETS_RUNNING);
     
@@ -95,7 +95,7 @@ CTask *CRoundRobinScheduler::GetCurrentTask(void)
     return m_CurrentTask;
 }
 
-void CRoundRobinScheduler::DispatchAvailableSemaphore(CSemaphore *Semaphore)
+void CRoundRobinScheduler::SetSemaphoreAvailable(CSemaphore *Semaphore)
 {
     u32 Physical = GetCurrentTask()->GetPageDirectory()->
                                                       Translate((u32)Semaphore);

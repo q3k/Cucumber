@@ -27,12 +27,12 @@ CPageDirectory::CPageDirectory(bool Empty)
         
         m_Directory->PhysicalAddress = PhysicalDirectory;
     }
-    m_CreatedEmpty = Empty;
+    m_bCreatedEmpty = Empty;
 }
 
 CPageDirectory::~CPageDirectory(void)
 {
-    if (!m_CreatedEmpty)
+    if (!m_bCreatedEmpty)
     {
         for (u16 Table = 0; Table < 1024; Table++)
         {

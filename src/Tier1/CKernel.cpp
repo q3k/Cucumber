@@ -1,6 +1,4 @@
 #include "Tier1/CKernel.h"
-#include "Tier1/Drivers/Misc/CDriverDummy.h"
-#include "Tier1/Drivers/Device/CDriverRamdisk.h"
 #include "Tier1/CPageFaultDispatcher.h"
 #include "Tier1/CPageDirectory.h"
 #include "Tier1/CTask.h"
@@ -26,7 +24,7 @@ extern "C" {
 
 CKernel::CKernel(void)
 {
-    m_Magic = CKERNEL_MAGIC;
+    m_dwMagic = CKERNEL_MAGIC;
 }
 
 CLogger &CKernel::Logger(void)
@@ -38,22 +36,14 @@ void CKernel::Start(void)
 {
     kprintf("[i] Hello from C++ land!\n");
        
-    if (m_Magic != CKERNEL_MAGIC)
+    if (m_dwMagic != CKERNEL_MAGIC)
     {
         kprintf("[e] Error! My constructor wasn't called properly.\n");
         return;
     }
     
     m_Logger = new CLogger();
-    m_DriverManager = new CDriverManager(64, this);
-    
-    IDriver *Dummy = new CDriverDummy();
-    m_DriverManager->AddDriver(Dummy);
-    
-    IDriver *Ramdisk = new CDriverRamdisk();
-    m_DriverManager->AddDriver(Ramdisk);
-    
-    m_DriverManager->LoadNew();
+
     CTask *KernelTask = CreateKernelTask();
     kprintf("[i] Kernel task has TID %i.\n", KernelTask->GetPID());
     CScheduler::AddTask(KernelTask);

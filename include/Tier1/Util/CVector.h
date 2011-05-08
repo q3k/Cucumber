@@ -31,7 +31,7 @@ namespace cb {
             const _T *BaseAddress(void) const;
             
             // Size
-            u32 Size(void);
+            u32 GetSize(void);
             
             // Search
             s32 Find(const _T &Element) const;
@@ -80,13 +80,13 @@ namespace cb {
     template <class _T> _T &CVector<_T>::Head(void)
     {
         ASSERT(m_Size > 0);
-        return m_Members[Size() - 1];
+        return m_Members[GetSize() - 1];
     }
 
     template <class _T> const _T &CVector<_T>::Head(void) const
     {
         ASSERT(m_Size > 0);
-        return m_Members[Size() - 1];
+        return m_Members[GetSize() - 1];
     }
 
     template <class _T> _T &CVector<_T>::Tail(void)
@@ -111,14 +111,14 @@ namespace cb {
         return m_Members;
     }
 
-    template <class _T> u32 CVector<_T>::Size(void)
+    template <class _T> u32 CVector<_T>::GetSize(void)
     {
         return m_Size;
     }
 
     template <class _T> s32 CVector<_T>::Find(const _T &Element) const
     {
-        for (u32 i = 0; i < Size(); i++)
+        for (u32 i = 0; i < GetSize(); i++)
             if (m_Members[i] == Element)
                 return i;
         return -1;
@@ -126,7 +126,7 @@ namespace cb {
 
     template <class _T> bool CVector<_T>::HasElement(const _T &Element) const
     {
-        for (u32 i = 0; i < Size(); i++)
+        for (u32 i = 0; i < GetSize(); i++)
             if (m_Members[i] == Element)
                 return true;
         return false;

@@ -50,5 +50,5 @@ void CScheduler::NextTask(void)
 
 void CScheduler::DispatchAvailableSemaphore(CSemaphore *Semaphore)
 {
-    g_Scheduler.m_CurrentScheduler->DispatchAvailableSemaphore(Semaphore);
+    g_Scheduler.m_CurrentScheduler->SetSemaphoreAvailable(Semaphore);
 }

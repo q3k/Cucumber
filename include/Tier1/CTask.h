@@ -161,7 +161,7 @@ namespace cb {
             
             void Dump(void);
             
-            void CedeTimeSlice(void);
+            void Yield(void);
             void WaitForSemaphore(T_SEMAPHORE *Semaphore);
             void WaitForSemaphore(CSemaphore *Semaphore);
             

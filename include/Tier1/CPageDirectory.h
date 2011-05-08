@@ -29,7 +29,7 @@ namespace cb {
             void CreateTable(u32 Virtual, u8 User = 1, u8 RW = 1);
             
             // Whether it was created empty
-            bool m_CreatedEmpty;
+            bool m_bCreatedEmpty;
         public:
             // Creates a new page directory for a kernel task
             CPageDirectory(bool Empty = false);

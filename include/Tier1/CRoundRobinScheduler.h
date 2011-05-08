@@ -11,11 +11,11 @@ namespace cb {
             void AddTask(CTask *Task);
             void NextTask(void);
             CTask *GetCurrentTask(void);
-            void DispatchAvailableSemaphore(CSemaphore *Semaphore);
+            void SetSemaphoreAvailable(CSemaphore *Semaphore);
         private:
             CTask *m_CurrentTask;
             CLinearList<CTask *> m_TaskQueue;
-            u32 m_TaskQueuePosition;
+            u32 m_iTaskQueuePosition;
     };
 };
 

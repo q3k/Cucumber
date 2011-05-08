@@ -6,8 +6,8 @@ extern "C" {
     #include "Tier0/interrupts.h"
 }
 
-volatile u32 CTimer::m_NumTicks = 0;
-bool CTimer::m_Initialized = false;
+volatile u32 CTimer::m_nTicks = 0;
+bool CTimer::m_bInitialized = false;
 CLinearList<TCallbackInfo> CTimer::m_Callbacks;
 
 void CTimer::Initialize(void)
@@ -20,22 +20,22 @@ void CTimer::Initialize(void)
     koutb(0x40, High);
     
     interrupts_setup_irq(0x00, (void*)Dispatch);
-    m_Initialized = true;
+    m_bInitialized = true;
 }
 
 void CTimer::Dispatch(void *Registers)
 {
     __asm__ volatile("cli");
-    m_NumTicks++;
+    m_nTicks++;
     
-    if (m_NumTicks > (0xFFFFFFFF - 1000)) // 1000 ticks margin
+    if (m_nTicks > (0xFFFFFFFF - 1000)) // 1000 ticks margin
         Reschedule();
     for (u32 i = 0; i < m_Callbacks.GetSize(); i++)
     {
         TCallbackInfo &Callback = m_Callbacks[i];
         if (Callback.Times == -1 || Callback.Times > 0)
         {
-            if (m_NumTicks > Callback.NextCall)
+            if (m_nTicks > Callback.NextCall)
             {
                 if (Callback.Times != -1)
                     Callback.Times--;
@@ -75,12 +75,12 @@ void CTimer::Reschedule(void)
         Callback.NextCall -= Amount;
     }
     
-    m_NumTicks -= Amount;
+    m_nTicks -= Amount;
 }
 
 void CTimer::Create(u32 Interval, s32 Times, TTimerCallback Callback, u32 Extra)
 {
-    if (!m_Initialized)
+    if (!m_bInitialized)
         Initialize();
     
     TCallbackInfo NewCallback;
@@ -88,7 +88,7 @@ void CTimer::Create(u32 Interval, s32 Times, TTimerCallback Callback, u32 Extra)
     NewCallback.Interval = Interval;
     NewCallback.Times = Times;
     NewCallback.Callback = Callback;
-    NewCallback.NextCall = m_NumTicks + Interval;
+    NewCallback.NextCall = m_nTicks + Interval;
     NewCallback.Extra = Extra;
     
     m_Callbacks.Push(NewCallback);

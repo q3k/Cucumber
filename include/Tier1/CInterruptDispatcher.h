@@ -17,7 +17,6 @@ extern "C" {
 //CInterruptDispatcher StaticDispatcher Implementation
 #define CID_SDIS_IMP(n) void CInterruptDispatcher::d_Interrupt##n( \
                                                     T_ISR_REGISTERS_ERR R) { \
-    kprintf("oioi\naaaa\nbbbbb\n"); \
     if (m_Dispatchers[n] != 0) \
         m_Dispatchers[n]->Dispatch(&R); \
 }
@@ -36,7 +35,7 @@ namespace cb {
             u8 m_Interrupt;
             
             // Enabled?
-            bool m_Enabled;
+            bool m_bEnabled;
             
             // Private enable function - call it from the constructor, another
             // public method or whatever
@@ -47,7 +46,7 @@ namespace cb {
         private:     
             // Internal stuff for translating static calls into member functions
             static CInterruptDispatcher *m_Dispatchers[256];
-            static bool m_InitializedStatic;
+            static bool m_bInitializedStatic;
             static void InitializeStatic(void);
             
             // All the static dispatchers for all the interrupts

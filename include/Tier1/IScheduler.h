@@ -11,7 +11,7 @@ namespace cb {
             virtual void AddTask(CTask *Task) = 0;
             virtual void NextTask(void) = 0;
             virtual CTask *GetCurrentTask(void) = 0;
-            virtual void DispatchAvailableSemaphore(CSemaphore *Semaphore) = 0;
+            virtual void SetSemaphoreAvailable(CSemaphore *Semaphore) = 0;
     };
 };
 

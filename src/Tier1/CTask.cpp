@@ -132,9 +132,11 @@ void CTask::Dump(void)
                                       m_ESP, m_EBP, m_EIP);
 }
 
-void CTask::Yield(void)
+__attribute__((optimize("O0"))) void CTask::Yield(void)
 {
+	//kprintf("Entering NextTask\n");
     CScheduler::NextTask();
+    //kprintf("returned from NextTask\n");
 }
 
 void CTask::WaitForSemaphore(T_SEMAPHORE *Semaphore)

@@ -9,7 +9,7 @@ extern "C" {
 
 namespace cb {
     class CSemaphore {
-        private:
+        protected:
             T_ATOMIC m_Available;
         public:
             CSemaphore(u32 Available = 1);

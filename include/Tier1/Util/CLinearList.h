@@ -5,6 +5,7 @@ extern "C" {
     #include "Tier0/heap.h"
     #include "Tier0/panic.h"
     #include "Tier0/kstdlib.h"
+	#include "Tier0/kstdio.h"
 };
 
 namespace cb {
@@ -96,12 +97,18 @@ namespace cb {
     
     template <class _T> _T &CLinearList<_T>::operator[](u32 Index)
     {
-        ASSERT(m_Data != 0);
+    	ASSERT(m_Data != 0);
         TLinearListNode *Node = m_Data;
         for (u32 i = 0; i < Index; i++)
         {
             Node = Node->Next;
-            ASSERT(Node != 0);
+            //ASSERT(Node != 0);
+            if (Node == 0)
+            {
+            	kprintf("fail\n");
+            	__asm__ volatile("cli");
+            	for(;;){}
+            }
         }
         
         return Node->Data;
@@ -164,10 +171,25 @@ namespace cb {
             m_SizeCacheValid = false;
             return;
         }
+
         ASSERT(m_Data != 0);
         
+        if (Index == 0)
+        {
+        	ASSERT(m_Data != 0);
+
+        	TLinearListNode *ToBeDeleted = m_Data;
+        	TLinearListNode *NodeAfter = m_Data->Next;
+        	m_Data = NodeAfter;
+
+        	kfree((void*)ToBeDeleted);
+
+        	m_SizeCacheValid = false;
+        	return;
+        }
+
         TLinearListNode *NodeBefore = m_Data;
-        for (u32 i = 0; i < Index - 1; i++)
+        for (s32 i = 0; i < (s32)Index - 1; i++)
         {
             NodeBefore = NodeBefore->Next;
             ASSERT(NodeBefore != 0);

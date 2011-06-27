@@ -66,8 +66,12 @@ void CKernel::Start(void)
     else
     {
         for (;;) {
-            CScheduler::GetCurrentTask()->Sleep(1000);
-            kprintf("[i] Hello! I'm the child process.\n");
+            //CScheduler::GetCurrentTask()->Sleep(1000);
+        	for (volatile u32 i = 0; i < 14000; i++)
+        	            {
+        	                for (volatile u32 j = 0; j < 650; j++){}
+        	            }
+            kprintf("[i] Hello! I'm the child process %i.\n", CTimer::GetTicks());
         }
     }
 }

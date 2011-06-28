@@ -204,7 +204,7 @@ u64 page_tab_high[512] __attribute__((aligned(0x1000)));
 #define GET_TAB_ENTRY(x) (((u64)x >> 12) & 0x1FF)
 #define GET_OFFSET(x) (x & 0xFFF)
 
-void create_ia32e_paging(u64 KernelPhysicalStart, u64 KernelVirtualStart, u64 KernelSize)
+u32 create_ia32e_paging(u64 KernelPhysicalStart, u64 KernelVirtualStart, u64 KernelSize)
 {
 	puts("Clearing paging structures...\n");
 
@@ -237,6 +237,12 @@ void create_ia32e_paging(u64 KernelPhysicalStart, u64 KernelVirtualStart, u64 Ke
 	print_hex(NumPages);
 	puts(" pages)\n");
 
+	if (NumPages > 512)
+	{
+		puts("Error: Kernel size > 2MiB not implemented!");
+		return 1;
+	}
+
 	if (GET_PML4_ENTRY(KernelVirtualStart) != 0)
 	{
 		// We're NOT mapping the same PML4 entry as for identity mapping...
@@ -263,7 +269,7 @@ void create_ia32e_paging(u64 KernelPhysicalStart, u64 KernelVirtualStart, u64 Ke
 	else
 	{
 		puts("Error: kernel overlaps 2MiB identity paging!\n");
-		return;
+		return 1;
 	}
 
 	Address = KernelPhysicalStart;
@@ -276,6 +282,8 @@ void create_ia32e_paging(u64 KernelPhysicalStart, u64 KernelVirtualStart, u64 Ke
 		puts("\n");
 		Address += 0x1000;
 	}
+
+	return 0;
 }
 
 u32 load(void *Multiboot, unsigned int Magic)
@@ -409,7 +417,8 @@ u32 load(void *Multiboot, unsigned int Magic)
     print_hex(Size);
     puts(" bytes)\n");
 
-    create_ia32e_paging(StartPhysical, StartVirtual, Size);
+    if (create_ia32e_paging(StartPhysical, StartVirtual, Size))
+    	return 0;
     __asm__ volatile ("movl %cr4, %eax; bts $5, %eax; movl %eax, %cr4");
     __asm__ volatile ("movl %%eax, %%cr3" :: "a" (pml4));
     puts("CR3 is now pointing to PML4 (0x");

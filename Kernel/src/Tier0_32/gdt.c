@@ -34,7 +34,7 @@ void gdt_entry_create_null(u8 Index)
 void gdt_create_flat(void)
 {
     g_gdt_ptr.Size = sizeof(T_GDT_ENTRY) * 6 - 1;
-    g_gdt_ptr.Address = (u32)&g_gdt_entries;
+    g_gdt_ptr.Address = (u64)&g_gdt_entries;
 
     gdt_entry_create_null(0);
     gdt_entry_create(1, 0, 0xFFFFFFFF, GDT_RING0, GDT_EXECUTABLE, GDT_RW);

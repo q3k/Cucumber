@@ -25,12 +25,12 @@ typedef struct {
 } T_PAGING_DIRECTORY;
 
 void paging_init_simple(void);
-u8 paging_get_physical(u32 Virtual, u32 *Physical);
-u8 paging_get_physical_ex(u32 Virtual, u32 *Physical, 
+u8 paging_get_physical(u64 Virtual, u64 *Physical);
+u8 paging_get_physical_ex(u64 Virtual, u64 *Physical,
                           T_PAGING_DIRECTORY *Directory);
-void paging_map_kernel_page(u32 Virtual, u32 Physical);
-void paging_map_kernel_table(u32 Virtual, u32 Physical);
-void paging_map_page(u32 Virtual, u32 Physical, T_PAGING_DIRECTORY *Directory, 
+void paging_map_kernel_page(u64 Virtual, u64 Physical);
+void paging_map_kernel_table(u64 Virtual, u64 Physical);
+void paging_map_page(u64 Virtual, u64 Physical, T_PAGING_DIRECTORY *Directory,
                      u8 User, u8 RW);
 void paging_use_directory(T_PAGING_DIRECTORY *Directory);
 T_PAGING_DIRECTORY *paging_get_directory(void);

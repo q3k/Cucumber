@@ -30,7 +30,7 @@ void exceptions_division_by_zero_isr(T_ISR_REGISTERS Registers)
 
 void exceptions_page_fault_isr(T_ISR_REGISTERS_ERR Registers)
 {
-    u32 FaultAddress;
+    u64 FaultAddress;
     __asm__ volatile("mov %%cr2, %0" : "=r" (FaultAddress));
     
     u8 Present = !(Registers.Error & 0x01);

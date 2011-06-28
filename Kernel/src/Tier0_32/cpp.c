@@ -3,15 +3,15 @@
 #include "Tier0/cpp.h"
 #include "Tier0/kstdio.h"
 
-extern u32 g_start_ctors;
-extern u32 g_end_ctors;
+extern u64 g_start_ctors;
+extern u64 g_end_ctors;
 void CKernelStart(void);
 
 void cpp_call_ctors(void)
 {
     u32 Number = ((void *)&g_end_ctors - (void *)&g_start_ctors) / 4;
     kprintf("[i] Calling %i constructors before jumping to Tier1..\n", Number);
-    for(u32 *C = (u32*)&g_start_ctors; C < (u32*)&g_end_ctors; ++C)
+    for(u64 *C = (u64*)&g_start_ctors; C < (u64*)&g_end_ctors; ++C)
     {
         ((void (*) (void)) (*C)) ();
     }

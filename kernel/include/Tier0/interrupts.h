@@ -39,14 +39,14 @@ typedef enum E_INTERRUPTS_CHIP T_INTERRUPTS_CHIP;
 struct S_ISR_STUB {
     u16 Code1;
     u8 Code2;
-    u32 Handler;
+    u64 Handler;
     u32 Code3;
     u8 Code4;
 } __attribute__ ((packed));
 typedef struct S_ISR_STUB T_ISR_STUB;
 
 typedef struct {
-    u32 edi, esi, ebp, esp, ebx, edx, ecx, eax;
+    u64 edi, esi, ebp, esp, ebx, edx, ecx, eax;
     u32 Error;
     u32 eip, cs, eflags, useresp, ss;
 } T_ISR_REGISTERS_ERR;

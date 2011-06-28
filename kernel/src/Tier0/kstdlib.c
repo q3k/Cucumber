@@ -1,7 +1,7 @@
 #include "types.h"
 #include "Tier0/kstdlib.h"
 
-void *kmemcpy(void* Destination, const void *Source, u32 Count)
+void *kmemcpy(void* Destination, const void *Source, u64 Count)
 {
     u8* Destination8 = (u8*)Destination;
     u8* Source8 = (u8*)Source;
@@ -13,7 +13,7 @@ void *kmemcpy(void* Destination, const void *Source, u32 Count)
     return Destination;
 }
 
-void *kmemset(void *Destination, u8 Value, u32 Count)
+void *kmemset(void *Destination, u8 Value, u64 Count)
 {
     u8 *us = (u8 *)Destination;
     while (Count-- != 0)
@@ -21,7 +21,7 @@ void *kmemset(void *Destination, u8 Value, u32 Count)
     return Destination;
 }
 
-void *kmemsetw(void *Destination, u16 Value, u32 Count)
+void *kmemsetw(void *Destination, u16 Value, u64 Count)
 {
     u16 *us = (u16 *)Destination;
     while (Count-- != 0)

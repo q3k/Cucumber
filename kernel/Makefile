@@ -13,14 +13,14 @@ default: emulate-nohdd
 
 SHELL:=/bin/bash
 ENV:=/usr/xdev/bin
-TARGET:=i586-elf
+TARGET:=x86_64-elf
 CC:=$(ENV)/$(TARGET)-gcc
 CX:=$(ENV)/$(TARGET)-g++
 AS:=nasm
 LD:=$(ENV)/$(TARGET)-ld
 
 # -O2 sets -foptimize-sibling-calls which breaks code...
-CFLAGS:=-Wall -Werror -nostdlib -nostartfiles -nodefaultlibs -std=c99 -g
+CFLAGS:=-m64 -mcmodel=large -Wall -Werror -nostdlib -nostartfiles -nodefaultlibs -std=c99 -g
 CFLAGS+=-I ./include -Wno-packed-bitfield-compat -O2 -fno-optimize-sibling-calls
 
 
@@ -33,10 +33,11 @@ LFLAGS:=-nostdlib -nostartfiles -nodefaultlibs
 
 obj/src/%.nao : src/%.asm
 	@echo "[i] Assembling $*.asm..."
-	@$(AS) -f elf -o obj/src/$*.nao src/$*.asm
+	@$(AS) -f elf64 -o obj/src/$*.nao src/$*.asm
 
 obj/src/%.o : src/%.c
 	@echo "[i] Compiling $*.c ..."
+	@if [ -e obj/src/$*.o ] ; then rm obj/src/$*.o ; fi
 	@mkdir -p obj/src/$*.o
 	@rmdir obj/src/$*.o
 	@$(CC) $(CFLAGS) -c src/$*.c -o obj/src/$*.o
@@ -84,8 +85,10 @@ emulate-nohdd-debug: kernel.bin
 	@qemu -kernel kernel.bin -S -gdb tcp::1234
 
 emulate-nohdd: kernel.bin
+	@echo "[i] Building loader..."
+	@pushd ../Loader > /dev/null && $(MAKE) -f Makefile loader.bin && popd > /dev/null
 	@echo "[i] Starting QEMU..."
-	@qemu -kernel kernel.bin
+	@qemu-system-x86_64 -kernel ../Loader/loader.bin -initrd kernel.bin
 
 emulate: hdd.img
 	@echo "[i] Starting QEmu..."

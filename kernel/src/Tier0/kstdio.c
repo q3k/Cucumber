@@ -1,7 +1,7 @@
 #include "types.h"
 #include "Tier0/kstdio.h"
 #include "Tier0/kstdlib.h"
-#include "Tier0/semaphore.h"
+//#include "Tier0/semaphore.h"
 #include <stdarg.h>
 
 #define va_start(v,l) __builtin_va_start(v,l)
@@ -13,11 +13,20 @@ typedef __builtin_va_list va_list;
 u8 g_kstdio_current_line = 0;
 u8 g_kstdio_cur_x = 0, g_kstdio_cur_y = 0;
 
-T_SEMAPHORE ScreenWriteLock;
+//T_SEMAPHORE ScreenWriteLock;
+
+#define VIDEO_MEMORY ((u64)0xB8000)
+
+void kstdio_set_globals(u8 line, u8 cur_x, u8 cur_y)
+{
+	g_kstdio_current_line = line;
+	g_kstdio_cur_x = cur_x;
+	g_kstdio_cur_y = cur_y;
+}
 
 void kstdio_init(void)
 {
-    semaphore_init(&ScreenWriteLock);
+    //semaphore_init(&ScreenWriteLock);
 }
 
 void koutb(u16 Port, u8 Data)
@@ -124,9 +133,9 @@ void kscroll_up(void)
    if (g_kstdio_cur_y >= 25)
    {
         Temp = g_kstdio_cur_y - 25 + 1;
-        kmemcpy((void*)0xC00B8000, (void*)(0xC00B8000 + Temp * 80 * 2), (25 - Temp) * 80 * 2);
+        kmemcpy((void*)VIDEO_MEMORY, (void*)(VIDEO_MEMORY + Temp * 80 * 2), (25 - Temp) * 80 * 2);
 
-        kmemsetw((void*)(0xC00B8000 + (25 - Temp) * 160), Blank, 160);
+        kmemsetw((void*)(VIDEO_MEMORY + (25 - Temp) * 160), Blank, 160);
         g_kstdio_cur_y = 25 - 1;
    }
    //semaphore_release(&ScreenWriteLock);
@@ -199,8 +208,8 @@ void kdump(u8 *bData, u32 Length)
 
 void kputch(s8 Character)
 {
-    semaphore_acquire(&ScreenWriteLock);
-    volatile u8 *VideoMemory = (u8 *)0xC00B8000;
+    //semaphore_acquire(&ScreenWriteLock);
+    volatile u8 *VideoMemory = (u8 *)VIDEO_MEMORY;
     u16 Offset = (g_kstdio_cur_y * 80 + g_kstdio_cur_x) << 1;
 
     if (Character == '\n')
@@ -214,7 +223,7 @@ void kputch(s8 Character)
         else
             kmove_cursor(g_kstdio_cur_x + 1, g_kstdio_cur_y);
     }
-    semaphore_release(&ScreenWriteLock);
+    //semaphore_release(&ScreenWriteLock);
 }
 
 void kputs(const s8 *szString)
@@ -233,7 +242,7 @@ void kprint(const s8 *szString)
 
 void kclear(void)
 {
-    volatile u8 *VideoMemory = (u8 *)0xC00B8000;
+    volatile u8 *VideoMemory = (u8 *)VIDEO_MEMORY;
     u32 Size = (80 * 25 ) << 1;
     for (u32 i = 0; i < Size; i += 2)
     {

@@ -10,8 +10,8 @@ u32 acpi_find_rsdp(void)
 
     // Try to find the pointer... apparently it's 16byte-aligned...
     
-    u32 Address = 0;
-    for (u32 Search = 0x000E0000; Search <= 0x000FFFFF; Search += 4)
+    u64 Address = 0;
+    for (u64 Search = 0x000E0000; Search <= 0x000FFFFF; Search += 4)
     {
         if (kmemcmp((u8 *)Search, (u8 *)szMagic, 8) == 0)
         {

@@ -60,9 +60,9 @@ void heap_index_remove(T_HEAP_INDEX *Index, u32 Position)
     Index->Size--;
 }
 
-T_HEAP *heap_create(u32 Start, u32 End, u32 Max)
+T_HEAP *heap_create(u64 Start, u64 End, u64 Max)
 {
-    u32 NumPages = (End - Start ) / (1024 * 4);
+    u64 NumPages = (End - Start ) / (1024 * 4);
     if ((End - Start) % (1024 * 4) != 0)
         NumPages++;
 
@@ -70,8 +70,8 @@ T_HEAP *heap_create(u32 Start, u32 End, u32 Max)
             NumPages, (End - Start) / 0x100000);
     for (int i = 0; i < NumPages; i++)
     {
-        u32 Page = physmem_allocate_page();
-        u32 Physical = physmem_page_to_physical(Page);
+        u64 Page = physmem_allocate_page();
+        u64 Physical = physmem_page_to_physical(Page);
         paging_map_kernel_page(Start + i * 1024 * 4, Physical);
     }
 
@@ -96,21 +96,21 @@ T_HEAP *heap_create(u32 Start, u32 End, u32 Max)
     return Heap;
 }
 
-s32 _heap_find_smallest_hole(T_HEAP *Heap, u32 Size, u8 Aligned)
+s32 _heap_find_smallest_hole(T_HEAP *Heap, u64 Size, u8 Aligned)
 {
-    u32 Iterator = 0;
+    u64 Iterator = 0;
     while (Iterator < Heap->Index.Size)
     {
         T_HEAP_HEADER *Header = heap_index_get(&Heap->Index, Iterator);
         if (Aligned > 0)
         {
-            u32 Location = (u32)Header;
-            u32 Offset = 0;
+            u64 Location = (u64)Header;
+            u64 Offset = 0;
 
             if (((Location + sizeof(T_HEAP_HEADER)) & 0xFFFFF000) != 0)
                 Offset = 0x1000 - (Location + sizeof(T_HEAP_HEADER)) % 0x1000;
             
-            u32 HoleSize = (u32)Header->Size - Offset;
+            u32 HoleSize = (u64)Header->Size - Offset;
 
             if (HoleSize >= Size)
                 break;
@@ -126,23 +126,23 @@ s32 _heap_find_smallest_hole(T_HEAP *Heap, u32 Size, u8 Aligned)
         return Iterator;
 }
 
-void _heap_expand(T_HEAP *Heap, u32 Size)
+void _heap_expand(T_HEAP *Heap, u64 Size)
 {
     u16 NumPages = Size / 0x1000; 
     if (Size % 0x1000 != 0)
         NumPages++;
 
-    for (u32 i = 0; i < NumPages; i++)
+    for (u64 i = 0; i < NumPages; i++)
     {
-        u32 Page = physmem_allocate_page();
-        u32 Physical = physmem_page_to_physical(Page);
+        u64 Page = physmem_allocate_page();
+        u64 Physical = physmem_page_to_physical(Page);
         paging_map_kernel_page(Heap->End + i * 0x1000, Physical);
     }
     
     Heap->End = Heap->Start + NumPages * 0x1000;
 }
 
-u32 _heap_contract(T_HEAP *Heap, u32 Size)
+u32 _heap_contract(T_HEAP *Heap, u64 Size)
 {
     if (Size & 0x1000)
     {
@@ -153,15 +153,15 @@ u32 _heap_contract(T_HEAP *Heap, u32 Size)
     if (Size < HEAP_MIN_SIZE)
         Size = HEAP_MIN_SIZE;
     
-    u32 OldSize = Heap->End - Heap->Start;
-    u32 NumberToDelete = (OldSize - Size) / 0x1000;
+    u64 OldSize = Heap->End - Heap->Start;
+    u64 NumberToDelete = (OldSize - Size) / 0x1000;
 
     for (int i = 0; i < NumberToDelete; i++)
     {
-        u32 Virtual = Heap->End + i * 0x1000;
-        u32 Physical;
+        u64 Virtual = Heap->End + i * 0x1000;
+        u64 Physical;
         paging_get_physical(Virtual, &Physical);
-        u32 Page = Physical / 0x1000;
+        u64 Page = Physical / 0x1000;
         physmem_free_page(Page);
     }
 
@@ -170,35 +170,35 @@ u32 _heap_contract(T_HEAP *Heap, u32 Size)
     return (Heap->End - Heap->Start);
 }
 
-void *heap_alloc_p(T_HEAP *Heap, u32 Size, u8 Aligned, u32 *Physical)
+void *heap_alloc_p(T_HEAP *Heap, u64 Size, u8 Aligned, u64 *Physical)
 {
     void *Address = heap_alloc(Heap, Size, Aligned);
     
     if (Physical != 0)
-        paging_get_physical((u32)Address, Physical);
+        paging_get_physical((u64)Address, Physical);
     
     return Address;
 }
 
-void *heap_alloc(T_HEAP *Heap, u32 Size, u8 Aligned)
+void *heap_alloc(T_HEAP *Heap, u64 Size, u8 Aligned)
 {
-    u32 RealSize = Size + sizeof(T_HEAP_HEADER) + sizeof(T_HEAP_FOOTER);
-    s32 Iterator = _heap_find_smallest_hole(Heap, RealSize, Aligned);
+    u64 RealSize = Size + sizeof(T_HEAP_HEADER) + sizeof(T_HEAP_FOOTER);
+    s64 Iterator = _heap_find_smallest_hole(Heap, RealSize, Aligned);
 
     if (Iterator == -1)
     {
-        u32 OldSize = Heap->End - Heap->Start;
-        u32 OldEnd = Heap->End;
+        u64 OldSize = Heap->End - Heap->Start;
+        u64 OldEnd = Heap->End;
         _heap_expand(Heap, OldSize + RealSize);
-        u32 NewSize = Heap->End - Heap->Start;
+        u64 NewSize = Heap->End - Heap->Start;
 
         Iterator = 0;
-        u32 Last = 0;
-        s32 LastIndex = -1;
+        u64 Last = 0;
+        s64 LastIndex = -1;
 
         while (Iterator < Heap->Index.Size)
         {
-            u32 Location = (u32)heap_index_get(&Heap->Index, Iterator);
+            u64 Location = (u64)heap_index_get(&Heap->Index, Iterator);
             if (Location > Last)
             {
                 Last = Location;
@@ -226,7 +226,7 @@ void *heap_alloc(T_HEAP *Heap, u32 Size, u8 Aligned)
             T_HEAP_HEADER *Header = (T_HEAP_HEADER *)Last;
             Header->Size += NewSize - OldSize;
 
-            T_HEAP_FOOTER *Footer = (T_HEAP_FOOTER *)((u32)Header
+            T_HEAP_FOOTER *Footer = (T_HEAP_FOOTER *)((u64)Header
                                     + Header->Size - sizeof(T_HEAP_FOOTER));
             Footer->Header = Header;
             Footer->Magic = HEAP_FOOTER_MAGIC;
@@ -237,8 +237,8 @@ void *heap_alloc(T_HEAP *Heap, u32 Size, u8 Aligned)
 
     T_HEAP_HEADER *Header = (T_HEAP_HEADER*)heap_index_get(&Heap->Index, 
                             Iterator);
-    u32 HoleStart = (u32)Header;
-    u32 HoleSize = Header->Size;
+    u64 HoleStart = (u64)Header;
+    u64 HoleSize = Header->Size;
 
     if (HoleSize - RealSize < sizeof(T_HEAP_HEADER) + sizeof(T_HEAP_FOOTER))
     {
@@ -248,7 +248,7 @@ void *heap_alloc(T_HEAP *Heap, u32 Size, u8 Aligned)
 
     if (Aligned && HoleStart & 0xFFFFF000)
     {
-        u32 NewLocation = HoleStart + 0x1000 - (HoleStart & 0xFFF)
+        u64 NewLocation = HoleStart + 0x1000 - (HoleStart & 0xFFF)
                           - sizeof(T_HEAP_HEADER);
         Header->Size = 0x1000 - (HoleStart & 0xFFF) - sizeof(T_HEAP_HEADER);
         Header->Magic = HEAP_HEADER_MAGIC;
@@ -283,10 +283,10 @@ void *heap_alloc(T_HEAP *Heap, u32 Size, u8 Aligned)
         NewHoleHeader->Size = HoleSize - RealSize;
         NewHoleHeader->Hole = 1;
 
-        T_HEAP_FOOTER *NewHoleFooter = (T_HEAP_FOOTER*)((u32)NewHoleHeader
+        T_HEAP_FOOTER *NewHoleFooter = (T_HEAP_FOOTER*)((u64)NewHoleHeader
             + NewHoleHeader->Size - sizeof(T_HEAP_FOOTER));
 
-        if ((u32)NewHoleFooter < Heap->End)
+        if ((u64)NewHoleFooter < Heap->End)
         {
             NewHoleFooter->Magic = HEAP_FOOTER_MAGIC;
             NewHoleFooter->Header = NewHoleHeader;
@@ -295,15 +295,15 @@ void *heap_alloc(T_HEAP *Heap, u32 Size, u8 Aligned)
         heap_index_insert(&Heap->Index, (void*)NewHoleHeader);
     }
 
-    return (void *)((u32)BlockHeader + sizeof(T_HEAP_HEADER));
+    return (void *)((u64)BlockHeader + sizeof(T_HEAP_HEADER));
 }
 
 void heap_free(T_HEAP *Heap, void *Data)
 {
     if (Data == 0) return;
-    T_HEAP_HEADER *Header = (T_HEAP_HEADER *)((u32)Data 
+    T_HEAP_HEADER *Header = (T_HEAP_HEADER *)((u64)Data
                              - sizeof(T_HEAP_HEADER));
-    T_HEAP_FOOTER *Footer = (T_HEAP_FOOTER *)((u32)Header + Header->Size
+    T_HEAP_FOOTER *Footer = (T_HEAP_FOOTER *)((u64)Header + Header->Size
                              - sizeof(T_HEAP_FOOTER));
 
     if (Header->Magic != HEAP_HEADER_MAGIC)
@@ -314,27 +314,27 @@ void heap_free(T_HEAP *Heap, void *Data)
 
     u8 ShouldAdd = 1;
 
-    T_HEAP_FOOTER *FooterLeft = (T_HEAP_FOOTER *)((u32)Data
+    T_HEAP_FOOTER *FooterLeft = (T_HEAP_FOOTER *)((u64)Data
                                 - sizeof(T_HEAP_FOOTER));
     if (FooterLeft->Magic == HEAP_FOOTER_MAGIC && FooterLeft->Header->Hole)
     {
-        u32 OurSize = Header->Size;
+        u64 OurSize = Header->Size;
         Header = FooterLeft->Header;
         Footer->Header = Header;
         Header->Size += OurSize;
         ShouldAdd = 0;
     }
 
-    T_HEAP_HEADER *HeaderRight = (T_HEAP_HEADER *)((u32)Footer 
+    T_HEAP_HEADER *HeaderRight = (T_HEAP_HEADER *)((u64)Footer
                                  + sizeof(T_HEAP_FOOTER));
     if (HeaderRight->Magic == HEAP_HEADER_MAGIC && HeaderRight->Hole)
     {
         Header->Size += HeaderRight->Size;
-        Footer = (T_HEAP_FOOTER *)((u32)HeaderRight + HeaderRight->Size
+        Footer = (T_HEAP_FOOTER *)((u64)HeaderRight + HeaderRight->Size
                   - sizeof(T_HEAP_FOOTER));
         Footer->Header = Header;
         
-        u32 Iterator = 0;
+        u64 Iterator = 0;
         while (Iterator < Heap->Index.Size &&
                heap_index_get(&Heap->Index, Iterator) != (void *)HeaderRight)
             Iterator++;
@@ -343,22 +343,22 @@ void heap_free(T_HEAP *Heap, void *Data)
             heap_index_remove(&Heap->Index, Iterator);
     }
 
-    if ((u32)Footer + sizeof(T_HEAP_FOOTER) == Heap->End)
+    if ((u64)Footer + sizeof(T_HEAP_FOOTER) == Heap->End)
     {
-        u32 OldSize = Heap->End - Heap->Start;
-        u32 NewSize = _heap_contract(Heap, (u32)Header - Heap->Start);
+        u64 OldSize = Heap->End - Heap->Start;
+        u64 NewSize = _heap_contract(Heap, (u64)Header - Heap->Start);
 
         if (Header->Size > (OldSize - NewSize))
         {
             Header->Size -= (OldSize - NewSize);
-            Footer = (T_HEAP_FOOTER *)((u32)Header + Header->Size 
+            Footer = (T_HEAP_FOOTER *)((u64)Header + Header->Size
                       - sizeof(T_HEAP_FOOTER));
             Footer->Magic = HEAP_FOOTER_MAGIC;
             Footer->Header = Header;
         }
         else
         {
-            u32 Iterator = 0;
+            u64 Iterator = 0;
             while (Iterator < Heap->Index.Size &&
                    heap_index_get(&Heap->Index, Iterator) != (void *)Header)
                 Iterator++;
@@ -381,12 +381,12 @@ void heap_init_simple(void)
                          HEAP_START + 0x0FFFF000);
 }
 
-void *kmalloc(u32 Size)
+void *kmalloc(u64 Size)
 {
     return heap_alloc(g_heap, Size, 0);
 }
 
-void *kmalloc_p(u32 Size, u8 Aligned, u32 *Physical)
+void *kmalloc_p(u64 Size, u8 Aligned, u64 *Physical)
 {
     return heap_alloc_p(g_heap, Size, Aligned, Physical);
 }

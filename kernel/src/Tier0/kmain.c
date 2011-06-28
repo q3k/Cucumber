@@ -1,6 +1,6 @@
 #include "types.h"
 #include "Tier0/kstdio.h"
-#include "Tier0/gdt.h"
+/*#include "Tier0/gdt.h"
 #include "Tier0/paging.h"
 #include "Tier0/acpi.h"
 #include "Tier0/interrupts.h"
@@ -13,31 +13,24 @@
 #include "Tier0/cpp.h"
 #include "Tier0/exceptions.h"
 #include "Tier0/panic.h"
-#include "Tier0/prng.h"
+#include "Tier0/prng.h"*/
 
-void interrupts_irq_sample(void);
-
-// Just to see whether this stuff actually works
-void sample_interrupt_0x2A(void)
-{
-    kprintf("[i] Hello from ISR for interrupt 0x2A!\n");
-    return;
-}
-
-void kmain_newstack(void);
-
-// Real kernel entry point, called from _start.asm
-void kmain(void *MultibootHeader, u32 Magic)
+// Real kernel entry point, called from loader
+void kmain(u32 current_line, u32 cursor_x, u32 cursor_y)
 {
     kstdio_init();
-    kclear();
-    kprintf("                         _           \n"
+    kstdio_set_globals(current_line, cursor_x, cursor_y);
+    //kclear();
+    kprintf("\n                         _           \n"
             "   ___ _ _ ___ _ _ _____| |_ ___ ___ \n"
             "  |  _| | |  _| | |     | . | -_|  _|\n"
             "  |___|___|___|___|_|_|_|___|___|_|  \n\n");
-    kprintf("[i] Welcome to Cucumber!\n\n");
-    
-    if (Magic != 0x2BADB002)
+    kprintf("[i] Welcome to Cucumber (x86-64)!\n");
+    //kprintf("%x %x %x\n", current_line, cursor_x, cursor_y);
+
+    for (;;) {}
+
+    /*if (Magic != 0x2BADB002)
     {
         kprintf("[e] Fatal! Boot via incompatible bootloader.\n");
         return;
@@ -84,8 +77,6 @@ void kmain(void *MultibootHeader, u32 Magic)
     for (u32 Rl = 0; Rl < R; Rl++)
     {
         krand();
-        /*kseed(Rl);
-        krand();*/
     }
     
     // Let's create a new kernel stack
@@ -96,14 +87,14 @@ void kmain(void *MultibootHeader, u32 Magic)
     __asm__ volatile("mov %0, %%esp" : : "r" (0xA0000000 + 4095));
     
     // This automagically creates a new usable stack frame
-    kmain_newstack();
+    kmain_newstack();*/
 }
 
-void kmain_newstack(void)
+/*void kmain_newstack(void)
 {
     kprintf("[i] Now using real stack...\n");
     cpp_call_ctors();
     cpp_start_ckernel();
     kprintf("[i] Returned from Tier1, sleeping forever.\n");
     LOOPFOREVER;
-}
+}*/

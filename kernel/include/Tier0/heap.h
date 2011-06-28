@@ -15,7 +15,7 @@
 typedef struct {
    u32 Magic;
    u8 Hole;
-   u32 Size;
+   u64 Size;
 } T_HEAP_HEADER;
 
 typedef struct {
@@ -25,8 +25,8 @@ typedef struct {
 
 typedef struct {
     void **Array;
-    u32 Size;
-    u32 MaxSize;
+    u64 Size;
+    u64 MaxSize;
 } T_HEAP_INDEX;
 
 T_HEAP_INDEX heap_index_initialize(void *Address, u32 MaxSize);
@@ -35,19 +35,19 @@ u8 heap_index_smaller(void *A, void *B);
 
 typedef struct {
     T_HEAP_INDEX Index;
-    u32 Start;
-    u32 End;
-    u32 Max;
+    u64 Start;
+    u64 End;
+    u64 Max;
 } T_HEAP;
 
-T_HEAP *heap_create(u32 Start, u32 End, u32 Max);
-void *heap_alloc(T_HEAP *Heap, u32 Size, u8 Aligned);
-void *heap_alloc_p(T_HEAP *Heap, u32 Size, u8 Aligned, u32 *Physical);
+T_HEAP *heap_create(u64 Start, u64 End, u64 Max);
+void *heap_alloc(T_HEAP *Heap, u64 Size, u8 Aligned);
+void *heap_alloc_p(T_HEAP *Heap, u64 Size, u8 Aligned, u64 *Physical);
 void heap_free(T_HEAP *Heap, void *Address);
 
 void heap_init_simple(void);
-void *kmalloc(u32 Size);
-void *kmalloc_p(u32 Size, u8 Aligned, u32 *Physical);
+void *kmalloc(u64 Size);
+void *kmalloc_p(u64 Size, u8 Aligned, u64 *Physical);
 void kfree(void *Data);
 
 #endif

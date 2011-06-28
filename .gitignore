@@ -1,2 +1,9 @@
-/obj
-/kernel.bin
+Kernel/obj
+Kernel/kernel.bin
+Kernel/dump
+Loader/obj
+Loader/loader.bin
+Loader/dump
+kernel.bin
+obj
+dump

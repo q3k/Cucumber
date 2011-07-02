@@ -1,6 +1,6 @@
 #include "Tier0/panic.h"
 #include "Tier0/kstdio.h"
-#include "Tier0/prng.h"
+//#include "Tier0/prng.h"
 #include "preprocessor_hacks.h"
 
 #define KPANIC_HEADER(n) KPANIC_HEADER##n
@@ -21,7 +21,8 @@
 
 char *kpanic_get_random_message(void)
 {
-    u16 N = krand() % 10;
+    //u16 N = krand() % 10;
+	u16 N = 0;
     switch (N)
     {
         PPHAX_DO10(KPANIC_CASE);
@@ -71,7 +72,7 @@ void kpanic_ex(const s8 *Error, const s8 *File, u32 Line, T_ISR_REGISTERS R)
     
     // Dumping registers
     
-    u32 ds, cr0, cr3;
+    /*u32 ds, cr0, cr3;
     
     __asm__ volatile("mov %%cr0, %0": "=r"(cr0));
     __asm__ volatile("mov %%cr3, %0": "=r"(cr3));
@@ -84,13 +85,13 @@ void kpanic_ex(const s8 *Error, const s8 *File, u32 Line, T_ISR_REGISTERS R)
     kprintf("        eax: 0x%X ebx: 0x%x ecx: 0x%x edx: 0x%x\n",
         R.eax, R.ebx, R.ecx, R.edx);
     kprintf("        esi: 0x%X edi: 0x%x ebp: 0x%x esp: 0x%x\n",
-        R.esi, R.edi, R.ebp, R.esp);
+        R.esi, R.edi, R.ebp, R.esp);*/
     
     //s32 FrameSize = R.ebp - R.esp;
     
     /*if (FrameSize > 0 && FrameSize < 0x100)
     {*/
-        kprintf("\n  stack frame looks promising...\n");
+        /*kprintf("\n  stack frame looks promising...\n");
         kprintf("  attempting stack dump:\n");
         
         u32 Number = 80;
@@ -98,7 +99,7 @@ void kpanic_ex(const s8 *Error, const s8 *File, u32 Line, T_ISR_REGISTERS R)
         {
             kprintf("    %x %x %x %x %x %x %x %x\n",
                *v, *(v+1), *(v+2), *(v+3), *(v+4), *(v+5), *(v+6), *(v+7));
-        }
+        }*/
     /*}
     else
         kprintf("\n  stack looks unusable, not dummping.\n");*/

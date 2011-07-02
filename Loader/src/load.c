@@ -190,6 +190,7 @@ static inline void cpuid(u32 code, u32 *a, u32 *d) {
 // This will be replaced later on by the kernel code.
 
 u64 pml4[512] __attribute__((aligned(0x1000)));
+
 u64 page_dir_ptr_tab_low[512] __attribute__((aligned(0x1000)));
 u64 page_dir_low[512] __attribute__((aligned(0x1000)));
 u64 page_tab_low[512] __attribute__((aligned(0x1000)));
@@ -276,20 +277,24 @@ u32 create_ia32e_paging(u64 KernelPhysicalStart, u64 KernelVirtualStart, u64 Ker
 	for (u16 i = GET_TAB_ENTRY(KernelVirtualStart); i < GET_TAB_ENTRY(KernelVirtualStart) + NumPages; i++)
 	{
 		page_tab_high[i] = Address | 3;
-		print_hex(KernelVirtualStart + i * 0x1000);
+		/*print_hex(KernelVirtualStart + i * 0x1000);
 		puts(" -> ");
 		print_hex(Address);
-		puts("\n");
+		puts("\n");*/
 		Address += 0x1000;
 	}
 
 	return 0;
 }
 
+u32 g_multiboot_header;
+
 u32 load(void *Multiboot, unsigned int Magic)
 {
     clear();
     puts("Cucumber x86-64 loader...\n");
+
+    g_multiboot_header = (u32)Multiboot;
 
 
     if (Magic != 0x2BADB002)
@@ -437,5 +442,5 @@ u32 load(void *Multiboot, unsigned int Magic)
 
     puts("Now in 32-bit compability mode, jumping to the kernel...\n");
 
-    return (u32)Header->Entry;
+    return 1;
 }

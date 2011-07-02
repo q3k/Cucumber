@@ -1,22 +1,24 @@
 #include "types.h"
 #include "Tier0/kstdio.h"
-/*#include "Tier0/gdt.h"
+//#include "Tier0/gdt.h"
 #include "Tier0/paging.h"
-#include "Tier0/acpi.h"
-#include "Tier0/interrupts.h"
-#include "Tier0/ps2.h"
+//#include "Tier0/acpi.h"
+//#include "Tier0/interrupts.h"
+//#include "Tier0/ps2.h"
 #include "Tier0/system.h"
-#include "Tier0/pic.h"
-#include "Tier0/kbd_layout.h"
-#include "Tier0/physical_alloc.h"
-#include "Tier0/heap.h"
-#include "Tier0/cpp.h"
-#include "Tier0/exceptions.h"
-#include "Tier0/panic.h"
-#include "Tier0/prng.h"*/
+//#include "Tier0/pic.h"
+//#include "Tier0/kbd_layout.h"
+//#include "Tier0/physical_alloc.h"
+//#include "Tier0/heap.h"
+//#include "Tier0/cpp.h"
+//#include "Tier0/exceptions.h"
+//#include "Tier0/panic.h"
+//#include "Tier0/prng.h"
+
+extern u64 _end;
 
 // Real kernel entry point, called from loader
-void kmain(u32 current_line, u32 cursor_x, u32 cursor_y)
+void kmain(u32 current_line, u32 cursor_x, u32 cursor_y, u32 MultibootHeader)
 {
     kstdio_init();
     kstdio_set_globals(current_line, cursor_x, cursor_y);
@@ -26,19 +28,18 @@ void kmain(u32 current_line, u32 cursor_x, u32 cursor_y)
             "  |  _| | |  _| | |     | . | -_|  _|\n"
             "  |___|___|___|___|_|_|_|___|___|_|  \n\n");
     kprintf("[i] Welcome to Cucumber (x86-64)!\n");
-    //kprintf("%x %x %x\n", current_line, cursor_x, cursor_y);
+
+    kprintf("[i] Multiboot header @%x\n", MultibootHeader);
+    system_parse_multiboot_header((void*)((u64)MultibootHeader));
+    kprintf("[i] Booting via %s.\n", system_get_bootloader_name());
+    kprintf("[i] Memory available: %uk.\n", system_get_memory_upper());
+    kprintf("[i] Kernel end: %x.\n", &_end);
+
+    //paging_init_simple();
 
     for (;;) {}
-
-    /*if (Magic != 0x2BADB002)
-    {
-        kprintf("[e] Fatal! Boot via incompatible bootloader.\n");
-        return;
-    }
     
-    
-    paging_init_simple();
-    gdt_create_flat();
+    /*gdt_create_flat();
     
     physmem_init();
     system_parse_multiboot_header(MultibootHeader);

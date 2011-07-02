@@ -1,43 +1,72 @@
 #include "Tier0/paging.h"
-#include "Tier0/system.h"
 #include "Tier0/kstdio.h"
 #include "Tier0/kstdlib.h"
-#include "Tier0/interrupts.h"
-#include "Tier0/heap.h"
 #include "types.h"
 
-T_PAGING_DIRECTORY g_kernel_page_directory __attribute__ ((aligned (4096)));
-T_PAGING_TABLE g_kernel_page_tables[1024] __attribute__ ((aligned (4096)));
+// The basic structures for the first kernel thread...
+// Since they are < 2Mib, their virtual addresses = their physical addresses -
+// some offset given by the loader
+//T_PAGING_ML4 g_paging_basic_ml4;
+// These are the structures for mapping the lowest 2MiB
+//T_PAGING_ML4 g_paging_basic_dpt_lowmap;
+//T_PAGING_ML4 g_paging_basic_dir_lowmap;
+//T_PAGING_ML4 g_paging_basic_tab_lowmap;
+// These are the structures for mapping the kernel memory (2Mib)
+//T_PAGING_ML4 g_paging_basic_dpt_kernel;
+//T_PAGING_ML4 g_paging_basic_dir_kernel;
+//T_PAGING_ML4 g_paging_basic_tab_kernel;
 
-u8 paging_get_physical_ex(u32 Virtual, u32 *Physical, 
-                          T_PAGING_DIRECTORY *Directory)
+T_PAGING_ML4 *paging_get_ml4(void)
 {
-    u16 DirectoryIndex = (Virtual >> 22) & 0x3FF;
-    u32 DirectoryEntry = Directory->Entries[DirectoryIndex];
-
-    u8 TablePresent = DirectoryEntry & 0b1;
-    if (!TablePresent) 
-        return 0;
-
-    T_PAGING_TABLE *Table = Directory->Tables[DirectoryIndex];
-
-    u16 TableIndex = (Virtual >> 12) & 0x3FF;
-    T_PAGING_PAGE Page = (Table->Pages[TableIndex]);
-    if (!Page.Present)
-        return 0;
-
-    *Physical = (Page.Physical << 12);
-    *Physical |= (Virtual & 0xFFF);
-
-    return 1;
+	u64 Address;
+	__asm__ volatile("mov %%cr3, %0\n" : "=r"(Address));
+	return (T_PAGING_ML4*)Address;
 }
 
-u8 paging_get_physical(u32 Virtual, u32 *Physical)
+u8 paging_get_physical_ex(u64 Virtual, u64 *Physical, T_PAGING_ML4 *ML4)
 {
-    return paging_get_physical_ex(Virtual, Physical, &g_kernel_page_directory);
+    u16 ML4Index = PAGING_GET_ML4_INDEX(Virtual);
+    u16 DPTIndex = PAGING_GET_DPT_INDEX(Virtual);
+    u16 DirIndex = PAGING_GET_DIR_INDEX(Virtual);
+    u16 TabIndex = PAGING_GET_TAB_INDEX(Virtual);
+
+    if (!ML4->Entries[ML4Index].Present)
+    	return 1;
+
+    T_PAGING_DPT *DPT = ML4->Children[ML4Index];
+
+    if (!DPT->Entries[DPTIndex].Present)
+    	return 1;
+
+    T_PAGING_DIR *Dir = DPT->Children[DPTIndex];
+
+    if (!Dir->Entries[DirIndex].Present)
+    	return 1;
+
+    T_PAGING_TAB *Tab = Dir->Children[DirIndex];
+
+    if (!Tab->Entries[TabIndex].Present)
+    	return 1;
+
+    (*Physical) = (Tab->Entries[TabIndex].Physical << 12) + PAGING_GET_PAGE_OFFSET(Virtual);
+
+    return 0;
 }
 
-void paging_dump_directory(void)
+u8 paging_get_physical(u64 Virtual, u64 *Physical)
+{
+	T_PAGING_ML4 *ml4 = paging_get_ml4();
+    return paging_get_physical_ex(Virtual, Physical, ml4);
+	return 0;
+}
+
+// This initializes a very basic paging structure for the first kernel thread
+void paging_init_simple(u64 PhysicalVirtualOffset)
+{
+
+}
+
+/*void paging_dump_directory(void)
 {
     for (u32 i = 0; i < 10; i++)
     {
@@ -167,5 +196,5 @@ void paging_init_simple(void)
     paging_map_kernel_table(0xC0400000, 0x00400000);
 
     paging_use_directory(&g_kernel_page_directory);
-}
+}*/
 

@@ -327,11 +327,17 @@ u32 load(void *Multiboot, unsigned int Magic)
 
     u32 ModulesCount = *((u32*)Multiboot + 5);
     u32 ModulesAddress = *((u32*)Multiboot + 6);
+    
+    if (ModulesCount == 0)
+    {
+        puts("Error: No kernel specified! Can't boot non-existant code, sorry!\n");
+        return 0;
+    }
 
     if (ModulesCount != 1)
     {
 	    puts("Error: just one module is enough. Don't load a ton of them.\n");
-	    return 0;
+            return 0;
     }
 
     puts("Kernel is @");

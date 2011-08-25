@@ -76,10 +76,16 @@ void system_parse_load_context(T_LOAD_CONTEXT *LoadContext)
         PANIC("Not implemented: Memory Map Probing");
     
     // Now, mark the BIOS area (lowest megabyte) as unavailable
-    // TODO: Implement me
+    T_SYSTEM_INVALID_RAM *BIOSArea = &g_SystemInfo.InvalidMemoryAreas[g_SystemInfo.NumInvalidAreas];
+    BIOSArea->Base = 0;
+    BIOSArea->Size = 1024 *1024;
+    g_SystemInfo.NumInvalidAreas++;
     
     // And mark our kernel physical location as unavailable
-    // TODO: Implement me
+    T_SYSTEM_INVALID_RAM *KernelArea = &g_SystemInfo.InvalidMemoryAreas[g_SystemInfo.NumInvalidAreas];
+    KernelArea->Base = LoadContext->KernelPhysicalStart;
+    KernelArea->Size = LoadContext->KernelPhysicalEnd - LoadContext->KernelPhysicalStart;
+    g_SystemInfo.NumInvalidAreas++;
     
     kprintf("[i] Highest unavailable address is %x.\n", HighestUnavailable);
     physmem_init(HighestUnavailable);

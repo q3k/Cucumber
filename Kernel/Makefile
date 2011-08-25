@@ -13,7 +13,7 @@ default: emulate-nohdd
 
 SHELL:=/bin/bash
 ENV:=/usr/xdev/bin
-TARGET:=x86_64-elf
+TARGET:=x86_64-pc-elf
 CC:=$(ENV)/$(TARGET)-gcc
 CX:=$(ENV)/$(TARGET)-g++
 AS:=nasm
@@ -88,7 +88,7 @@ emulate-nohdd: kernel.bin
 	@echo "[i] Building loader..."
 	@pushd ../Loader > /dev/null && $(MAKE) -f Makefile loader.bin && popd > /dev/null
 	@echo "[i] Starting QEMU..."
-	@qemu-system-x86_64 -kernel ../Loader/loader.bin -initrd kernel.bin
+	@qemu-system-x86_64 -kernel ../Loader/loader.bin
 
 emulate: hdd.img
 	@echo "[i] Starting QEmu..."

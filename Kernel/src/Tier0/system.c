@@ -60,6 +60,8 @@ void system_parse_load_context(T_LOAD_CONTEXT *LoadContext)
 
                 Area->Base = Node->Base;
                 Area->Size = Node->Length;
+                
+                kprintf("[i] Unavailable memory: %x - %x\n", Node->Base, Node->Base + Node->Length);
 
                 if (Area->Base > HighestUnavailable)
                 	HighestUnavailable = Area->Base;
@@ -121,7 +123,7 @@ u8 system_memory_available(u64 Start, u64 Length)
             return 0;
 
         // If the request spans accross an invalid area
-        if (Area.Base >= Start && Start + Length < Area.Base + Area.Size)
+        if (Area.Base >= Start && Start + Length > Area.Base + Area.Size)
             return 0;
     }
     return 1;

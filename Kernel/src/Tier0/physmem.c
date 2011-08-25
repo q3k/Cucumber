@@ -20,6 +20,7 @@
 // happens that we run out of memory... We're probably badly screwed, anyway.
 
 #include "Tier0/physmem.h"
+#include "Tier0/system.h"
 #include "Tier0/kstdio.h"
 #include "Tier0/panic.h"
 
@@ -36,19 +37,26 @@ void physmem_init(u64 MemorySize)
 
 u64 physmem_allocate_page(void)
 {
-    PANIC("Not implemented!");
-    return 0;
+    u64 NextPageStart = g_TopFrame;
+    
+    while (!system_memory_available(NextPageStart, PHYSMEM_PAGE_SIZE))
+    {
+        NextPageStart += PHYSMEM_PAGE_SIZE;
+        
+        if (NextPageStart > g_MemorySize)
+            PANIC("Out of memory!");
+    }
+    
+    return NextPageStart / PHYSMEM_PAGE_SIZE;
 }
 
 
 u64 physmem_page_to_physical(u64 Page)
 {
-    PANIC("Not implemented!");
-    return 0;
+    return Page * PHYSMEM_PAGE_SIZE;
 }
 
 u64 physmem_physical_to_page(u64 Physical)
 {
-    PANIC("Not implemented!");
-    return 0;
+    return Physical / PHYSMEM_PAGE_SIZE;
 }

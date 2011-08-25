@@ -4,7 +4,7 @@
 #include "Tier0/system.h"
 #include "Tier0/panic.h"
 #include "Tier0/kstdio.h"
-#include "Tier0/physical_alloc.h"
+#include "Tier0/physmem.h"
 
 T_SYSTEM_INFO g_SystemInfo;
 

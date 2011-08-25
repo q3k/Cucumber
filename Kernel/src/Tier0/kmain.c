@@ -9,7 +9,7 @@
 #include "Tier0/system.h"
 //#include "Tier0/pic.h"
 //#include "Tier0/kbd_layout.h"
-//#include "Tier0/physical_alloc.h"
+#include "Tier0/physmem.h"
 //#include "Tier0/heap.h"
 //#include "Tier0/cpp.h"
 //#include "Tier0/exceptions.h"

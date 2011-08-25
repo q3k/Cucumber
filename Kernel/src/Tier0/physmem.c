@@ -19,7 +19,7 @@
 // this code will only be called from low-level system routines, if it actually 
 // happens that we run out of memory... We're probably badly screwed, anyway.
 
-#include "Tier0/physical_alloc.h"
+#include "Tier0/physmem.h"
 #include "Tier0/kstdio.h"
 #include "Tier0/panic.h"
 

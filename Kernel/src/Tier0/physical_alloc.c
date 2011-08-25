@@ -36,19 +36,19 @@ void physmem_init(u64 MemorySize)
 
 u64 physmem_allocate_page(void)
 {
-    PANIC("Not implemeneted!");
+    PANIC("Not implemented!");
     return 0;
 }
 
 
 u64 physmem_page_to_physical(u64 Page)
 {
-    PANIC("Not implemeneted!");
+    PANIC("Not implemented!");
     return 0;
 }
 
 u64 physmem_physical_to_page(u64 Physical)
 {
-    PANIC("Not implemeneted!");
+    PANIC("Not implemented!");
     return 0;
 }

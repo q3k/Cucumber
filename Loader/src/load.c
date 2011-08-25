@@ -8,6 +8,10 @@ typedef char s8;
 u8 stdio_current_line = 0;
 u8 stdio_cur_x = 0, stdio_cur_y = 0;
 
+extern u64 omg64;
+
+u32 *pJmpLoadAddres = (u32 *)(((u8 *)&omg64) + 1);
+
 void outb(u16 Port, u8 Data)
 {
     __asm__ volatile("outb %1, %0" :: "dN" (Port), "a" (Data));
@@ -447,6 +451,8 @@ u32 load(void *Multiboot, unsigned int Magic)
                         "movl %%ebx, %%cr0;":::"eax","ebx","ecx");
 
     puts("Now in 32-bit compability mode, jumping to the kernel...\n");
+    
+    *pJmpLoadAddres = Header->Entry;
 
     return 1;
 }

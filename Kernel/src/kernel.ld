@@ -6,6 +6,8 @@ KERNEL_VMA = 0x00000000FF000000;
 SECTIONS
 {
     . = KERNEL_VMA;
+    
+    _start = .;
 
     .text : AT(ADDR(.text) - KERNEL_VMA)
     {

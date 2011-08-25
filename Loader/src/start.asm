@@ -5,6 +5,7 @@ extern stdio_cur_x
 extern stdio_cur_y
 extern g_multiboot_header;
 global _loader
+global omg64
 
 ; Multiboot-related constants
 MODULEALIGN     equ 1 << 0
@@ -83,7 +84,8 @@ _loader_gdt:
 	movzx esi, byte [stdio_cur_x]
 	movzx edx, byte [stdio_cur_y]
 	mov ecx, dword [g_multiboot_header]
-	
+
+omg64:	
 	; 64-bit, here we come!
 	call 0x18:0xFF001000
 

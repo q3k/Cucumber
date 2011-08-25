@@ -1,4 +1,5 @@
 #include "types.h"
+#include "load_context.h"
 #include "Tier0/kstdio.h"
 //#include "Tier0/gdt.h"
 #include "Tier0/paging.h"
@@ -12,28 +13,39 @@
 //#include "Tier0/heap.h"
 //#include "Tier0/cpp.h"
 //#include "Tier0/exceptions.h"
-//#include "Tier0/panic.h"
+#include "Tier0/panic.h"
 //#include "Tier0/prng.h"
 
+extern u64 _start;
 extern u64 _end;
 
 // Real kernel entry point, called from loader
-void kmain(u32 current_line, u32 cursor_x, u32 cursor_y, u32 MultibootHeader)
+void kmain(u32 LoadContextAddress)
 {
+    T_LOAD_CONTEXT *LoadContext = (T_LOAD_CONTEXT*)(u64)LoadContextAddress;
     kstdio_init();
-    kstdio_set_globals(current_line, cursor_x, cursor_y);
-    //kclear();
+    
+    if (LoadContext->VGATextModeUsed)
+        kstdio_set_globals(LoadContext->VGACurrentLine, LoadContext->VGACursorX, LoadContext->VGACursorY);
+    else
+        kclear();
+    
     kprintf("\n                         _           \n"
             "   ___ _ _ ___ _ _ _____| |_ ___ ___ \n"
             "  |  _| | |  _| | |     | . | -_|  _|\n"
             "  |___|___|___|___|_|_|_|___|___|_|  \n\n");
     kprintf("[i] Welcome to Cucumber (x86-64)!\n");
+    kprintf("[i] Load Context @%x     \n", LoadContext);
+    
+    if (!LoadContext->MultibootUsed)
+        PANIC("No Multiboot header provided by loader!");
 
-    kprintf("[i] Multiboot header @%x\n", MultibootHeader);
-    system_parse_multiboot_header((void*)((u64)MultibootHeader));
-    kprintf("[i] Booting via %s.\n", system_get_bootloader_name());
+    kprintf("[i] Multiboot header @%x\n", LoadContext->MultibootHeader);
+    system_parse_load_context(LoadContext);
+    kprintf("[i] Booting via %s.\n", LoadContext->LoaderName);
     kprintf("[i] Memory available: %uk.\n", system_get_memory_upper());
-    kprintf("[i] Kernel end: %x.\n", &_end);
+    kprintf("[i] Kernel physical: %x-%x.\n", LoadContext->KernelPhysicalStart, LoadContext->KernelPhysicalEnd);
+    kprintf("[i] Kernel virtual:  %x-%x.\n", &_start, &_end);
 
     //paging_init_simple();
 

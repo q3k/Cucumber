@@ -1,9 +1,6 @@
 extern load
 extern puts
-extern stdio_current_line
-extern stdio_cur_x
-extern stdio_cur_y
-extern g_multiboot_header;
+extern g_Context;
 global _loader
 global omg64
 
@@ -80,10 +77,7 @@ _loader_gdt:
 	test ebx, ebx
 	jz hang
 
-	movzx edi, byte [stdio_current_line]
-	movzx esi, byte [stdio_cur_x]
-	movzx edx, byte [stdio_cur_y]
-	mov ecx, dword [g_multiboot_header]
+	mov edi, g_Context
 
 omg64:	
 	; 64-bit, here we come!

@@ -1,6 +1,8 @@
 #ifndef __SYSTEM_H__
 #define __SYSTEM_H__
 
+#include "load_context.h"
+
 struct S_SYSTEM_MLTBT_MMAP {
     u32 Size;
     u64 Base;
@@ -15,7 +17,17 @@ struct S_SYSTEM_INVALID_RAM {
 } __attribute__ ((packed));
 typedef struct S_SYSTEM_INVALID_RAM T_SYSTEM_INVALID_RAM;
 
-void system_parse_multiboot_header(void *Header);
+typedef struct {
+    u64 MemoryLower;
+    u64 MemoryUpper;
+    s8* BootloaderName;
+    
+    // Just a guess...
+    T_SYSTEM_INVALID_RAM InvalidMemoryAreas[256];
+    u8 NumInvalidAreas;    
+} T_SYSTEM_INFO;
+
+void system_parse_load_context(T_LOAD_CONTEXT *LoadContext);
 u64 system_get_memory_upper(void);
 u64 system_get_memory_lower(void);
 s8 *system_get_bootloader_name(void);

@@ -5,6 +5,25 @@ typedef unsigned int u32;
 typedef unsigned long long u64;
 typedef char s8;
 
+struct S_LOAD_CONTEXT {
+    u64 KernelPhysicalStart;
+    u64 KernelPhysicalEnd;
+    
+    s8 LoaderName[80];
+    
+    // VGA text mode 0
+    u8 VGATextModeUsed : 1;
+    u32 VGACurrentLine;
+    u32 VGACursorX;
+    u32 VGACursorY;
+    
+    // Multiboot
+    u8 MultibootUsed : 1;
+    u64 MultibootHeader;
+} __attribute__((packed));
+typedef struct S_LOAD_CONTEXT T_LOAD_CONTEXT;
+
+
 u8 stdio_current_line = 0;
 u8 stdio_cur_x = 0, stdio_cur_y = 0;
 
@@ -292,6 +311,7 @@ u32 create_ia32e_paging(u64 KernelPhysicalStart, u64 KernelVirtualStart, u64 Ker
 }
 
 u32 g_multiboot_header;
+T_LOAD_CONTEXT g_Context;
 
 u32 load(void *Multiboot, unsigned int Magic)
 {
@@ -431,6 +451,26 @@ u32 load(void *Multiboot, unsigned int Magic)
     puts("\n  (0x");
     print_hex(Size);
     puts(" bytes)\n");
+    
+    g_Context.KernelPhysicalStart = StartPhysical;
+    g_Context.KernelPhysicalEnd = StartPhysical + Size;
+    
+    s8 *LoaderName = "Cucumber x86-64 loader";
+    
+    u8 i = 0;
+    while (*LoaderName)
+    {
+        g_Context.LoaderName[i] = *LoaderName;
+        i++;
+        LoaderName++;
+    }
+    g_Context.VGATextModeUsed = 1;
+    g_Context.MultibootUsed = 1;
+    g_Context.MultibootHeader = (u32)Multiboot;
+    
+    puts("Load context 0x");
+    print_hex((u32)&g_Context);
+    puts(".\n");
 
     if (create_ia32e_paging(StartPhysical, StartVirtual, Size))
         return 0;
@@ -452,6 +492,9 @@ u32 load(void *Multiboot, unsigned int Magic)
 
     puts("Now in 32-bit compability mode, jumping to the kernel...\n");
     
+    g_Context.VGACurrentLine = stdio_current_line;
+    g_Context.VGACursorX = stdio_cur_x;
+    g_Context.VGACursorY = stdio_cur_y;
     *pJmpLoadAddres = Header->Entry;
 
     return 1;

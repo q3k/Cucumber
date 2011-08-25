@@ -83,9 +83,9 @@ _loader_gdt:
 	movzx esi, byte [stdio_cur_x]
 	movzx edx, byte [stdio_cur_y]
 	mov ecx, dword [g_multiboot_header]
-
+	
 	; 64-bit, here we come!
-	call 0x18:0xFF000000
+	call 0x18:0xFF001000
 
 hang:
    hlt

@@ -36,8 +36,11 @@ void physmem_create_node(void)
 {
 	if (!g_physalloc_space_for_next)
 		PANIC("No space for next physmem node! :o");
+    
 
 	T_PHYSALLOC_NODE *NewNode = (T_PHYSALLOC_NODE *)g_physalloc_space_for_next;
+    kprintf("%x\n", g_physalloc_space_for_next);
+    for (;;) {}
 	physmem_zero_node(NewNode);
 
 	g_physalloc_top_node->Next = NewNode;
@@ -69,7 +72,12 @@ void physmem_set_node_space(u64 Space)
 
 void physmem_mark_as_used(u64 Page)
 {
-	T_PHYSALLOC_NODE *Node;
+	u16 OffsetInBitmaps = Page / (PHYSALLOC_NUM_BITMAPS * 64);
+    u8 OffsetInBitmap = Page % 64;
+
+    kprintf("p: marking %i (%i %i)\n", Page, OffsetInBitmaps, OffsetInBitmap);
+        
+    T_PHYSALLOC_NODE *Node;
 
     if (g_physalloc_list_size * PHYSALLOC_NUM_BITMAPS * 64 >= Page)
     	Node = physmem_traverse_list(Page / (PHYSALLOC_NUM_BITMAPS * 64));
@@ -81,11 +89,6 @@ void physmem_mark_as_used(u64 Page)
     	}
     	Node = g_physalloc_top_node;
     }
-
-    u16 OffsetInBitmaps = Page / (PHYSALLOC_NUM_BITMAPS * 64);
-    u8 OffsetInBitmap = Page % 64;
-
-    //kprintf("p: marking %i (%i %i)\n", Page, OffsetInBitmaps, OffsetInBitmap);
 
     u64 Bitmap = Node->Bitmaps[OffsetInBitmaps];
     Bitmap |= (1 << OffsetInBitmap);
@@ -108,7 +111,7 @@ u64 physmem_allocate_page(void)
 					{
 						Bitmap |= (1 << nBit);
 						Node->Bitmaps[nBitmap] = Bitmap;
-						kprintf("physmem: allocated %i\n", nNode * PHYSALLOC_NUM_BITMAPS + nBitmap * 64 + nBit);
+						kprintf("physmem: allocated %i, %i, %i\n", nNode, nBitmap, nBit);
 						return nNode * PHYSALLOC_NUM_BITMAPS + nBitmap * 64 + nBit;
 					}
 				}

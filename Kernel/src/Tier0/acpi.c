@@ -4,7 +4,7 @@
 u8 g_acpi_version = 0;
 u32 g_acpi_rsdt_address = 0;
 
-u32 acpi_find_rsdp(void)
+u64 acpi_find_rsdp(void)
 {
     s8 *szMagic = "RSD PTR ";
 

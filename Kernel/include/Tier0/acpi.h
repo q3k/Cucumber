@@ -39,6 +39,6 @@ struct S_ACPI_SDT_HEADER {
 } __attribute__ ((packed));
 typedef struct S_ACPI_SDT_HEADER T_ACPI_SDT_HEADER;
 
-u32 acpi_find_rsdp(void);
+u64 acpi_find_rsdp(void);
 
 #endif

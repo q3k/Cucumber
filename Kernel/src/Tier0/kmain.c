@@ -4,7 +4,7 @@
 #include "Tier0/kstdlib.h"
 #include "Tier0/gdt.h"
 #include "Tier0/paging.h"
-//#include "Tier0/acpi.h"
+#include "Tier0/acpi.h"
 //#include "Tier0/interrupts.h"
 //#include "Tier0/ps2.h"
 #include "Tier0/system.h"
@@ -57,22 +57,12 @@ void kmain(u32 LoadContextAddress)
     // Not using GDT in 64-bit mode... We'll use the loader-provided one.
     //gdt_create_flat();
     
-    for (;;) {}
-    
-    //Add kernel memory as reserved.
-    /*physmem_mark_as_used(0);
-    physmem_mark_as_used(1);
-    
-    kprintf("[i] Booting via %s.\n", system_get_bootloader_name());
-    kprintf("[i] Memory available: %uk.\n", system_get_memory_upper());
-    
-    u32 RSDPAddress = acpi_find_rsdp();
+    u64 RSDPAddress = acpi_find_rsdp();
     if (RSDPAddress == 0)
-    {
-        kprintf("[e] Fatal! ACPI not found.\n");
-        return;
-    }
-    interrupts_init_simple();
+        PANIC("No ACPI!");
+    
+    for(;;) {}
+    /*interrupts_init_simple();
     exceptions_init_simple();
     pic_init(0, 0);
     ps2_init_simple();

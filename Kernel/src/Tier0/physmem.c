@@ -23,6 +23,7 @@
 #include "Tier0/system.h"
 #include "Tier0/kstdio.h"
 #include "Tier0/panic.h"
+#include "Tier0/paging.h"
 
 // The amount of memory in the system, or the top usable pointer.
 u64 g_MemorySize;
@@ -59,4 +60,25 @@ u64 physmem_page_to_physical(u64 Page)
 u64 physmem_physical_to_page(u64 Physical)
 {
     return Physical / PHYSMEM_PAGE_SIZE;
+}
+
+void physmem_read(u64 Base, u64 Size, void *Destination)
+{
+    u8 *DataSource = (u8 *)paging_temp_page_get_virtual();
+    u64 OffsetInSource = Base & 0xFFF;
+    
+    u64 PreviousPageBase = Base & ~((u64)0xFFF);
+    paging_temp_page_set_physical(PreviousPageBase);
+    for (u64 i = 0; i < Size; i++)
+    {
+        u64 PageBase = (Base + i) & ~((u64)0xFFF);
+        
+        if (PageBase != PreviousPageBase)
+            paging_temp_page_set_physical(PageBase);
+        
+        PreviousPageBase = PageBase;
+        
+        *((u8 *)Destination + i) = DataSource[OffsetInSource % 4096];
+        OffsetInSource++;
+    }
 }

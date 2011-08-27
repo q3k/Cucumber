@@ -2,6 +2,7 @@
 #define __PAGING_H__
 
 #include "types.h"
+#include "load_context.h"
 
 // Some helpful macros
 #define PAGING_GET_ML4_INDEX(x) (((u64)x >> 39) & 0x1FF)
@@ -73,19 +74,19 @@ typedef struct {
 	T_PAGING_ML4_ENTRY Entries[512]; // For use by the CPU
 } __attribute__((packed)) T_PAGING_ML4;
 
-void           paging_init_simple(u64 KernelPhysicalStart, u64 KernelPhysicalSize);
-T_PAGING_ML4 * paging_get_ml4(void);
-u8             paging_get_physical(u64 Virtual, u64 *Physical);
-u8             paging_get_physical_ex(u64 Virtual, u64 *Physical,T_PAGING_ML4 *ML4);
+T_PAGING_ML4 *   paging_get_ml4(void);
+void             paging_set_ml4(u64 ML4Physical);
 
+u8               paging_get_physical(u64 Virtual, u64 *Physical);
+u8               paging_get_physical_ex(u64 Virtual, u64 *Physical,T_PAGING_ML4 *ML4);
 
-void paging_use_ml4(T_PAGING_ML4 *ML4);
-T_PAGING_ML4 *paging_get_kernel_ml4(void);
-/*void paging_map_kernel_page(u64 Virtual, u64 Physical);
-void paging_map_kernel_table(u64 Virtual, u64 Physical);
-void paging_map_page(u64 Virtual, u64 Physical, T_PAGING_DIRECTORY *Directory,
-                     u8 User, u8 RW);
-void paging_use_directory(T_PAGING_DIRECTORY *Directory);
-T_PAGING_DIRECTORY *paging_get_directory(void);*/
+// The temporary page is a page you can use to access some temporary physical
+// location. There is only one page, 4096 bytes large. Deal with it.
+void             paging_temp_page_setup(T_LOAD_CONTEXT *LoadContext);
+const inline u64 paging_temp_page_get_virtual(void)
+{
+    return 0xFF000000 + 511 * 0x1000;
+}
+void             paging_temp_page_set_physical(u64 Physical);
 
 #endif

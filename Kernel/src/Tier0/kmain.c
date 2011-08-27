@@ -1,6 +1,7 @@
 #include "types.h"
 #include "load_context.h"
 #include "Tier0/kstdio.h"
+#include "Tier0/kstdlib.h"
 //#include "Tier0/gdt.h"
 #include "Tier0/paging.h"
 //#include "Tier0/acpi.h"
@@ -19,6 +20,9 @@
 extern u64 _start;
 extern u64 _end;
 
+u8 test[4096 * 2];
+u8 test2[4096 * 2];
+
 // Real kernel entry point, called from loader
 void kmain(u32 LoadContextAddress)
 {
@@ -30,7 +34,7 @@ void kmain(u32 LoadContextAddress)
     else
         kclear();
     
-    kprintf("\n                         _           \n"
+    kprintf("                         _           \n"
             "   ___ _ _ ___ _ _ _____| |_ ___ ___ \n"
             "  |  _| | |  _| | |     | . | -_|  _|\n"
             "  |___|___|___|___|_|_|_|___|___|_|  \n\n");
@@ -48,21 +52,13 @@ void kmain(u32 LoadContextAddress)
     kprintf("[i] Loader physical: %x-%x.\n", LoadContext->LoaderPhysicalStart, LoadContext->LoaderPhysicalEnd);
     kprintf("[i] Kernel virtual:  %x-%x.\n", &_start, &_end);
 
-    paging_init_simple(LoadContext->KernelPhysicalStart, LoadContext->KernelPhysicalEnd - LoadContext->KernelPhysicalStart);
-    
-    //kprintf("physical: %x\n", PhysicalData);
-    //paging_get_physical_ex(0xf0000000, &test, paging_get_kernel_ml4());
-    //kprintf("%x\n", test);
+    paging_temp_page_setup(LoadContext);
+    //gdt_create_flat();
     
     for (;;) {}
     
-    /*gdt_create_flat();
-    
-    physmem_init();
-    system_parse_multiboot_header(MultibootHeader);
-    
     //Add kernel memory as reserved.
-    physmem_mark_as_used(0);
+    /*physmem_mark_as_used(0);
     physmem_mark_as_used(1);
     
     kprintf("[i] Booting via %s.\n", system_get_bootloader_name());

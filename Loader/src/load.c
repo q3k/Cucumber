@@ -306,7 +306,6 @@ u32 create_ia32e_paging(u64 KernelPhysicalStart, u64 KernelVirtualStart, u64 Ker
         page_tab_high[i] = Address | 3;
         
         Address += 0x1000;
-        
         if (i >= 512)
             break;
     }

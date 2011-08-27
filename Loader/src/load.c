@@ -301,14 +301,14 @@ u32 create_ia32e_paging(u64 KernelPhysicalStart, u64 KernelVirtualStart, u64 Ker
     }
 
     Address = KernelPhysicalStart;
-    for (u16 i = GET_TAB_ENTRY(KernelVirtualStart); i < GET_TAB_ENTRY(KernelVirtualStart) + NumPages; i++)
+    for (u16 i = GET_TAB_ENTRY(KernelVirtualStart); i < GET_TAB_ENTRY(KernelVirtualStart) + 512; i++)
     {
         page_tab_high[i] = Address | 3;
-        /*print_hex(KernelVirtualStart + i * 0x1000);
-        puts(" -> ");
-        print_hex(Address);
-        puts("\n");*/
+        
         Address += 0x1000;
+        
+        if (i >= 512)
+            break;
     }
 
     return 0;

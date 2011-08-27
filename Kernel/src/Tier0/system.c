@@ -89,6 +89,12 @@ void system_parse_load_context(T_LOAD_CONTEXT *LoadContext)
     KernelArea->Size = LoadContext->KernelPhysicalEnd - LoadContext->KernelPhysicalStart;
     g_SystemInfo.NumInvalidAreas++;
     
+    // ...and the loader physical location.
+    T_SYSTEM_INVALID_RAM *LoaderArea = &g_SystemInfo.InvalidMemoryAreas[g_SystemInfo.NumInvalidAreas];
+    LoaderArea->Base = LoadContext->LoaderPhysicalStart;
+    LoaderArea->Size = LoadContext->LoaderPhysicalEnd - LoadContext->LoaderPhysicalStart;
+    g_SystemInfo.NumInvalidAreas++;
+    
     kprintf("[i] Highest unavailable address is %x.\n", HighestUnavailable);
     physmem_init(HighestUnavailable);
 }

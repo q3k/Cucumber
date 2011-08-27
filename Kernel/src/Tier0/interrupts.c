@@ -3,7 +3,7 @@
 #include "Tier0/kstdio.h"
 #include "Tier0/pic.h"
 
-T_IDT_PTR g_idt_ptr;
+/*T_IDT_PTR g_idt_ptr;
 T_IDT_ENTRY g_idt_entries[256];
 T_ISR_STUB g_isr_stubs[256];
 
@@ -151,3 +151,4 @@ void interrupts_irq_finish(u8 IRQ)
     if (g_interrupts_chip == E_INTERRUPTS_CHIP_PIC)
         pic_eoi(IRQ);
 }
+*/

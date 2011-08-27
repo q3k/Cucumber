@@ -41,7 +41,11 @@ obj/src/%.o : src/%.c
 	@mkdir -p obj/src/$*.o
 	@rmdir obj/src/$*.o
 	@$(CC) $(CFLAGS) -c src/$*.c -o obj/src/$*.o
-	
+
+version-gen:
+	@echo "[i] Generating revision file..."
+	@contrib/rev-gen
+
 obj/src/%.xo : src/%.cpp
 	@echo "[i] Compiling $*.cpp ..."
 	@if [ -e obj/src/$*.xo ] ; then rm obj/src/$*.xo ; fi
@@ -63,7 +67,7 @@ Tier0: $(TIER0)
 #TIER1 := $(foreach i, $(TIER1OBJ), obj/$(i))
 #Tier1: $(TIER1)
 
-kernel.bin: Tier0
+kernel.bin: version-gen Tier0
 	@echo "[i] Linking kernel.bin..."
 	@$(LD) -T src/kernel.ld -o kernel.bin $(TIER0) $(TIER1)
 

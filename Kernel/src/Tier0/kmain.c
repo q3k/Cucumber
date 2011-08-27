@@ -1,4 +1,5 @@
 #include "types.h"
+#include "version.h"
 #include "load_context.h"
 #include "Tier0/kstdio.h"
 #include "Tier0/kstdlib.h"
@@ -39,6 +40,7 @@ void kmain(u32 LoadContextAddress)
             "  |  _| | |  _| | |     | . | -_|  _|\n"
             "  |___|___|___|___|_|_|_|___|___|_|  \n\n");
     kprintf("[i] Welcome to Cucumber (x86-64)!\n");
+    kprintf("[i] %s\n\n", CUCUMBER_VERION);
     kprintf("[i] Load Context @%x     \n", LoadContext);
     
     if (!LoadContext->MultibootUsed)
@@ -61,9 +63,10 @@ void kmain(u32 LoadContextAddress)
     if (RSDPAddress == 0)
         PANIC("No ACPI!");
     
-    for(;;) {}
-    /*interrupts_init_simple();
-    exceptions_init_simple();
+    
+    //interrupts_init_simple();
+    for (;;) {}
+    /*exceptions_init_simple();
     pic_init(0, 0);
     ps2_init_simple();
     kbd_layout_set_default();

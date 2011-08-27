@@ -1,0 +1,18 @@
+#!/usr/bin/env python2
+
+import os
+
+revision = "<unknown>"
+
+try:
+   revision = "git commit %s" % os.popen("git rev-parse --verify HEAD").read().split("\n")[0][:20]
+except Exception:
+   pass
+
+f = open("include/version.h", "w")
+f.write("""#ifndef __VERSION_H__
+#define __VERSION_H__
+
+#define CUCUMBER_VERION \"""" + revision + """\"
+
+#endif""")

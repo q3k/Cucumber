@@ -5,6 +5,7 @@ Loader/obj
 Loader/loader.bin
 Loader/dump
 kernel.bin
+Kernel/include/version.h
 obj
 dump
 *~

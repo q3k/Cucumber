@@ -6,6 +6,8 @@ Offset  = 0x00100000;
 SECTIONS
 {
     . = Offset;
+    
+    _start = .;
 
     .text :
     {
@@ -37,5 +39,7 @@ SECTIONS
         *(.comment)
         *(.eh_frame)
     }
+    
+    _end = .;
 }
 

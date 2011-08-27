@@ -14,6 +14,7 @@ SECTIONS
         _code = .;
         *(.text)
         *(.rodata*)
+        
         . = ALIGN(4096);
     }
 

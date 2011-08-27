@@ -45,10 +45,15 @@ void kmain(u32 LoadContextAddress)
     kprintf("[i] Booting via %s.\n", LoadContext->LoaderName);
     kprintf("[i] Memory available: %uk.\n", system_get_memory_upper());
     kprintf("[i] Kernel physical: %x-%x.\n", LoadContext->KernelPhysicalStart, LoadContext->KernelPhysicalEnd);
+    kprintf("[i] Loader physical: %x-%x.\n", LoadContext->LoaderPhysicalStart, LoadContext->LoaderPhysicalEnd);
     kprintf("[i] Kernel virtual:  %x-%x.\n", &_start, &_end);
 
-    //paging_init_simple();
-
+    paging_init_simple(LoadContext->KernelPhysicalStart, LoadContext->KernelPhysicalEnd - LoadContext->KernelPhysicalStart);
+    
+    //kprintf("physical: %x\n", PhysicalData);
+    //paging_get_physical_ex(0xf0000000, &test, paging_get_kernel_ml4());
+    //kprintf("%x\n", test);
+    
     for (;;) {}
     
     /*gdt_create_flat();

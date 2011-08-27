@@ -56,35 +56,31 @@ struct S_PAGING_ML4_ENTRY {
 typedef struct S_PAGING_ML4_ENTRY T_PAGING_ML4_ENTRY;
 
 
-// OS-defined structures - semi-loose.
+// OS-defined structures
 typedef struct {
 	T_PAGING_TAB_ENTRY Entries[512];
-	u64 PhysicalAddress;
-} T_PAGING_TAB;
+} __attribute__((packed)) T_PAGING_TAB;
 
 typedef struct {
-	T_PAGING_DIR_ENTRY Entries[512]; // For use by CPU
-	T_PAGING_TAB *Children[512];     // For use by OS
-	u64 PhysicalAddress;             // FOr use by OS when setting CPU
-} T_PAGING_DIR;
+	T_PAGING_DIR_ENTRY Entries[512]; // For use by the CPU
+} __attribute__((packed)) T_PAGING_DIR;
 
 typedef struct {
-	T_PAGING_DPT_ENTRY Entries[512];
-	T_PAGING_DIR *Children[512];
-	u64 PhysicalAddress;
-} T_PAGING_DPT;
+	T_PAGING_DPT_ENTRY Entries[512]; // For use by the CPU
+} __attribute__((packed)) T_PAGING_DPT;
 
 typedef struct {
-	T_PAGING_ML4_ENTRY Entries[512];
-	T_PAGING_DPT *Children[512];
-	u64 PhysicalAddress;
-} T_PAGING_ML4;
+	T_PAGING_ML4_ENTRY Entries[512]; // For use by the CPU
+} __attribute__((packed)) T_PAGING_ML4;
 
-void           paging_init_simple(u64 PhysicalVirtualOffset);
+void           paging_init_simple(u64 KernelPhysicalStart, u64 KernelPhysicalSize);
 T_PAGING_ML4 * paging_get_ml4(void);
 u8             paging_get_physical(u64 Virtual, u64 *Physical);
 u8             paging_get_physical_ex(u64 Virtual, u64 *Physical,T_PAGING_ML4 *ML4);
 
+
+void paging_use_ml4(T_PAGING_ML4 *ML4);
+T_PAGING_ML4 *paging_get_kernel_ml4(void);
 /*void paging_map_kernel_page(u64 Virtual, u64 Physical);
 void paging_map_kernel_table(u64 Virtual, u64 Physical);
 void paging_map_page(u64 Virtual, u64 Physical, T_PAGING_DIRECTORY *Directory,

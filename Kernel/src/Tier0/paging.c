@@ -1,20 +1,23 @@
 #include "Tier0/paging.h"
 #include "Tier0/kstdio.h"
 #include "Tier0/kstdlib.h"
+#include "Tier0/panic.h"
 #include "types.h"
 
 // The basic structures for the first kernel thread...
-// Since they are < 2Mib, their virtual addresses = their physical addresses -
-// some offset given by the loader
-//T_PAGING_ML4 g_paging_basic_ml4;
-// These are the structures for mapping the lowest 2MiB
-//T_PAGING_ML4 g_paging_basic_dpt_lowmap;
-//T_PAGING_ML4 g_paging_basic_dir_lowmap;
-//T_PAGING_ML4 g_paging_basic_tab_lowmap;
-// These are the structures for mapping the kernel memory (2Mib)
-//T_PAGING_ML4 g_paging_basic_dpt_kernel;
-//T_PAGING_ML4 g_paging_basic_dir_kernel;
-//T_PAGING_ML4 g_paging_basic_tab_kernel;
+// Here's an overview of how it will look like:
+//
+// ML4 -> DPT -> - DIR0 -> 512x Tab -> 512x512x Page
+//               - DIR1 -> 512x Tab -> 512x512x Page
+//               - DIR2 -> 512x Tab -> 512x512x Page
+//               - DIR3 -> 512x Tab -> 512x512x Page
+// This lets us have more-or-less dynamic paging of the whole first 32-bit
+// memory space... Since we can't have true dynamic allocation of paging
+// structures (as he wave no kernel heap, as we have no paging), we'll have to
+// settle for this. The size of this whole mess should be around 8mib or so.
+struct {
+    T_PAGING_ML4 *g_KernelML4; // This is allocated semi-dynamically
+} __attribute__((packed)) g_KernelPaging;
 
 T_PAGING_ML4 *paging_get_ml4(void)
 {
@@ -23,32 +26,36 @@ T_PAGING_ML4 *paging_get_ml4(void)
 	return (T_PAGING_ML4*)Address;
 }
 
+T_PAGING_ML4 *paging_get_kernel_ml4(void)
+{
+    //return &g_KernelPaging.ML4;
+    return 0;
+}
+
 u8 paging_get_physical_ex(u64 Virtual, u64 *Physical, T_PAGING_ML4 *ML4)
 {
-    u16 ML4Index = PAGING_GET_ML4_INDEX(Virtual);
+    /*u16 ML4Index = PAGING_GET_ML4_INDEX(Virtual);
     u16 DPTIndex = PAGING_GET_DPT_INDEX(Virtual);
     u16 DirIndex = PAGING_GET_DIR_INDEX(Virtual);
     u16 TabIndex = PAGING_GET_TAB_INDEX(Virtual);
+    
 
     if (!ML4->Entries[ML4Index].Present)
     	return 1;
-
     T_PAGING_DPT *DPT = ML4->Children[ML4Index];
 
     if (!DPT->Entries[DPTIndex].Present)
     	return 1;
-
     T_PAGING_DIR *Dir = DPT->Children[DPTIndex];
 
     if (!Dir->Entries[DirIndex].Present)
     	return 1;
-
     T_PAGING_TAB *Tab = Dir->Children[DirIndex];
 
     if (!Tab->Entries[TabIndex].Present)
     	return 1;
 
-    (*Physical) = (Tab->Entries[TabIndex].Physical << 12) + PAGING_GET_PAGE_OFFSET(Virtual);
+    (*Physical) = (Tab->Entries[TabIndex].Physical << 12) + PAGING_GET_PAGE_OFFSET(Virtual);*/
 
     return 0;
 }
@@ -57,13 +64,17 @@ u8 paging_get_physical(u64 Virtual, u64 *Physical)
 {
 	T_PAGING_ML4 *ml4 = paging_get_ml4();
     return paging_get_physical_ex(Virtual, Physical, ml4);
-	return 0;
 }
 
-// This initializes a very basic paging structure for the first kernel thread
-void paging_init_simple(u64 PhysicalVirtualOffset)
+// This initializes the paging structure for the first kernel thread
+void paging_init_simple(u64 KernelPhysicalStart, u64 KernelPhysicalSize)
 {
+    
+}
 
+void paging_use_ml4(T_PAGING_ML4 *ML4)
+{
+    //__asm volatile ( "mov %%rax, %%cr3\n" :: "a" (ML4->PhysicalAddress));
 }
 
 /*void paging_dump_directory(void)

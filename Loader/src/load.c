@@ -9,6 +9,8 @@ struct S_LOAD_CONTEXT {
     u64 KernelPhysicalStart;
     u64 KernelPhysicalEnd;
     
+    u64 LoaderPhysicalStart;
+    u64 LoaderPhysicalEnd;
     s8 LoaderName[80];
     
     // VGA text mode 0
@@ -28,6 +30,8 @@ u8 stdio_current_line = 0;
 u8 stdio_cur_x = 0, stdio_cur_y = 0;
 
 extern u64 omg64;
+extern u64 _end;
+extern u64 _start;
 
 u32 *pJmpLoadAddres = (u32 *)(((u8 *)&omg64) + 1);
 
@@ -467,6 +471,8 @@ u32 load(void *Multiboot, unsigned int Magic)
     g_Context.VGATextModeUsed = 1;
     g_Context.MultibootUsed = 1;
     g_Context.MultibootHeader = (u32)Multiboot;
+    g_Context.LoaderPhysicalStart = (u32)&_start;
+    g_Context.LoaderPhysicalEnd = (u32)&_end;
     
     puts("Load context 0x");
     print_hex((u32)&g_Context);
@@ -496,6 +502,6 @@ u32 load(void *Multiboot, unsigned int Magic)
     g_Context.VGACursorX = stdio_cur_x;
     g_Context.VGACursorY = stdio_cur_y;
     *pJmpLoadAddres = Header->Entry;
-
+    
     return 1;
 }

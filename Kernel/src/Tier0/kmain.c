@@ -2,7 +2,7 @@
 #include "load_context.h"
 #include "Tier0/kstdio.h"
 #include "Tier0/kstdlib.h"
-//#include "Tier0/gdt.h"
+#include "Tier0/gdt.h"
 #include "Tier0/paging.h"
 //#include "Tier0/acpi.h"
 //#include "Tier0/interrupts.h"
@@ -53,6 +53,8 @@ void kmain(u32 LoadContextAddress)
     kprintf("[i] Kernel virtual:  %x-%x.\n", &_start, &_end);
 
     paging_temp_page_setup(LoadContext);
+    
+    // Not using GDT in 64-bit mode... We'll use the loader-provided one.
     //gdt_create_flat();
     
     for (;;) {}

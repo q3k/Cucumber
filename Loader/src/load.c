@@ -315,11 +315,20 @@ u32 create_ia32e_paging(u64 KernelPhysicalStart, u64 KernelVirtualStart, u64 Ker
 
 u32 g_multiboot_header;
 T_LOAD_CONTEXT g_Context;
+extern u64 GDT;
 
 u32 load(void *Multiboot, unsigned int Magic)
 {
     clear();
     puts("Cucumber x86-64 loader...\n");
+    
+    puts("GDT: \n");
+    for (u32 i = 0; i < 5; i++)
+    {
+        puts("  ");
+        print_hex(*(&GDT + i));
+        puts("\n");
+    }
 
     g_multiboot_header = (u32)Multiboot;
 

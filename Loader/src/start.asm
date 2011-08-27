@@ -3,6 +3,7 @@ extern puts
 extern g_Context;
 global _loader
 global omg64
+global GDT
 
 ; Multiboot-related constants
 MODULEALIGN     equ 1 << 0

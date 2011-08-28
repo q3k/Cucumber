@@ -2,7 +2,11 @@
 #include "Tier0/paging.h"
 #include "Tier0/physmem.h"
 #include "Tier0/kstdio.h"
+#include "Tier0/kstdlib.h"
 #include "Tier0/panic.h"
+
+#define MP_TEMP_BUFFER_LENGTH 1024
+u8 g_EntriesBuffer[MP_TEMP_BUFFER_LENGTH];
 
 u64 mp_find_pointer(u64 Start, u64 End)
 {
@@ -80,11 +84,66 @@ void mp_initialize(void)
     if (PointerTable.TablePhysical)
     {
         kprintf("[i] MP Configuration Table present.\n");
-        // do something.
+        mp_parse_configuration_table(PointerTable.TablePhysical);
     }
     else
     {
         kprintf("[i] MP Configuration Type present.\n");
-        // do something else
+        // do something else... like panic.
+        PANIC("MP types not implemented!");
+    }
+}
+
+u8 mp_parse_cpu(u32 EntryAddress, u8 CPUNum)
+{
+    T_MP_ENTRY_CPU *CPU = (T_MP_ENTRY_CPU *)&g_EntriesBuffer[EntryAddress];
+    
+    if (CPU->FlagBootstrap)
+        kprintf("    CPU #%i, LAPIC sig %x, cpuid %x (bootstrap)\n", CPUNum, CPU->LAPICID, CPU->CPUID);
+    else if (!CPU->FlagAvailable)
+        kprintf("    CPU #%i, LAPIC sig %x, cpuid %x, (UNAVAILABLE!!!)", CPUNum, CPU->LAPICID, CPU->CPUID);
+    else
+        kprintf("    CPU #%i, LAPIC sig %x, cpuid %x (halted)\n", CPUNum, CPU->LAPICID, CPU->CPUID);
+    
+    return sizeof(T_MP_ENTRY_CPU);
+}
+
+void mp_parse_configuration_table(u32 TableAddress)
+{
+    T_MP_CONFIGURATION_HEADER Header;
+    physmem_read(TableAddress, 44, &Header);
+    
+    s8 OEMName[9];
+    kmemcpy(OEMName, Header.OEMName, 8);
+    OEMName[8] = 0x00;
+    
+    s8 ProductName[13];
+    kmemcpy(ProductName, Header.ProductName, 12);
+    ProductName[12] = 0x00;
+    
+    kprintf("[i] MP OEM: %s\n", OEMName);
+    kprintf("[i] MP Product: %s\n", ProductName);
+    
+    kprintf("[i] MP Base Configuration Table length: %i bytes.\n", Header.BaseTableLength);
+    
+    if (Header.BaseTableLength > MP_TEMP_BUFFER_LENGTH)
+        PANIC("MP BCT too big!");
+    
+    physmem_read(TableAddress + 44, Header.BaseTableLength - 44, g_EntriesBuffer);
+    
+    u32 EntryAddress = 0;
+    u8 CPUNum = 0;
+    while (1)
+    {
+        u8 EntryType = g_EntriesBuffer[EntryAddress];
+        switch (EntryType)
+        {
+            case 0x00:
+                EntryAddress += mp_parse_cpu(EntryAddress, CPUNum);
+                CPUNum++;
+                break;
+            default:
+                for (;;) {}
+        }
     }
 }

@@ -91,6 +91,8 @@ typedef union {
     u64 FlagsU64;
 } T_CPUID_FEATURES;
 
+#define CPUID_HAS(f) (g_SystemInfo.CPUFeatures.Flags.f ? 1 : 0)
+
 typedef struct {
     u64 MemoryLower;
     u64 MemoryUpper;

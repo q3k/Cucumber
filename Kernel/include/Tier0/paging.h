@@ -89,4 +89,15 @@ const inline u64 paging_temp_page_get_virtual(void)
 }
 void             paging_temp_page_set_physical(u64 Physical);
 
+// The MiniVMM is a mini virtual memory manager that manages, similarly to the
+// basic physical frame manager, allocation of _virtual_ frames, for use by
+// paging functions. This should be only used by major parts of the kernel, for
+// example to map some data structures to physical memory, or if physmem_read
+// calls would be too slow.
+void paging_minivmm_setup(u64 Start, u64 End);
+u64 paging_minivmm_allocate(void);
+
+// A simple page map call. This does no checks! Triple faults ahoy.
+void paging_map_page(u64 Virtual, u64 Physical);
+
 #endif

@@ -6,6 +6,7 @@
 #include "Tier0/gdt.h"
 #include "Tier0/paging.h"
 #include "Tier0/acpi.h"
+#include "Tier0/apic.h"
 #include "Tier0/smp.h"
 //#include "Tier0/interrupts.h"
 //#include "Tier0/ps2.h"
@@ -44,16 +45,21 @@ void kmain(u32 LoadContextAddress)
     kprintf("[i] %s\n\n", CUCUMBER_VERION);
     kprintf("[i] Load Context @%x     \n", LoadContext);
     
-    T_CPUID_FEATURES f;
-    f.FlagsU64 = 0;
-    f.Flags.PBE = 1;
-    kprintf("%x\n", f.FlagsU64);
     if (!LoadContext->MultibootUsed)
         PANIC("No Multiboot header provided by loader!");
 
     kprintf("[i] Multiboot header @%x\n", LoadContext->MultibootHeader);
+    
     system_parse_cpu_features();
-    for (;;) {}
+    
+    extern T_SYSTEM_INFO g_SystemInfo;
+    if (!CPUID_HAS(FPU))
+        PANIC("CPU doesn't have FPU!");
+    if (!CPUID_HAS(MSR))
+        PANIC("CPU doesn't support MSR!");
+    if (!CPUID_HAS(APIC))
+        PANIC("CPU doesn't support APIC!");
+    
     system_parse_load_context(LoadContext);
     kprintf("[i] Booting via %s.\n", LoadContext->LoaderName);
     kprintf("[i] Memory available: %uk.\n", system_get_memory_upper());
@@ -62,15 +68,18 @@ void kmain(u32 LoadContextAddress)
     kprintf("[i] Kernel virtual:  %x-%x.\n", &_start, &_end);
 
     paging_temp_page_setup(LoadContext);
+    paging_minivmm_setup((u64)&_end, 0xFF000000 + 511 * 4096);
     
     // Not using GDT in 64-bit mode... We'll use the loader-provided one.
     //gdt_create_flat();
     
     u64 RSDPAddress = acpi_find_rsdp();
     if (RSDPAddress == 0)
-        PANIC("No ACPI!");
+        kprintf("[w] No ACPI!\n");
     
     smp_initialize();
+    
+    apic_enable_lapic();
     
     //interrupts_init_simple();
     for (;;) {}

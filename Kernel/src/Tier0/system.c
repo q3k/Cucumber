@@ -11,26 +11,30 @@ T_SYSTEM_INFO g_SystemInfo;
 extern u64 _end;
 extern u64 _start;
 
+
+#define NOTIFY_ABOUT_FEATURE(f) if (g_SystemInfo.CPUFeatures.Flags.f) \
+    kprintf(" " #f);
+
 void system_parse_cpu_features(void)
 {
     g_SystemInfo.CPUFeatures.FlagsU64 = system_cpuid(1);
     
     kprintf("[i] CPU features:");
     
-    if (g_SystemInfo.CPUFeatures.Flags.ACPI)
-        kprintf(" ACPI");
-    
-    if (g_SystemInfo.CPUFeatures.Flags.APIC)
-        kprintf(" APIC");
-    
-    if (g_SystemInfo.CPUFeatures.Flags.FPU)
-        kprintf(" FPU");
-    
-    if (g_SystemInfo.CPUFeatures.Flags.IA64)
-        kprintf(" IA64");
-        
-    if (g_SystemInfo.CPUFeatures.Flags.PAE)
-        kprintf(" PAE");
+    NOTIFY_ABOUT_FEATURE(ACPI);
+    NOTIFY_ABOUT_FEATURE(AES);
+    NOTIFY_ABOUT_FEATURE(APIC);
+    NOTIFY_ABOUT_FEATURE(FPU);
+    NOTIFY_ABOUT_FEATURE(IA64);
+    NOTIFY_ABOUT_FEATURE(MMX);
+    NOTIFY_ABOUT_FEATURE(MSR);
+    NOTIFY_ABOUT_FEATURE(PAE);
+    NOTIFY_ABOUT_FEATURE(SSE);
+    NOTIFY_ABOUT_FEATURE(SSE2);
+    NOTIFY_ABOUT_FEATURE(SSE3);
+    NOTIFY_ABOUT_FEATURE(SSSE3);
+    NOTIFY_ABOUT_FEATURE(SSE4_1);
+    NOTIFY_ABOUT_FEATURE(SSE4_2);
     
     kprintf("\n");
 }
@@ -182,8 +186,19 @@ u64 system_cpuid(u32 Code)
 
 u8 system_msr_available(void)
 {
-    return 1;
+    return CPUID_HAS(MSR);
 }
 
-u64 system_msr_get(u32 MSR);
-void system_msr_set(u32 MSR, u64 Data);
+u64 system_msr_get(u32 MSR)
+{
+    u32 Low;
+    u32 High;
+    __asm__ volatile("rdmsr" : "=a"(Low), "=d"(High) : "c"(MSR));
+    
+    return (u64)Low | ((u64)High << 32);
+}
+
+void system_msr_set(u32 MSR, u64 Data)
+{
+    __asm__ volatile("wrmsr" :: "a"((u32)(Data & 0xFFFFFFFF)), "d"((u32)(Data >> 32)), "c"(MSR));
+}

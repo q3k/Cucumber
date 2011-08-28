@@ -7,7 +7,14 @@
 struct {
     T_PAGING_TAB_ENTRY *TempPage; // For temp page mapping.
     u64 TempPageVirtual;
-} __attribute__((packed)) g_KernelPaging;
+} g_KernelPaging;
+
+struct {
+    u64 Start;
+    u64 End;
+    
+    u64 Top;
+} g_MiniVMM;
 
 T_PAGING_ML4 *paging_get_ml4(void)
 {
@@ -82,4 +89,36 @@ u8 paging_get_physical(u64 Virtual, u64 *Physical)
 void paging_set_ml4(u64 ML4Physical)
 {
     __asm volatile ( "mov %%rax, %%cr3\n" :: "a" (ML4Physical));
+}
+
+void paging_minivmm_setup(u64 Start, u64 End)
+{
+    g_MiniVMM.Start = Start;
+    g_MiniVMM.End = End;
+    g_MiniVMM.Top = Start;
+}
+
+u64 paging_minivmm_allocate(void)
+{
+    if (g_MiniVMM.Top + 0x1000 > g_MiniVMM.End)
+        PANIC("MiniVMM out of memory!");
+    
+    u64 Result = g_MiniVMM.Top;
+    g_MiniVMM.Top += 4096;
+    
+    return Result;
+}
+
+void paging_map_page(u64 Virtual, u64 Physical)
+{
+    T_PAGING_ML4 *ML4 = paging_get_ml4();
+    u64 aDPT = ML4->Entries[PAGING_GET_ML4_INDEX(Virtual)].Physical << 12;
+    T_PAGING_DPT *DPT = (T_PAGING_DPT *)aDPT;
+    u64 aDir = DPT->Entries[PAGING_GET_DPT_INDEX(Virtual)].Physical << 12;
+    T_PAGING_DIR *Dir = (T_PAGING_DIR *)aDir;
+    u64 aTab = Dir->Entries[PAGING_GET_DIR_INDEX(Virtual)].Physical << 12;
+    T_PAGING_TAB *Tab = (T_PAGING_TAB *)aTab;
+    
+    Tab->Entries[PAGING_GET_TAB_INDEX(Virtual)].Physical = Physical >> 12;    
+    __asm__ volatile("invlpg %0" :: "m"(*(u32 *)Virtual));
 }

@@ -105,6 +105,24 @@ void smp_initialize(void)
     }
 }
 
+u8 smp_parse_io_interrupt(u32 EntryAddress)
+{
+    //T_SMP_ENTRY_IO_INTERRUPT *Interrupt = (T_SMP_ENTRY_IO_INTERRUPT *)&g_EntriesBuffer[EntryAddress];
+    
+    //kprintf("    IO Interrupt %i %i %i %i %i %i %i\n", Interrupt->InterruptType, Interrupt->Polarity, Interrupt->TriggerMode, Interrupt->SourceBusID, Interrupt->SourceBusIRQ, Interrupt->DestinationIOAPICID, Interrupt->DestinationIOAPICINTIN);
+    
+    return 8;
+}
+
+u8 smp_parse_local_interrupt(u32 EntryAddress)
+{
+    //T_SMP_ENTRY_LOCAL_INTERRUPT *Interrupt = (T_SMP_ENTRY_LOCAL_INTERRUPT *)&g_EntriesBuffer[EntryAddress];
+    
+    //kprintf("    L  Interrupt %i %i %i %i %i %i %i\n", Interrupt->InterruptType, Interrupt->Polarity, Interrupt->TriggerMode, Interrupt->SourceBusID, Interrupt->SourceBusIRQ, Interrupt->DestinationLAPICID, Interrupt->DestinationLAPICLINTIN);
+    
+    return 8;
+}
+
 u8 smp_parse_ioapic(u32 EntryAddress)
 {
     T_SMP_ENTRY_IOAPIC *IOAPIC  = (T_SMP_ENTRY_IOAPIC *)&g_EntriesBuffer[EntryAddress];
@@ -195,7 +213,7 @@ void smp_parse_configuration_table(u32 TableAddress)
     g_SMP.NumCPUs = 0;
     g_SMP.NumIOAPICs = 0;
     
-    while (1)
+    while (EntryAddress < Header.BaseTableLength - sizeof(T_SMP_CONFIGURATION_HEADER))
     {
         u8 EntryType = g_EntriesBuffer[EntryAddress];
         switch (EntryType)
@@ -209,8 +227,12 @@ void smp_parse_configuration_table(u32 TableAddress)
             case 0x02:
                 EntryAddress += smp_parse_ioapic(EntryAddress);
                 break;
-            default:
-                for (;;) {}
+            case 0x03:
+                EntryAddress += smp_parse_io_interrupt(EntryAddress);
+                break;
+            case 0x04:
+                EntryAddress += smp_parse_local_interrupt(EntryAddress);
+                break;
         }
     }
 }

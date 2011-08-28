@@ -44,10 +44,16 @@ void kmain(u32 LoadContextAddress)
     kprintf("[i] %s\n\n", CUCUMBER_VERION);
     kprintf("[i] Load Context @%x     \n", LoadContext);
     
+    T_CPUID_FEATURES f;
+    f.FlagsU64 = 0;
+    f.Flags.PBE = 1;
+    kprintf("%x\n", f.FlagsU64);
     if (!LoadContext->MultibootUsed)
         PANIC("No Multiboot header provided by loader!");
 
     kprintf("[i] Multiboot header @%x\n", LoadContext->MultibootHeader);
+    system_parse_cpu_features();
+    for (;;) {}
     system_parse_load_context(LoadContext);
     kprintf("[i] Booting via %s.\n", LoadContext->LoaderName);
     kprintf("[i] Memory available: %uk.\n", system_get_memory_upper());

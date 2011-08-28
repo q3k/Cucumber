@@ -79,6 +79,51 @@ typedef struct {
     u32 Address;
 } __attribute__((packed)) T_SMP_ENTRY_IOAPIC;
 
+typedef enum {
+    E_SMP_INTERRUPT_TYPE_INT = 0,
+    E_SMP_INTERRUPT_TYPE_NMI = 1,
+    E_SMP_INTERRUPT_TYPE_SMI = 2,
+    E_SMP_INTERRUPT_TYPE_ExtINT = 3
+} E_SMP_INTERRUPT_TYPE;
+
+typedef enum {
+    E_SMP_POLARITY_BUS = 0,
+    E_SMP_POLARITY_HIGH = 1,
+    E_SMP_POLARITY_RESERVED = 2,
+    E_SMP_POLARITY_LOW = 3
+} E_SMP_POLARITY;
+
+typedef enum {
+    E_SMP_TRIGGER_MODE_BUS = 0,
+    E_SMP_TRIGGER_MODE_EDGE = 1,
+    E_SMP_TRIGGER_MODE_RESERVED = 2,
+    E_SMP_TRIGGER_MODE_LEVEL = 3
+} E_SMP_TRIGGER_MODE;
+
+typedef struct {
+    u8 EntryType;
+    E_SMP_INTERRUPT_TYPE InterruptType : 8;
+    E_SMP_POLARITY Polarity : 2;
+    E_SMP_TRIGGER_MODE TriggerMode : 2;
+    u16 Reserved : 12;
+    u8 SourceBusID;
+    u8 SourceBusIRQ;
+    u8 DestinationIOAPICID;
+    u8 DestinationIOAPICINTIN;
+}  __attribute__((packed)) T_SMP_ENTRY_IO_INTERRUPT;
+
+typedef struct {
+    u8 EntryType;
+    E_SMP_INTERRUPT_TYPE InterruptType : 8; //hack?
+    E_SMP_POLARITY Polarity : 2;
+    E_SMP_TRIGGER_MODE TriggerMode : 2;
+    u16 Reserved : 12;
+    u8 SourceBusID;
+    u8 SourceBusIRQ;
+    u8 DestinationLAPICID;
+    u8 DestinationLAPICLINTIN;
+} __attribute__((packed)) T_SMP_ENTRY_LOCAL_INTERRUPT;
+
 u64 smp_find_pointer(u64 Start, u64 End);
 void smp_initialize(void);
 void smp_parse_configuration_table(u32 TableAddress);

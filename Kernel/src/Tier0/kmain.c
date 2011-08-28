@@ -6,7 +6,7 @@
 #include "Tier0/gdt.h"
 #include "Tier0/paging.h"
 #include "Tier0/acpi.h"
-#include "Tier0/mp.h"
+#include "Tier0/smp.h"
 //#include "Tier0/interrupts.h"
 //#include "Tier0/ps2.h"
 #include "Tier0/system.h"
@@ -64,7 +64,7 @@ void kmain(u32 LoadContextAddress)
     if (RSDPAddress == 0)
         PANIC("No ACPI!");
     
-    mp_initialize();
+    smp_initialize();
     
     //interrupts_init_simple();
     for (;;) {}

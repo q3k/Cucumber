@@ -3,6 +3,25 @@
 
 #include "types.h"
 
+// OS structures
+typedef enum {
+    E_MP_CPU_STATE_DISABLED,
+    E_MP_CPU_STATE_HALTED,
+    E_MP_CPU_STATE_IDLE,
+    E_MP_CPU_STATE_RUNNING
+} E_MP_CPU_STATE;
+
+typedef struct {
+    u8 ID;
+    u32 CPUID;
+    
+    u8 LAPICID;
+    E_MP_CPU_STATE State;
+    
+    u8 Bootstrap : 1;
+} T_MP_CPU;
+
+// BIOS-provided Structures
 typedef struct {
     s8 Signature[4];
     u32 TablePhysical;

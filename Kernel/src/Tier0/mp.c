@@ -8,6 +8,13 @@
 #define MP_TEMP_BUFFER_LENGTH 1024
 u8 g_EntriesBuffer[MP_TEMP_BUFFER_LENGTH];
 
+#define MP_MAX_CPU 32
+
+struct {
+    T_MP_CPU CPUs[MP_MAX_CPU];
+    u8 NumCPUs;
+} g_MP;
+
 u64 mp_find_pointer(u64 Start, u64 End)
 {
     for (u64 i = Start & ~((u64)0x10); i < End; i += 16)
@@ -94,16 +101,35 @@ void mp_initialize(void)
     }
 }
 
-u8 mp_parse_cpu(u32 EntryAddress, u8 CPUNum)
+u8 mp_parse_cpu(u32 EntryAddress)
 {
+    u8 i = g_MP.NumCPUs;
     T_MP_ENTRY_CPU *CPU = (T_MP_ENTRY_CPU *)&g_EntriesBuffer[EntryAddress];
     
     if (CPU->FlagBootstrap)
-        kprintf("    CPU #%i, LAPIC sig %x, cpuid %x (bootstrap)\n", CPUNum, CPU->LAPICID, CPU->CPUID);
+    {
+        kprintf("    CPU #%i, LAPIC sig %x, cpuid %x (bootstrap)\n", i, CPU->LAPICID, CPU->CPUID);
+        g_MP.CPUs[i].Bootstrap = 1;
+        g_MP.CPUs[i].State = E_MP_CPU_STATE_RUNNING;
+    }
     else if (!CPU->FlagAvailable)
-        kprintf("    CPU #%i, LAPIC sig %x, cpuid %x, (UNAVAILABLE!!!)", CPUNum, CPU->LAPICID, CPU->CPUID);
+    {
+        kprintf("    CPU #%i, LAPIC sig %x, cpuid %x, (UNAVAILABLE!!!)", i, CPU->LAPICID, CPU->CPUID);
+        g_MP.CPUs[i].Bootstrap = 0;
+        g_MP.CPUs[i].State = E_MP_CPU_STATE_DISABLED;
+    }
     else
-        kprintf("    CPU #%i, LAPIC sig %x, cpuid %x (halted)\n", CPUNum, CPU->LAPICID, CPU->CPUID);
+    {
+        kprintf("    CPU #%i, LAPIC sig %x, cpuid %x (halted)\n", i, CPU->LAPICID, CPU->CPUID);
+        g_MP.CPUs[i].Bootstrap = 0;
+        g_MP.CPUs[i].State = E_MP_CPU_STATE_HALTED;
+    }
+    
+    g_MP.CPUs[i].ID = i;
+    g_MP.CPUs[i].CPUID = CPU->CPUID;
+    g_MP.CPUs[i].LAPICID = CPU->LAPICID;
+    
+    g_MP.NumCPUs++;
     
     return sizeof(T_MP_ENTRY_CPU);
 }
@@ -132,15 +158,14 @@ void mp_parse_configuration_table(u32 TableAddress)
     physmem_read(TableAddress + 44, Header.BaseTableLength - 44, g_EntriesBuffer);
     
     u32 EntryAddress = 0;
-    u8 CPUNum = 0;
+    g_MP.NumCPUs = 0;
     while (1)
     {
         u8 EntryType = g_EntriesBuffer[EntryAddress];
         switch (EntryType)
         {
             case 0x00:
-                EntryAddress += mp_parse_cpu(EntryAddress, CPUNum);
-                CPUNum++;
+                EntryAddress += mp_parse_cpu(EntryAddress);
                 break;
             default:
                 for (;;) {}

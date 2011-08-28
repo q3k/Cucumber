@@ -9,10 +9,14 @@
 u8 g_EntriesBuffer[SMP_TESMP_BUFFER_LENGTH];
 
 #define SMP_MAX_CPU 32
+#define SMP_MAX_IOAPIC 9
 
 struct {
     T_SMP_CPU CPUs[SMP_MAX_CPU];
     u8 NumCPUs;
+    
+    T_SMP_IOAPIC IOAPICs[SMP_MAX_IOAPIC];
+    u8 NumIOAPICs;
 } g_SMP;
 
 u64 smp_find_pointer(u64 Start, u64 End)
@@ -101,6 +105,36 @@ void smp_initialize(void)
     }
 }
 
+u8 smp_parse_ioapic(u32 EntryAddress)
+{
+    T_SMP_ENTRY_IOAPIC *IOAPIC  = (T_SMP_ENTRY_IOAPIC *)&g_EntriesBuffer[EntryAddress];
+    
+    if (IOAPIC->Available)
+    {
+        g_SMP.IOAPICs[g_SMP.NumIOAPICs].ID = IOAPIC->ID;
+        g_SMP.IOAPICs[g_SMP.NumIOAPICs].Address = IOAPIC->Address;
+        
+        kprintf("    IOAPIC ID %i, @0x%x\n", IOAPIC->ID, IOAPIC->Address);
+    }
+    else
+        kprintf("    IOAPIC ID %i, UNAVAILABLE!!!", IOAPIC->ID);
+    
+    return 8;
+}
+
+u8 smp_parse_bus(u32 EntryAddress)
+{
+    T_SMP_ENTRY_BUS *Bus = (T_SMP_ENTRY_BUS *)&g_EntriesBuffer[EntryAddress];
+    
+    s8 Name[7];
+    kmemcpy(Name, Bus->BusType, 6);
+    Name[6] = 0x00;
+    
+    kprintf("    Bus #%i, %s\n", Bus->BusID, Name);
+    
+    return 8;
+}
+
 u8 smp_parse_cpu(u32 EntryAddress)
 {
     u8 i = g_SMP.NumCPUs;
@@ -159,6 +193,8 @@ void smp_parse_configuration_table(u32 TableAddress)
     
     u32 EntryAddress = 0;
     g_SMP.NumCPUs = 0;
+    g_SMP.NumIOAPICs = 0;
+    
     while (1)
     {
         u8 EntryType = g_EntriesBuffer[EntryAddress];
@@ -166,6 +202,12 @@ void smp_parse_configuration_table(u32 TableAddress)
         {
             case 0x00:
                 EntryAddress += smp_parse_cpu(EntryAddress);
+                break;
+            case 0x01:
+                EntryAddress += smp_parse_bus(EntryAddress);
+                break;
+            case 0x02:
+                EntryAddress += smp_parse_ioapic(EntryAddress);
                 break;
             default:
                 for (;;) {}

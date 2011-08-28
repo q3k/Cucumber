@@ -21,6 +21,11 @@ typedef struct {
     u8 Bootstrap : 1;
 } T_SMP_CPU;
 
+typedef struct {
+    u8 ID;
+    u32 Address;
+} T_SMP_IOAPIC;
+
 // BIOS-provided Structures
 typedef struct {
     s8 Signature[4];
@@ -58,6 +63,21 @@ typedef struct {
     u32 Reserved1;
     u32 Reserved2;
 } __attribute__((packed)) T_SMP_ENTRY_CPU;
+
+typedef struct {
+    u8 EntryType;
+    u8 BusID;
+    u8 BusType[6];
+} __attribute__((packed)) T_SMP_ENTRY_BUS;
+
+typedef struct {
+    u8 EntryType;
+    u8 ID;
+    u8 Version;
+    u8 Available : 1;
+    u8 Reserved  : 7;
+    u32 Address;
+} __attribute__((packed)) T_SMP_ENTRY_IOAPIC;
 
 u64 smp_find_pointer(u64 Start, u64 End);
 void smp_initialize(void);

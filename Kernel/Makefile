@@ -13,7 +13,7 @@ default: emulate-nohdd
 
 SHELL:=/bin/bash
 ENV:=/usr/xdev/bin
-TARGET:=x86_64-pc-elf
+TARGET:=x86_64-elf
 CC:=$(ENV)/$(TARGET)-gcc
 CX:=$(ENV)/$(TARGET)-g++
 AS:=nasm

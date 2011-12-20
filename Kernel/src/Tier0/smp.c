@@ -135,7 +135,7 @@ u8 smp_parse_ioapic(u32 EntryAddress)
         kprintf("    IOAPIC ID %i, @0x%x\n", IOAPIC->ID, IOAPIC->Address);
     }
     else
-        kprintf("    IOAPIC ID %i, UNAVAILABLE!!!", IOAPIC->ID);
+        kprintf("    IOAPIC ID %i, unavailable!!!", IOAPIC->ID);
     
     return 8;
 }
@@ -166,7 +166,7 @@ u8 smp_parse_cpu(u32 EntryAddress)
     }
     else if (!CPU->FlagAvailable)
     {
-        kprintf("    CPU #%i, LAPIC sig %x, cpuid %x, (UNAVAILABLE!!!)", i, CPU->LAPICID, CPU->CPUID);
+        kprintf("    CPU #%i, LAPIC sig %x, cpuid %x, (unavailable", i, CPU->LAPICID, CPU->CPUID);
         g_SMP.CPUs[i].Bootstrap = 0;
         g_SMP.CPUs[i].State = E_SMP_CPU_STATE_DISABLED;
     }

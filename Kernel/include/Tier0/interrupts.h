@@ -14,7 +14,8 @@ struct S_IDT_ENTRY {
     u16 Selector;
     u8 Zero;
     u8 Type;
-    u16 OffsetHigh;
+    u16 OffsetMiddle;
+    u32 OffsetHigh;
 } __attribute__ ((packed));
 typedef struct S_IDT_ENTRY T_IDT_ENTRY;
 
@@ -33,27 +34,31 @@ enum E_INTERRUPTS_CHIP {
 };
 typedef enum E_INTERRUPTS_CHIP T_INTERRUPTS_CHIP;
 
-// This is a structure that allows easy access to a 12-byte ASM stub which
+// This is a structure that allows easy access to a 62-byte ASM stub which
 // calls a stdcall handler. Not the best way and not the shortest stub,
 // but hey, it works.
 struct S_ISR_STUB {
-    u16 Code1;
-    u8 Code2;
+    u64 Code1;
+    u64 Code2;
+    u64 Code3;
+    u16 Code4;
     u64 Handler;
-    u32 Code3;
-    u8 Code4;
+    u64 Code5;
+    u64 Code6;
+    u64 Code7;
+    u32 Code8;
 } __attribute__ ((packed));
 typedef struct S_ISR_STUB T_ISR_STUB;
 
 typedef struct {
-    u64 edi, esi, ebp, esp, ebx, edx, ecx, eax;
-    u32 Error;
-    u32 eip, cs, eflags, useresp, ss;
+    u64 r15, r14, r13, r12, r11, r10, r9, r8, rdi, rsi, rbp, rdx, rcx, rbx, rax;
+    u64 Error;
+    u64 eip, cs, eflags, useresp, ss; // no idea about these in long mode - we'll figure that out later
 } T_ISR_REGISTERS_ERR;
 
 typedef struct {
-    u32 edi, esi, ebp, esp, ebx, edx, ecx, eax;
-    u32 eip, cs, eflags, useresp, ss;
+    u64 r15, r14, r13, r12, r11, r10, r9, r8, rdi, rsi, rbp, rdx, rcx, rbx, rax;
+    u64 eip, cs, eflags, useresp, ss; // ditto
 } T_ISR_REGISTERS;
 
 u8 interrupts_init_idt(void);

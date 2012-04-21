@@ -3,12 +3,17 @@
 #include "Tier0/kstdio.h"
 #include "Tier0/pic.h"
 
-/*T_IDT_PTR g_idt_ptr;
-T_IDT_ENTRY g_idt_entries[256];
-T_ISR_STUB g_isr_stubs[256];
+struct {
+    // IDT
+    T_IDT_PTR IDTPointer;
+    T_IDT_ENTRY IDTEntries[256];
+    T_ISR_STUB ISRStubs[256];
 
-T_INTERRUPTS_CHIP g_interrupts_chip = E_INTERRUPTS_CHIP_UNK;
+    // IRQ/APIC/Whatever
+    T_INTERRUPTS_CHIP Chip = E_INTERRUPTS_CHIP_UNK;
+} g_Interrupts;
 
+// This shit does nothing
 void interrupts_set_chip(T_INTERRUPTS_CHIP Chip)
 {
     g_interrupts_chip = Chip;
@@ -21,7 +26,7 @@ void interrupts_set_chip(T_INTERRUPTS_CHIP Chip)
         kprintf("[i] Interrupts: Switching to intel I/O APIC based "
                 "interrupts.\n");
 }
-
+/*
 u8 interrupts_init_idt(void)
 {
     g_idt_ptr.Limit = 256 * 8;

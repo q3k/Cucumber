@@ -26,33 +26,35 @@ void interrupts_set_chip(T_INTERRUPTS_CHIP Chip)
         kprintf("[i] Interrupts: Switching to intel I/O APIC based "
                 "interrupts.\n");
 }
-/*
+
 u8 interrupts_init_idt(void)
 {
-    g_idt_ptr.Limit = 256 * 8;
+    g_Interrups.IDTPointer.Limit = 256 * 16;
 
-    u32 Physical = 0;
-    u8 Result = paging_get_physical((u32)g_idt_entries, &Physical);
+    u64 Physical = 0;
+    u8 Result = paging_get_physical((u64)g_Interrupts.IDTEntries, &Physical);
     if (!Result)
         return 0;
 
-    kprintf("[i] Setting up IDT at 0x%x (0x%x Virtual).\n", Physical, g_idt_entries);
+    kprintf("[i] Setting up IDT at 0x%x (0x%x Virtual).\n", Physical, g_Interrupts.IDTEntries);
     
-    g_idt_ptr.Base = Physical;
+    g_Interrupts.IDTPointer.Base = Physical;
 
     // Null those entries!
     for (u16 i = 0; i < 256; i++)
     {
         // Maybe I should access the struct's members...
-        // Or i can just cast that to to u32's and null them.
+        // Or i can just cast that to to u64's and null them.
         // This will set the Present flag to 0 either way
-        *((u32 *)(&g_idt_entries[i])) = 0;
-        *(((u32 *)(&g_idt_entries[i]) + 1)) = 0;
+        *((u64 *)(&g_idt_entries[i])) = 0;
+        *(((u64 *)(&g_idt_entries[i]) + 1)) = 0;
+        *(((u64 *)(&g_idt_entries[i]) + 2)) = 0;
+        *(((u64 *)(&g_idt_entries[i]) + 3)) = 0;
     }
 
     return 1; 
 }
-
+/*
 // This creates an ASM stub for 
 
 // This creates a 12-byte ASM stub for a handler

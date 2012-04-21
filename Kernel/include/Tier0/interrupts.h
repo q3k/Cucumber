@@ -5,17 +5,22 @@
 
 struct S_IDT_PTR {
     u16 Limit;
-    u32 Base;
+    u64 Base;
 } __attribute__ ((packed));
 typedef struct S_IDT_PTR T_IDT_PTR;
 
 struct S_IDT_ENTRY {
     u16 OffsetLow;
     u16 Selector;
-    u8 Zero;
-    u8 Type;
+    u8 Zero1;
+    u8 Type    : 4;
+    u8 Zero2   : 1;
+    u8 DPL     : 2;
+    u8 Present : 1;
+
     u16 OffsetMiddle;
     u32 OffsetHigh;
+    u64 Reserved;
 } __attribute__ ((packed));
 typedef struct S_IDT_ENTRY T_IDT_ENTRY;
 

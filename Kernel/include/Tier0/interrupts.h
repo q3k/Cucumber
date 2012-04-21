@@ -58,12 +58,12 @@ typedef struct S_ISR_STUB T_ISR_STUB;
 typedef struct {
     u64 r15, r14, r13, r12, r11, r10, r9, r8, rdi, rsi, rbp, rdx, rcx, rbx, rax;
     u64 Error;
-    u64 eip, cs, eflags, useresp, ss; // no idea about these in long mode - we'll figure that out later
+    u64 eip, cs, eflags, rsp, ss; // no idea about these in long mode - we'll figure that out later
 } T_ISR_REGISTERS_ERR;
 
 typedef struct {
     u64 r15, r14, r13, r12, r11, r10, r9, r8, rdi, rsi, rbp, rdx, rcx, rbx, rax;
-    u64 eip, cs, eflags, useresp, ss; // ditto
+    u64 eip, cs, eflags, rsp, ss; // ditto
 } T_ISR_REGISTERS;
 
 u8 interrupts_init_idt(void);

@@ -115,15 +115,15 @@ void kpanic(const s8 *Error, const s8 *File, u32 Line)
     
     T_ISR_REGISTERS R;
         
-    __asm__ volatile("mov %%eax, %0": "=r"(R.eax));
-    __asm__ volatile("mov %%ebx, %0": "=r"(R.ebx));
-    __asm__ volatile("mov %%ecx, %0": "=r"(R.ecx));
-    __asm__ volatile("mov %%edx, %0": "=r"(R.edx));
+    __asm__ volatile("mov %%rax, %0": "=r"(R.rax));
+    __asm__ volatile("mov %%rbx, %0": "=r"(R.rbx));
+    __asm__ volatile("mov %%rcx, %0": "=r"(R.rcx));
+    __asm__ volatile("mov %%rdx, %0": "=r"(R.rdx));
     
-    __asm__ volatile("mov %%esi, %0": "=r"(R.esi));
-    __asm__ volatile("mov %%edi, %0": "=r"(R.edi));
-    __asm__ volatile("mov %%ebp, %0": "=r"(R.ebp));
-    __asm__ volatile("mov %%esp, %0": "=r"(R.esp));
+    __asm__ volatile("mov %%rsi, %0": "=r"(R.rsi));
+    __asm__ volatile("mov %%rdi, %0": "=r"(R.rdi));
+    __asm__ volatile("mov %%rbp, %0": "=r"(R.rbp));
+    __asm__ volatile("mov %%rsp, %0": "=r"(R.rsp));
     
     __asm__ volatile("mov %%cs, %0": "=r"(R.cs));
     

@@ -10,13 +10,13 @@ struct {
     T_ISR_STUB ISRStubs[256];
 
     // IRQ/APIC/Whatever
-    T_INTERRUPTS_CHIP Chip = E_INTERRUPTS_CHIP_UNK;
+    T_INTERRUPTS_CHIP Chip;
 } g_Interrupts;
 
 // This shit does nothing
 void interrupts_set_chip(T_INTERRUPTS_CHIP Chip)
 {
-    g_interrupts_chip = Chip;
+    g_Interrupts.Chip = Chip;
 
     if (Chip == E_INTERRUPTS_CHIP_UNK)
         kprintf("[i] Interrupts: Turning off.\n");
@@ -29,7 +29,7 @@ void interrupts_set_chip(T_INTERRUPTS_CHIP Chip)
 
 u8 interrupts_init_idt(void)
 {
-    g_Interrups.IDTPointer.Limit = 256 * 16;
+    g_Interrupts.IDTPointer.Limit = 256 * 16;
 
     u64 Physical = 0;
     u8 Result = paging_get_physical((u64)g_Interrupts.IDTEntries, &Physical);
@@ -46,10 +46,10 @@ u8 interrupts_init_idt(void)
         // Maybe I should access the struct's members...
         // Or i can just cast that to to u64's and null them.
         // This will set the Present flag to 0 either way
-        *((u64 *)(&g_idt_entries[i])) = 0;
-        *(((u64 *)(&g_idt_entries[i]) + 1)) = 0;
-        *(((u64 *)(&g_idt_entries[i]) + 2)) = 0;
-        *(((u64 *)(&g_idt_entries[i]) + 3)) = 0;
+        *((u64 *)(&g_Interrupts.IDTEntries[i])) = 0;
+        *(((u64 *)(&g_Interrupts.IDTEntries[i]) + 1)) = 0;
+        *(((u64 *)(&g_Interrupts.IDTEntries[i]) + 2)) = 0;
+        *(((u64 *)(&g_Interrupts.IDTEntries[i]) + 3)) = 0;
     }
 
     return 1; 

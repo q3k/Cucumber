@@ -20,7 +20,7 @@ struct S_IDT_ENTRY {
 
     u16 OffsetMiddle;
     u32 OffsetHigh;
-    u64 Reserved;
+    u32 Reserved;
 } __attribute__ ((packed));
 typedef struct S_IDT_ENTRY T_IDT_ENTRY;
 

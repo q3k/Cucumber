@@ -7,6 +7,10 @@
 struct {
     T_PAGING_TAB_ENTRY *TempPage; // For temp page mapping.
     u64 TempPageVirtual;
+
+    u64 KernelVirtualStart;
+    u64 KernelPhysicalStart;
+    u64 KernelSize;
 } g_KernelPaging;
 
 struct {
@@ -74,10 +78,23 @@ void paging_temp_page_set_physical(u64 Physical)
     __asm__ volatile("invlpg %0" :: "m"(*(u32 *)g_KernelPaging.TempPageVirtual));
 }
 
+void paging_kernel_initialize(u64 KernelVirtualStart, u64 KernelPhysicalStart, u64 KernelSize)
+{
+    g_KernelPaging.KernelVirtualStart = KernelVirtualStart;
+    g_KernelPaging.KernelPhysicalStart = KernelPhysicalStart;
+    g_KernelPaging.KernelSize = KernelSize;
+}
+
 u8 paging_get_physical_ex(u64 Virtual, u64 *Physical, T_PAGING_ML4 *ML4)
 {
-    PANIC("not implemented!");
-    return 0;
+    if (Virtual < g_KernelPaging.KernelVirtualStart || Virtual > g_KernelPaging.KernelVirtualStart + g_KernelPaging.KernelSize)
+    {
+        PANIC("not implemented");
+        return 0;
+    }
+
+    *Physical = Virtual - g_KernelPaging.KernelVirtualStart + g_KernelPaging.KernelPhysicalStart;
+    return 1;
 }
 
 u8 paging_get_physical(u64 Virtual, u64 *Physical)

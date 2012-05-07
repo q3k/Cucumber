@@ -80,6 +80,8 @@ void             paging_set_ml4(u64 ML4Physical);
 u8               paging_get_physical(u64 Virtual, u64 *Physical);
 u8               paging_get_physical_ex(u64 Virtual, u64 *Physical,T_PAGING_ML4 *ML4);
 
+void paging_kernel_initialize(u64 KernelVirtualStart, u64 KernelPhysicalStart, u64 KernelSize);
+
 // The temporary page is a page you can use to access some temporary physical
 // location. There is only one page, 4096 bytes large. Deal with it.
 void             paging_temp_page_setup(T_LOAD_CONTEXT *LoadContext);

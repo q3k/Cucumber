@@ -105,7 +105,7 @@ void kprintf(const s8 *szFormat, ...)
                     break;
                 case 'X':
                 case 'x':
-                    ; u32 bData = va_arg(ap, u32);
+                    ; u64 bData = va_arg(ap, u64);
                     kprint_hex(bData);
                     break;
                 default:
@@ -184,9 +184,9 @@ void kdump_nibble(u8 Nibble)
         kputch(Nibble + 55);
 }
 
-void kprint_hex(u32 Number)
+void kprint_hex(u64 Number)
 {
-    for (s8 i = 3; i >= 0; i--)
+    for (s8 i = 7; i >= 0; i--)
     {
         u8 Byte = (Number >> (i << 3)) & 0xFF; //switch i bytes to the right and mask as byte
         kdump_nibble((Byte >> 4)  & 0x0F); //high nibble

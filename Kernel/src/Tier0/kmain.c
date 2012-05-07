@@ -26,6 +26,11 @@ extern u64 _end;
 u8 test[4096 * 2];
 u8 test2[4096 * 2];
 
+void interrupts_test(void)
+{
+    kprintf("Hello from an interrupt!\n");
+}
+
 // Real kernel entry point, called from loader
 void kmain(u32 LoadContextAddress)
 {
@@ -67,6 +72,7 @@ void kmain(u32 LoadContextAddress)
     kprintf("[i] Loader physical: %x-%x.\n", LoadContext->LoaderPhysicalStart, LoadContext->LoaderPhysicalEnd);
     kprintf("[i] Kernel virtual:  %x-%x.\n", &_start, &_end);
 
+    paging_kernel_initialize((u64)&_start, LoadContext->KernelPhysicalStart, LoadContext->KernelPhysicalEnd - LoadContext->KernelPhysicalStart);
     paging_temp_page_setup(LoadContext);
     paging_minivmm_setup((u64)&_end, 0xFF000000 + 511 * 4096);
     
@@ -81,7 +87,10 @@ void kmain(u32 LoadContextAddress)
     
     apic_enable_lapic();
     
-    //interrupts_init_simple();
+    interrupts_init_simple();
+    interrupts_setup_isr(0x80, interrupts_test, E_INTERRUPTS_RING0);
+    interrupts_dump_idt_entry(0x80);
+    __asm__ volatile("int $0x80");
     for (;;) {}
     /*exceptions_init_simple();
     pic_init(0, 0);

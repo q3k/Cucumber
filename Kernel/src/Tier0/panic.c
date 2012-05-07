@@ -8,13 +8,13 @@
 #define KPANIC_HEADER0 " *** kernel fucking panic ***"
 #define KPANIC_HEADER1 " *** fucked up beyond all repair ***"
 #define KPANIC_HEADER2 " *** situation normal - all fucked up ***"
-#define KPANIC_HEADER3 " *** you fucked it up, you retard ***"
-#define KPANIC_HEADER4 " *** kill the fucking programmer ***"
-#define KPANIC_HEADER5 " *** are you mentally fucking challenged? ***"
-#define KPANIC_HEADER6 " *** PEBKAC, you fucking idiot ***"
-#define KPANIC_HEADER7 " *** oh fuck oh fuck oh fuck oh fuck ***"
-#define KPANIC_HEADER8 " *** you get to keep the fucking pieces ***"
-#define KPANIC_HEADER9 " *** just fucking give up already ***"
+#define KPANIC_HEADER3 " *** well shit. ***"
+#define KPANIC_HEADER4 " *** oh noes!1!1! ***"
+#define KPANIC_HEADER5 " *** crap! ***"
+#define KPANIC_HEADER6 " *** flail your arms, for this is a kernel panic ***"
+#define KPANIC_HEADER7 " *** oh fuck oh fuck oh fuck oh fuck oh fu...***"
+#define KPANIC_HEADER8 " *** you get to keep the pieces ***"
+#define KPANIC_HEADER9 " *** just give up already ***"
 
 #define KPANIC_CASE(n) case n: \
     return KPANIC_HEADER(n);

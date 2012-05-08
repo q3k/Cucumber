@@ -5,15 +5,25 @@
 #include "Tier0/panic.h"
 
 #define PAGEFAULT_TEXT "Page Fault (_____)."
-#define RERR_TO_R(RERR, R) R.eax = RERR.eax; \
-                           R.ebx = RERR.ebx; \
-                           R.ecx = RERR.ecx; \
-                           R.edx = RERR.edx; \
-                           R.edi = RERR.edi; \
-                           R.esi = RERR.eip; \
-                           R.esp = RERR.esp; \
-                           R.ebp = RERR.ebx; \
-                           R.cs  = RERR.cs;
+#define RERR_TO_R(RERR, R) R.rax = RERR.rax; \
+                           R.rbx = RERR.rbx; \
+                           R.rcx = RERR.rcx; \
+                           R.rdx = RERR.rdx; \
+                           R.rdi = RERR.rdi; \
+                           R.rsi = RERR.rip; \
+                           R.rsp = RERR.rsp; \
+                           R.rbp = RERR.rbp; \
+                           R.cs  = RERR.cs; \
+			   R.rflags = RERR.rflags; \
+			   R.ss = RERR.ss; \
+			   R.r8 = RERR.r8; \
+			   R.r9 = RERR.r9; \
+			   R.r10 = RERR.r10; \
+			   R.r11 = RERR.r11; \
+			   R.r12 = RERR.r12; \
+			   R.r13 = RERR.r13; \
+			   R.r14 = RERR.r14; \
+			   R.r15 = RERR.r15;
 
 void exceptions_init_simple(void)
 {
@@ -54,6 +64,5 @@ void exceptions_page_fault_isr(T_ISR_REGISTERS_ERR Registers)
     
     T_ISR_REGISTERS R;
     RERR_TO_R(Registers, R); 
-    for(;;){}       
-    //PANIC_EX_HEX(Error, R, FaultAddress);
+    PANIC_EX_HEX(Error, R, FaultAddress);
 }

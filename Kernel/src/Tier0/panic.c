@@ -72,7 +72,7 @@ void kpanic_ex(const s8 *Error, const s8 *File, u32 Line, T_ISR_REGISTERS R)
     
     // Dumping registers
     
-    /*u32 ds, cr0, cr3;
+    u64 ds, cr0, cr3;
     
     __asm__ volatile("mov %%cr0, %0": "=r"(cr0));
     __asm__ volatile("mov %%cr3, %0": "=r"(cr3));
@@ -80,29 +80,30 @@ void kpanic_ex(const s8 *Error, const s8 *File, u32 Line, T_ISR_REGISTERS R)
     
     kprintf("\n  register dump:\n");
     
-    kprintf("        cr0: 0x%X cr3: 0x%x  cs: 0x%x  cs: 0x%x\n",
-        cr0, cr3, R.cs, ds);
-    kprintf("        eax: 0x%X ebx: 0x%x ecx: 0x%x edx: 0x%x\n",
-        R.eax, R.ebx, R.ecx, R.edx);
-    kprintf("        esi: 0x%X edi: 0x%x ebp: 0x%x esp: 0x%x\n",
-        R.esi, R.edi, R.ebp, R.esp);*/
+    kprintf("    cr0: 0x%X cr3: 0x%x  cs: 0x%x\n", cr0, cr3, R.cs, ds);
+    kprintf("    ds:  0x%X rax: 0x%X rbx: 0x%x\n", ds, R.rax, R.rbx);
+    kprintf("    rcx: 0x%x rdx: 0x%x rsi: 0x%x\n", R.rcx, R.rdx, R.rsi);
+    kprintf("    rdi: 0x%x rbp: 0x%x rsp: 0x%x\n", R.rdi, R.rbp, R.rsp);
+    kprintf("    r8 : 0x%x r9 : 0x%x r10: 0x%x\n", R.r8, R.r9, R.r10);
+    kprintf("    r11: 0x%x r12: 0x%x r13: 0x%x\n", R.r11, R.r12, R.r13);
+    kprintf("    r14: 0x%x r15: 0x%x\n", R.r14, R.r15);
     
-    //s32 FrameSize = R.ebp - R.esp;
+//    s64 FrameSize = R.rbp - R.rsp;
     
-    /*if (FrameSize > 0 && FrameSize < 0x100)
-    {*/
-        /*kprintf("\n  stack frame looks promising...\n");
+//    if (FrameSize > 0 && FrameSize < 0x100)
+//    {
+        kprintf("\n  stack frame looks promising...\n");
         kprintf("  attempting stack dump:\n");
         
-        u32 Number = 80;
-        for (u32 *v = (u32*)R.esp; v < ((u32 *)R.esp + Number); v+=8)
+        u64 Number = 20;
+        for (u64 *v = (u64*)R.rsp; v < ((u64 *)R.rsp + Number); v+=4)
         {
-            kprintf("    %x %x %x %x %x %x %x %x\n",
+            kprintf("      %x %x %x %x\n",
                *v, *(v+1), *(v+2), *(v+3), *(v+4), *(v+5), *(v+6), *(v+7));
-        }*/
-    /*}
-    else
-        kprintf("\n  stack looks unusable, not dummping.\n");*/
+        }
+//    }
+//    else
+//        kprintf("\n  stack looks unusable (%i byte frame), not dummping.\n", FrameSize);
     
     kprintf("\n  if you want to keep using the OS, please reset your PC.");
     

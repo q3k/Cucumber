@@ -8,7 +8,7 @@
 #include "Tier0/acpi.h"
 #include "Tier0/apic.h"
 #include "Tier0/smp.h"
-//#include "Tier0/interrupts.h"
+#include "Tier0/interrupts.h"
 //#include "Tier0/ps2.h"
 #include "Tier0/system.h"
 //#include "Tier0/pic.h"
@@ -16,20 +16,14 @@
 #include "Tier0/physmem.h"
 //#include "Tier0/heap.h"
 //#include "Tier0/cpp.h"
-//#include "Tier0/exceptions.h"
+#include "Tier0/exceptions.h"
 #include "Tier0/panic.h"
 //#include "Tier0/prng.h"
 
 extern u64 _start;
 extern u64 _end;
 
-u8 test[4096 * 2];
-u8 test2[4096 * 2];
-
-void interrupts_test(void)
-{
-    kprintf("Hello from an interrupt!\n");
-}
+void kmain_newstack(void);
 
 // Real kernel entry point, called from loader
 void kmain(u32 LoadContextAddress)
@@ -75,6 +69,23 @@ void kmain(u32 LoadContextAddress)
     paging_kernel_initialize((u64)&_start, LoadContext->KernelPhysicalStart, LoadContext->KernelPhysicalEnd - LoadContext->KernelPhysicalStart);
     paging_temp_page_setup(LoadContext);
     paging_minivmm_setup((u64)&_end, 0xFF000000 + 511 * 4096);
+
+    // Let's create a new kernel stack
+    u64 StackVirtual = paging_minivmm_allocate();
+    kprintf("[i] New kernel stack 0x%x\n", StackVirtual);
+    
+    // And now let's use it and forget ebp because we can.
+    __asm__ volatile("mov %0, %%rsp" : : "r" (StackVirtual + 4096));
+
+    // And let's create a new stack frame.
+    // (and prevent gcc from inlinin the function call)
+    void (*kmain_newstack_ptr)() = kmain_newstack;
+    kmain_newstack_ptr();
+    for(;;){}
+}
+
+void kmain_newstack(void)
+{
     
     // Not using GDT in 64-bit mode... We'll use the loader-provided one.
     //gdt_create_flat();
@@ -88,9 +99,12 @@ void kmain(u32 LoadContextAddress)
     apic_enable_lapic();
     
     interrupts_init_simple();
-    interrupts_setup_isr(0x80, interrupts_test, E_INTERRUPTS_RING0);
-    interrupts_dump_idt_entry(0x80);
-    __asm__ volatile("int $0x80");
+    exceptions_init_simple();
+    u32 a = 5;
+    a -= 5;
+    u32 b = 7;
+    u32 c = b / a;
+    kprintf("c: %i\n", c);
     for (;;) {}
     /*exceptions_init_simple();
     pic_init(0, 0);
@@ -114,22 +128,8 @@ void kmain(u32 LoadContextAddress)
         krand();
     }
     
-    // Let's create a new kernel stack
-    u32 StackPhysical = physmem_allocate_page() * 1024 * 4;
-    paging_map_kernel_page(0xA0000000, StackPhysical);
-    
-    // And now let's use it and forget ebp because we can.
-    __asm__ volatile("mov %0, %%esp" : : "r" (0xA0000000 + 4095));
-    
-    // This automagically creates a new usable stack frame
-    kmain_newstack();*/
-}
-
-/*void kmain_newstack(void)
-{
-    kprintf("[i] Now using real stack...\n");
     cpp_call_ctors();
     cpp_start_ckernel();
     kprintf("[i] Returned from Tier1, sleeping forever.\n");
-    LOOPFOREVER;
-}*/
+    LOOPFOREVER;*/
+}

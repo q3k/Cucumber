@@ -85,7 +85,7 @@ void paging_kernel_initialize(u64 KernelVirtualStart, u64 KernelPhysicalStart, u
     g_KernelPaging.KernelSize = KernelSize;
 }
 
-u8 paging_get_physical_ex(u64 Virtual, u64 *Physical, T_PAGING_ML4 *ML4)
+/*u8 paging_get_physical_ex(u64 Virtual, u64 *Physical, T_PAGING_ML4 *ML4)
 {
     if (Virtual < g_KernelPaging.KernelVirtualStart || Virtual > g_KernelPaging.KernelVirtualStart + g_KernelPaging.KernelSize)
     {
@@ -101,7 +101,7 @@ u8 paging_get_physical(u64 Virtual, u64 *Physical)
 {
 	T_PAGING_ML4 *ml4 = paging_get_ml4();
     return paging_get_physical_ex(Virtual, Physical, ml4);
-}
+}*/
 
 void paging_set_ml4(u64 ML4Physical)
 {

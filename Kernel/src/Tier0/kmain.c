@@ -14,7 +14,7 @@
 //#include "Tier0/pic.h"
 //#include "Tier0/kbd_layout.h"
 #include "Tier0/physmem.h"
-//#include "Tier0/heap.h"
+#include "Tier0/heap.h"
 //#include "Tier0/cpp.h"
 #include "Tier0/exceptions.h"
 #include "Tier0/panic.h"
@@ -95,27 +95,18 @@ void kmain_newstack(void)
         kprintf("[w] No ACPI!\n");
     
     smp_initialize();
-    
     apic_enable_lapic();
-    
     interrupts_init_simple();
     exceptions_init_simple();
-    u32 a = 5;
-    a -= 5;
-    u32 b = 7;
-    u32 c = b / a;
-    kprintf("c: %i\n", c);
-    for (;;) {}
-    /*exceptions_init_simple();
-    pic_init(0, 0);
-    ps2_init_simple();
-    kbd_layout_set_default();
-    
-    __asm__ volatile("sti");
-    
-    kprintf("[i] Hardware interrupts are now enabled.\n");
     
     heap_init_simple();
+    for (;;) {}
+    
+    /*pic_init(0, 0);
+    ps2_init_simple();
+    kbd_layout_set_default();
+    __asm__ volatile("sti");
+    kprintf("[i] Hardware interrupts are now enabled.\n");
     
     kprintf("[i] Initializing PRNG...\n");
     u16 RLow, RHigh;

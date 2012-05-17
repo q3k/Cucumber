@@ -53,6 +53,6 @@ void gdt_create_flat(void)
         kprintf("%x\n", *((u32 *)g_GDTEntries + 2 * i));
     }
 
-    gdt_flush();
+//    gdt_flush();
 }
 

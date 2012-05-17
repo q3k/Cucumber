@@ -33,7 +33,7 @@ extern u64 omg64;
 extern u64 _end;
 extern u64 _start;
 
-u32 *pJmpLoadAddres = (u32 *)(((u8 *)&omg64) + 1);
+u64 pJmpLoadAddres = 0;
 
 void outb(u16 Port, u8 Data)
 {
@@ -313,7 +313,7 @@ u32 create_ia32e_paging(u64 KernelPhysicalStart, u64 KernelVirtualStart, u64 Ker
     return 0;
 }
 
-u32 g_multiboot_header;
+u64 g_multiboot_header;
 T_LOAD_CONTEXT g_Context;
 extern u64 GDT;
 
@@ -446,6 +446,11 @@ u32 load(void *Multiboot, unsigned int Magic)
             ContinuityTest = VirtualAddress + Sections[i].Size;
             Size += Sections[i].Size;
 
+            // inline strcmp, fuck yeah!
+            if (Name[0] == '.' && Name[1] == 't' && Name[2] == 'e' && Name[3] == 'x' && Name[4] == 't' && Name[5] == 0)
+            {
+                pJmpLoadAddres += VirtualAddress;
+            }
             puts("-> Section ");
             puts(Name);
             puts(", 0x");
@@ -505,11 +510,13 @@ u32 load(void *Multiboot, unsigned int Magic)
                         "movl %%ebx, %%cr0;":::"eax","ebx","ecx");
 
     puts("Now in 32-bit compability mode, jumping to the kernel...\n");
-    
     g_Context.VGACurrentLine = stdio_current_line;
     g_Context.VGACursorX = stdio_cur_x;
     g_Context.VGACursorY = stdio_cur_y;
-    *pJmpLoadAddres = Header->Entry;
-    
+    pJmpLoadAddres += Header->Entry;
+    puts("Will be jumping to 0x");
+    print_hex(pJmpLoadAddres);
+    puts(".\n");
+    for (;;) {}
     return 1;
 }

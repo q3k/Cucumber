@@ -28,6 +28,7 @@ void kmain_newstack(void);
 // Real kernel entry point, called from loader
 void kmain(u32 LoadContextAddress)
 {
+    for(;;) {}
     T_LOAD_CONTEXT *LoadContext = (T_LOAD_CONTEXT*)(u64)LoadContextAddress;
     kstdio_init();
     
@@ -43,7 +44,7 @@ void kmain(u32 LoadContextAddress)
     kprintf("[i] Welcome to Cucumber (x86-64)!\n");
     kprintf("[i] %s\n\n", CUCUMBER_VERION);
     kprintf("[i] Load Context @%x     \n", LoadContext);
-    
+    for(;;){}
     if (!LoadContext->MultibootUsed)
         PANIC("No Multiboot header provided by loader!");
 

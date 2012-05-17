@@ -62,10 +62,17 @@ _loader:
 
 	jmp 0x08:_loader_gdt
 
+hang:
+    jmp hang
+
 _loader_gdt:
 	call load
 
-	mov ebx, eax
+    test eax, eax
+    jz hang
+
+    push ecx
+    push ebx
 
 	mov ax, 0x20
 	mov ds, ax
@@ -74,19 +81,14 @@ _loader_gdt:
 	mov gs, ax
 	mov ss, ax
 
-	; Did we get an entry point address?
-	test ebx, ebx
-	jz hang
-
 	mov edi, g_Context
-
-omg64:	
 	; 64-bit, here we come!
-	call 0x18:0xFF001000
+    jmp 0x18:jmptohigh    
 
-hang:
-   hlt
-   jmp   hang
+jmptohigh: ; pop rax, call rax
+    db 0x58
+    db 0xff
+    db 0xd0
 
 ; #############################################################################
 ; ############################### bss segment #################################

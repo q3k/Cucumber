@@ -21,12 +21,12 @@ LD:=$(ENV)/$(TARGET)-ld
 
 # -O2 sets -foptimize-sibling-calls which breaks code...
 CFLAGS:=-m64 -mcmodel=large -Wall -Werror -nostdlib -nostartfiles -nodefaultlibs -std=c99 -g
-CFLAGS+=-I ./include -Wno-packed-bitfield-compat -O2 -fno-optimize-sibling-calls
+CFLAGS+=-I ./include -Wno-packed-bitfield-compat -O2 -fno-optimize-sibling-calls -mcmodel=large
 
 
 CXFLAGS:= -Wall -Werror -nostdlib -fno-builtin -nostartfiles -I ./include
 CXFLAGS+= -nodefaultlibs -fno-exceptions -fno-rtti -fno-stack-protector 
-CXFLAGS+= -Wno-packed-bitfield-compat -O3
+CXFLAGS+= -Wno-packed-bitfield-compat -O3 -mcmodel=large
 LFLAGS:=-nostdlib -nostartfiles -nodefaultlibs
 
 .PHONY: all clean kernel.bin emulate hdd.img

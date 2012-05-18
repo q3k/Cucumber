@@ -1,9 +1,12 @@
 extern load
 extern puts
+extern print_hex
 extern g_Context;
 global _loader
 global omg64
 global GDT
+global ldrEntryLow
+global ldrEntryHigh
 
 ; Multiboot-related constants
 MODULEALIGN     equ 1 << 0
@@ -42,6 +45,11 @@ GDT:
 	db 0xFF, 0xFF, 0, 0, 0, 10011010b, 10101111b, 0x00 	; 64-bit code segment	(0x18)
 	db 0xFF, 0xFF, 0, 0, 0, 10010010b, 10101111b, 0x00 	; 64-bit data segment	(0x20)
 
+ldrEntryLow:
+    dd 0
+ldrEntryHigh:
+    dd 0
+
 str_back_in_asm:
 	db "Back in assembler!", 0
 
@@ -71,8 +79,12 @@ _loader_gdt:
     test eax, eax
     jz hang
 
-    push ecx
-    push ebx
+    mov eax, [ldrEntryHigh]
+    push eax
+    mov eax, [ldrEntryLow]
+    push eax
+
+    call print_hex
 
 	mov ax, 0x20
 	mov ds, ax

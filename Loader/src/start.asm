@@ -83,6 +83,8 @@ _loader_gdt:
     push eax
     mov eax, [ldrEntryLow]
     push eax
+    push 0
+    push esp
 
     call print_hex
 
@@ -97,10 +99,13 @@ _loader_gdt:
 	; 64-bit, here we come!
     jmp 0x18:jmptohigh    
 
+align 8
 jmptohigh: ; pop rax, call rax
     db 0x58
     db 0xff
-    db 0xd0
+;    db 0xd0
+    db 0xeb
+    db 0xfe
 
 ; #############################################################################
 ; ############################### bss segment #################################

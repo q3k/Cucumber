@@ -33,7 +33,6 @@ extern u64 omg64;
 extern u64 _end;
 extern u64 _start;
 
-
 void outb(u16 Port, u8 Data)
 {
     __asm__ volatile("outb %1, %0" :: "dN" (Port), "a" (Data));
@@ -159,6 +158,16 @@ void dump_nibble(u8 Nibble)
         putch(Nibble + 55);
 }
 
+void print_hex_32(u32 Number)
+{
+    for (s8 i = 3; i >= 0; i--)
+    {
+        u8 Byte = (Number >> (i << 3)) & 0xFF; //switch i bytes to the right and mask as byte
+        dump_nibble((Byte >> 4)  & 0x0F); //high nibble
+        dump_nibble(Byte & 0x0F); //low nibble
+    }
+}
+
 void print_hex(u64 Number)
 {
     for (s8 i = 7; i >= 0; i--)
@@ -269,14 +278,20 @@ u32 create_ia32e_paging(u64 KernelPhysicalStart, u64 KernelVirtualStart, u64 Ker
         puts("Error: Kernel size > 2MiB not implemented!");
         return 1;
     }
+    puts("Kernel PML4: "); print_hex(GET_PML4_ENTRY(KernelVirtualStart)); puts("\n");
+    puts("Kernel  PDP: "); print_hex(GET_PDP_ENTRY(KernelVirtualStart)); puts("\n");
+    puts("Kernel  DIR: "); print_hex(GET_DIR_ENTRY(KernelVirtualStart)); puts("\n");
 
     if (GET_PML4_ENTRY(KernelVirtualStart) != 0)
     {
         // We're NOT mapping the same PML4 entry as for identity mapping...
         puts("Different PML4...\n");
         pml4[GET_PML4_ENTRY(KernelVirtualStart)] = (u32)page_dir_ptr_tab_high | 3;
+        puts("Setting pml4["); print_hex_32(GET_PML4_ENTRY(KernelVirtualStart)); puts("] to "); print_hex_32((u32)page_dir_ptr_tab_high | 3); puts(".\n");
         page_dir_ptr_tab_high[GET_PDP_ENTRY(KernelVirtualStart)] = (u32)page_dir_high | 3;
-        page_dir_high[GET_PDP_ENTRY(KernelVirtualStart)] = (u32)page_tab_high | 3;
+        puts("Setting pdp["); print_hex_32(GET_PDP_ENTRY(KernelVirtualStart)); puts("] to "); print_hex_32((u32)page_dir_high | 3); puts(".\n");
+        page_dir_high[GET_DIR_ENTRY(KernelVirtualStart)] = (u32)page_tab_high | 3;
+        puts("Setting dir["); print_hex_32(GET_DIR_ENTRY(KernelVirtualStart)); puts("] to "); print_hex_32((u32)page_tab_high | 3); puts(".\n");
     }
     else if (GET_PDP_ENTRY(KernelVirtualStart) != 0)
     {
@@ -305,8 +320,6 @@ u32 create_ia32e_paging(u64 KernelPhysicalStart, u64 KernelVirtualStart, u64 Ker
         page_tab_high[i] = Address | 3;
         
         Address += 0x1000;
-        if (i >= 512)
-            break;
     }
 
     return 0;
@@ -488,7 +501,10 @@ u32 load(void *Multiboot, unsigned int Magic)
     puts(".\n");
 
     if (create_ia32e_paging(StartPhysical, StartVirtual, Size))
-        return 0;
+    {
+        puts("Could not create paging structure, for some reason... Failing.\n");
+        for (;;) {}
+    }
     __asm__ volatile ("movl %cr4, %eax; bts $5, %eax; movl %eax, %cr4");
     __asm__ volatile ("movl %%eax, %%cr3" :: "a" (pml4));
     puts("CR3 is now pointing to PML4 (0x");

@@ -83,12 +83,9 @@ _loader_gdt:
     push eax
     mov eax, [ldrEntryLow]
     push eax
-    push 0
-    push esp
-
     call print_hex
-
-	mov ax, 0x20
+	
+    mov ax, 0x20
 	mov ds, ax
 	mov es, ax
 	mov fs, ax
@@ -103,9 +100,7 @@ align 8
 jmptohigh: ; pop rax, call rax
     db 0x58
     db 0xff
-;    db 0xd0
-    db 0xeb
-    db 0xfe
+    db 0xd0
 
 ; #############################################################################
 ; ############################### bss segment #################################

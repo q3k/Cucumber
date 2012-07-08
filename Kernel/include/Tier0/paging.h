@@ -87,7 +87,7 @@ void paging_kernel_initialize(u64 KernelVirtualStart, u64 KernelPhysicalStart, u
 void             paging_temp_page_setup(T_LOAD_CONTEXT *LoadContext);
 const inline u64 paging_temp_page_get_virtual(void)
 {
-    return 0xFF000000 + 511 * 0x1000;
+    return 0xFFFFFFFF80000000 + 511 * 0x1000;
 }
 void             paging_temp_page_set_physical(u64 Physical);
 

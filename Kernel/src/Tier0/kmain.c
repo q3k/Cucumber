@@ -43,7 +43,6 @@ void kmain(u32 LoadContextAddress)
     kprintf("[i] Welcome to Cucumber (x86-64)!\n");
     kprintf("[i] %s\n\n", CUCUMBER_VERION);
     kprintf("[i] Load Context @%x     \n", LoadContext);
-    for(;;){}
     if (!LoadContext->MultibootUsed)
         PANIC("No Multiboot header provided by loader!");
 
@@ -68,8 +67,7 @@ void kmain(u32 LoadContextAddress)
 
     paging_kernel_initialize((u64)&_start, LoadContext->KernelPhysicalStart, LoadContext->KernelPhysicalEnd - LoadContext->KernelPhysicalStart);
     paging_temp_page_setup(LoadContext);
-    paging_minivmm_setup((u64)&_end, 0xFF000000 + 511 * 4096);
-
+    paging_minivmm_setup((u64)&_end, 0xFFFFFFFF80000000 + 511 * 0x1000);
     // Let's create a new kernel stack
     u64 StackVirtual = paging_minivmm_allocate();
     kprintf("[i] New kernel stack 0x%x\n", StackVirtual);
@@ -81,7 +79,6 @@ void kmain(u32 LoadContextAddress)
     // (and prevent gcc from inlinin the function call)
     void (*kmain_newstack_ptr)() = kmain_newstack;
     kmain_newstack_ptr();
-    for(;;){}
 }
 
 void kmain_newstack(void)

@@ -30,7 +30,7 @@ T_PAGING_ML4 *paging_get_ml4(void)
 void paging_temp_page_setup(T_LOAD_CONTEXT *LoadContext)
 {
     // Try using page 511 (last) from kernel table
-    u64 PageVirtual = 0xFF000000 + 511 * 4096;
+    u64 PageVirtual = 0xFFFFFFFF80000000 + 511 * 4096;
     u64 MaxMapped = 4096 * 512; // first 2Mib by loader
     
     u64 KernelSize = LoadContext->KernelPhysicalEnd - LoadContext->KernelPhysicalStart;
@@ -75,7 +75,7 @@ void paging_temp_page_set_physical(u64 Physical)
     // TODO: check if smaller than maxphyaddr 
 
     g_KernelPaging.TempPage->Physical = Physical >> 12;
-    __asm__ volatile("invlpg %0" :: "m"(*(u32 *)g_KernelPaging.TempPageVirtual));
+    __asm__ volatile("invlpg %0" :: "m"(*(u64 *)g_KernelPaging.TempPageVirtual));
 }
 
 void paging_kernel_initialize(u64 KernelVirtualStart, u64 KernelPhysicalStart, u64 KernelSize)
@@ -113,6 +113,7 @@ void paging_minivmm_setup(u64 Start, u64 End)
     g_MiniVMM.Start = Start;
     g_MiniVMM.End = End;
     g_MiniVMM.Top = Start;
+    kprintf("[i] MiniVMM: %x - %x.\n", Start, End);
 }
 
 u64 paging_minivmm_allocate(void)

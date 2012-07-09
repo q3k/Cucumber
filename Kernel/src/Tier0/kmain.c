@@ -92,10 +92,9 @@ void kmain_newstack(void)
         kprintf("[w] No ACPI!\n");
     
     smp_initialize();
-    apic_enable_lapic();
     interrupts_init_simple();
     exceptions_init_simple();
-    
+    apic_enable_lapic();
     heap_init_simple();
     for (;;) {}
     

@@ -9,23 +9,7 @@ struct {
     T_IDT_ENTRY IDTEntries[256];
     T_ISR_STUB ISRStubs[256];
 
-    // IRQ/APIC/Whatever
-    T_INTERRUPTS_CHIP Chip;
 } __attribute__((packed)) g_Interrupts;
-
-// This shit does nothing
-void interrupts_set_chip(T_INTERRUPTS_CHIP Chip)
-{
-    g_Interrupts.Chip = Chip;
-
-    if (Chip == E_INTERRUPTS_CHIP_UNK)
-        kprintf("[i] Interrupts: Turning off.\n");
-    else if (Chip == E_INTERRUPTS_CHIP_PIC)
-        kprintf("[i] Interrupts: Switching to 8259 based interrupts.\n");
-    else if (Chip == E_INTERRUPTS_CHIP_APIC)
-        kprintf("[i] Interrupts: Switching to intel I/O APIC based "
-                "interrupts.\n");
-}
 
 void interrupts_lidt(void)
 {
@@ -131,7 +115,6 @@ void interrupts_setup_isr(u8 Interrupt, void *Handler, \
 */
 void interrupts_init_simple(void)
 {
-    interrupts_set_chip(E_INTERRUPTS_CHIP_PIC);
     interrupts_init_idt();
     interrupts_lidt();
 }

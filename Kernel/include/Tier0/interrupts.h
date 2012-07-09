@@ -32,13 +32,6 @@ enum E_INTERRUPTS_RING {
 };
 typedef enum E_INTERRUPTS_RING T_INTERRUPTS_RING;
 
-enum E_INTERRUPTS_CHIP {
-    E_INTERRUPTS_CHIP_UNK,
-    E_INTERRUPTS_CHIP_PIC,
-    E_INTERRUPTS_CHIP_APIC
-};
-typedef enum E_INTERRUPTS_CHIP T_INTERRUPTS_CHIP;
-
 // This is a structure that allows easy access to a 62-byte ASM stub which
 // calls a stdcall handler. Not the best way and not the shortest stub,
 // but hey, it works.

@@ -13,7 +13,7 @@ struct {
 
 void interrupts_lidt(void)
 {
-    __asm__ __volatile__("lidt (%0)" : : "p"(&g_Interrupts.IDTPointer));
+    __asm__ __volatile__("movq %0, %%rax; lidt (%%rax)" : : "p"(&g_Interrupts.IDTPointer));
 }
 
 u8 interrupts_init_idt(void)

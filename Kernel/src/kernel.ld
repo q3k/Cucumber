@@ -45,5 +45,6 @@ SECTIONS
    /DISCARD/ :
    {
         *(.comment)
+        *(.debug*)
    }
 }

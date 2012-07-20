@@ -104,7 +104,7 @@ void kmain_newstack(void)
                     "or $0x2, %rax;"
                     "movq %rax, %cr0;"
                     "movq %cr4, %rax;"
-                    "or $0x600, %ax;"
+                    "orq $0x600, %rax;"
                     "movq %rax, %cr4;");
 
     for (;;) {}

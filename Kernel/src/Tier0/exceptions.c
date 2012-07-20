@@ -14,23 +14,40 @@
                            R.rsp = RERR.rsp; \
                            R.rbp = RERR.rbp; \
                            R.cs  = RERR.cs; \
-			   R.rflags = RERR.rflags; \
-			   R.ss = RERR.ss; \
-			   R.r8 = RERR.r8; \
-			   R.r9 = RERR.r9; \
-			   R.r10 = RERR.r10; \
-			   R.r11 = RERR.r11; \
-			   R.r12 = RERR.r12; \
-			   R.r13 = RERR.r13; \
-			   R.r14 = RERR.r14; \
-			   R.r15 = RERR.r15;
+                           R.rip = RERR.rip; \
+                           R.rflags = RERR.rflags; \
+                           R.ss = RERR.ss; \
+                           R.r8 = RERR.r8; \
+                           R.r9 = RERR.r9; \
+                           R.r10 = RERR.r10; \
+                           R.r11 = RERR.r11; \
+                           R.r12 = RERR.r12; \
+                           R.r13 = RERR.r13; \
+                           R.r14 = RERR.r14; \
+                           R.r15 = RERR.r15;
 
 void exceptions_init_simple(void)
 {
     interrupts_setup_isr(0x00, (void*)exceptions_division_by_zero_isr,
                         E_INTERRUPTS_RING0);
+    interrupts_setup_isr(0x0D, (void*)exceptions_general_protection_isr,
+                        E_INTERRUPTS_RING0);
     interrupts_setup_isr(0x0E, (void*)exceptions_page_fault_isr,
                         E_INTERRUPTS_RING0);
+    interrupts_setup_isr(0x10, (void*)exceptions_floating_point_isr,
+                        E_INTERRUPTS_RING0);
+}
+
+void exceptions_floating_point_isr(T_ISR_REGISTERS Registers)
+{
+    PANIC("Floating point exception. wat.");
+}
+
+void exceptions_general_protection_isr(T_ISR_REGISTERS_ERR Registers)
+{
+    T_ISR_REGISTERS NoErr;
+    RERR_TO_R(Registers, NoErr);
+    PANIC_EX("General protection fault in kernel task.", NoErr);
 }
 
 void exceptions_division_by_zero_isr(T_ISR_REGISTERS Registers)

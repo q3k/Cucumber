@@ -12,7 +12,7 @@ LDFLAGS= $(SYSLDFLAGS) $(MYLDFLAGS)
 LIBS= -lm $(SYSLIBS) $(MYLIBS)
 
 AR= ar rcu
-RANLIB= ranlib
+RANLIB= /usr/xdev/bin/x86_64-elf-ranlib
 RM= rm -f
 
 SYSCFLAGS=
@@ -98,8 +98,16 @@ ansi:
 bsd:
 	$(MAKE) $(ALL) SYSCFLAGS="-DLUA_USE_POSIX -DLUA_USE_DLOPEN" SYSLIBS="-Wl,-E"
 
+CUCUMBERCFLAGS:=-m64 -mcmodel=large -Wall -nostdlib -nostartfiles -nodefaultlibs -std=c99 -g
+CUCUMBERCFLAGS+=-I ./include -Wno-packed-bitfield-compat -O2 -fno-optimize-sibling-calls -mcmodel=kernel
+CUCUMBERCFLAGS+= -mno-red-zone -ffreestanding
+
+%.o:
+	@echo "[i] [Lua] Compiling $*.c..."
+	@$(CC) $(CFLAGS) -c $*.c -o $*.o
+
 cucumber-kernel:
-	$(MAKE) $(ALL_O) SYSCFLAGS="-DLUA_ANSI -I\"../../include/Lua/\" -I\"../../include/\""
+	$(MAKE) $(LUA_A) SYSCFLAGS="-DLUA_ANSI -I\"../../include/Lua/\" -I\"../../include/\" $(CUCUMBERCFLAGS)"
 
 freebsd:
 	$(MAKE) $(ALL) SYSCFLAGS="-DLUA_USE_LINUX" SYSLIBS="-Wl,-E -lreadline"

@@ -67,9 +67,16 @@ Tier0: $(TIER0)
 #TIER1 := $(foreach i, $(TIER1OBJ), obj/$(i))
 #Tier1: $(TIER1)
 
-kernel.bin: version-gen Tier0
+src/Lua/liblua.a:
+	@echo "[i] Building Lua..."
+	@make -C src/Lua
+
+LUA := src/Lua/liblua.a
+Lua: $(LUA)
+
+kernel.bin: version-gen Tier0 Lua
 	@echo "[i] Linking kernel.bin..."
-	@$(LD) -T src/kernel.ld -o kernel.bin $(TIER0) $(TIER1)
+	@$(LD) -T src/kernel.ld -o kernel.bin $(TIER0) $(TIER1) $(LUA)
 
 hdd.img: kernel.bin
 	@echo "[i] Creating HDD image..."
@@ -101,6 +108,7 @@ emulate: hdd.img
 
 clean:
 	@rm -Rf obj
+	@make -C src/Lua clean
 	@if [ -e kernel.bin ] ; then rm kernel.bin ; fi
 	@if [ -e hdd_temp.img ] ; then rm hdd_temp.img ; fi
 	@if [ -e hdd.img ] ; then rm hdd.img; fi

@@ -22,7 +22,7 @@ LD:=$(ENV)/$(TARGET)-ld
 # -O2 sets -foptimize-sibling-calls which breaks code...
 CFLAGS:=-m64 -mcmodel=large -Wall -Werror -nostdlib -nostartfiles -nodefaultlibs -std=c99 -g
 CFLAGS+=-I ./include -Wno-packed-bitfield-compat -O2 -fno-optimize-sibling-calls -mcmodel=kernel
-
+CFLAGS+= -mno-red-zone -ffreestanding
 
 CXFLAGS:= -Wall -Werror -nostdlib -fno-builtin -nostartfiles -I ./include
 CXFLAGS+= -nodefaultlibs -fno-exceptions -fno-rtti -fno-stack-protector 

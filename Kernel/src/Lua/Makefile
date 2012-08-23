@@ -31,7 +31,7 @@ PLATS= aix ansi bsd cucumber-kernel freebsd generic linux macosx mingw posix sol
 LUA_A=	liblua.a
 CORE_O=	lapi.o lcode.o lctype.o ldebug.o ldo.o ldump.o lfunc.o lgc.o llex.o \
 	lmem.o lobject.o lopcodes.o lparser.o lstate.o lstring.o ltable.o \
-	ltm.o lundump.o lvm.o lzio.o
+	ltm.o lundump.o lvm.o lzio.o snprintf.o glue.o
 LIB_O=	lauxlib.o lbaselib.o lbitlib.o lcorolib.o ldblib.o liolib.o \
 	lmathlib.o loslib.o lstrlib.o ltablib.o loadlib.o linit.o
 BASE_O= $(CORE_O) $(LIB_O) $(MYOBJS)
@@ -98,7 +98,7 @@ bsd:
 	$(MAKE) $(ALL) SYSCFLAGS="-DLUA_USE_POSIX -DLUA_USE_DLOPEN" SYSLIBS="-Wl,-E"
 
 cucumber-kernel:
-	$(MAKE) $(ALL) SYSCFLAGS="-DLUA_ANSI -I\"../../include/Tier0-ANSI/\" -I\"../../include/\""
+	$(MAKE) $(ALL) SYSCFLAGS="-DLUA_ANSI -I\"../../include/Lua/\" -I\"../../include/\""
 
 freebsd:
 	$(MAKE) $(ALL) SYSCFLAGS="-DLUA_USE_LINUX" SYSLIBS="-Wl,-E -lreadline"

@@ -383,14 +383,14 @@
 ** ===================================================================
 */
 
-#define LUA_NUMBER_DOUBLE
-#define LUA_NUMBER	double
+//#define LUA_NUMBER_DOUBLE
+#define LUA_NUMBER	int
 
 /*
 @@ LUAI_UACNUMBER is the result of an 'usual argument conversion'
 @* over a number.
 */
-#define LUAI_UACNUMBER	double
+#define LUAI_UACNUMBER	int
 
 
 /*
@@ -399,10 +399,10 @@
 @@ lua_number2str converts a number to a string.
 @@ LUAI_MAXNUMBER2STR is maximum size of previous conversion.
 */
-#define LUA_NUMBER_SCAN		"%lf"
-#define LUA_NUMBER_FMT		"%.14g"
+#define LUA_NUMBER_SCAN		"%i"
+#define LUA_NUMBER_FMT		"%i"
 #define lua_number2str(s,n)	sprintf((s), LUA_NUMBER_FMT, (n))
-#define LUAI_MAXNUMBER2STR	32 /* 16 digits, sign, point, and \0 */
+#define LUAI_MAXNUMBER2STR	32 /* 16 digits, sign, point, and \0 */ // not sure - q3k
 
 
 /*
@@ -413,10 +413,10 @@
 ** systems, you can leave 'lua_strx2number' undefined and Lua will
 ** provide its own implementation.
 */
-#define lua_str2number(s,p)	strtod((s), (p))
+#define lua_str2number(s,p)	strtol((s), (p), 10)
 
 #if defined(LUA_USE_STRTODHEX)
-#define lua_strx2number(s,p)	strtod((s), (p))
+#define lua_strx2number(s,p)	strtol((s), (p))
 #endif
 
 
@@ -426,9 +426,11 @@
 
 /* the following operations need the math library */
 #if defined(lobject_c) || defined(lvm_c)
-#include <math.h>
-#define luai_nummod(L,a,b)	((a) - floor((a)/(b))*(b))
-#define luai_numpow(L,a,b)	(pow(a,b))
+//#include <math.h>
+//#define luai_nummod(L,a,b)	((a) - floor((a)/(b))*(b))
+//#define luai_numpow(L,a,b)	(pow(a,b))
+LUA_NUMBER luai_nummod(void *L, LUA_NUMBER a, LUA_NUMBER b);
+LUA_NUMBER luai_numpow(void *L, LUA_NUMBER a, LUA_NUMBER b);
 #endif
 
 /* these are quite standard operations */
@@ -451,8 +453,7 @@
 ** CHANGE that if ptrdiff_t is not adequate on your machine. (On most
 ** machines, ptrdiff_t gives a good choice between int or long.)
 */
-#define LUA_INTEGER	long long int
-#define ptrdiff_t long long int
+#define LUA_INTEGER	long int
 
 /*
 @@ LUA_UNSIGNED is the integral type used by lua_pushunsigned/lua_tounsigned.

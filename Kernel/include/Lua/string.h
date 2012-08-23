@@ -5,7 +5,7 @@
 #include "Tier0/kstdlib.h"
 
 const char *strchr (const char *str, int character);
-inline int strcmp(const char *s1, const char *s2);
+int strcmp(const char *s1, const char *s2);
 char *strpbrk(const char *s1, const char *s2);
 char *strerror(int errnum);
 char *strstr(const char *haystack, const char *needle);

@@ -1,5 +1,6 @@
 Kernel/obj
 Kernel/kernel.bin
+Kernel/src/Lua/*.o
 Kernel/dump
 Loader/obj
 Loader/loader.bin

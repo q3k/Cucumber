@@ -103,6 +103,12 @@ void kprintf(const s8 *szFormat, ...)
                     ; u8 *szString = va_arg(ap, u8*); //stupid gcc bug
                     kdump(szString, kstrlen((s8 *)szString));
                     break;
+                case 'f':
+                    {
+                        double Data =  va_arg(ap, double);
+                        kprint_hex((u64)Data);
+                        break;
+                    }
                 case 'X':
                 case 'x':
                     ; u64 bData = va_arg(ap, u64);
@@ -252,7 +258,7 @@ void kclear(void)
     kmove_cursor(0, 0);
 }
 
-s32 kmemcmp(u8 *MemA, u8 *MemB, u32 Length)
+s32 kmemcmp(const u8 *MemA, const u8 *MemB, u32 Length)
 {
     u32 Result = -1;
     for (u32 Search = 0; Search < Length; Search++)

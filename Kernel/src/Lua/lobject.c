@@ -114,42 +114,45 @@ static lua_Number readhexa (const char **s, lua_Number r, int *count) {
 /*
 ** convert an hexadecimal numeric string to a number, following
 ** C99 specification for 'strtod'
+** 
+** modified by q3k to ignore floating point crap
 */
 static lua_Number lua_strx2number (const char *s, char **endptr) {
-  lua_Number r = 0.0;
-  int e = 0, i = 0;
+  lua_Number r = 0;
+  int i = 0;
   int neg = 0;  /* 1 if number is negative */
   *endptr = cast(char *, s);  /* nothing is valid yet */
   while (lisspace(cast_uchar(*s))) s++;  /* skip initial spaces */
   neg = isneg(&s);  /* check signal */
   if (!(*s == '0' && (*(s + 1) == 'x' || *(s + 1) == 'X')))  /* check '0x' */
-    return 0.0;  /* invalid format (no '0x') */
+    return 0;  /* invalid format (no '0x') */
   s += 2;  /* skip '0x' */
   r = readhexa(&s, r, &i);  /* read integer part */
-  if (*s == '.') {
-    s++;  /* skip dot */
-    r = readhexa(&s, r, &e);  /* read fractional part */
-  }
-  if (i == 0 && e == 0)
-    return 0.0;  /* invalid format (no digit) */
-  e *= -4;  /* each fractional digit divides value by 2^-4 */
+//  if (*s == '.') {
+//    s++;  /* skip dot */
+//    r = readhexa(&s, r, &e);  /* read fractional part */
+//  }
+  if (i == 0)
+    return 0;  /* invalid format (no digit) */
+//  e *= -4;  /* each fractional digit divides value by 2^-4 */
   *endptr = cast(char *, s);  /* valid up to here */
-  if (*s == 'p' || *s == 'P') {  /* exponent part? */
-    int exp1 = 0;
-    int neg1;
-    s++;  /* skip 'p' */
-    neg1 = isneg(&s);  /* signal */
-    if (!lisdigit(cast_uchar(*s)))
-      goto ret;  /* must have at least one digit */
-    while (lisdigit(cast_uchar(*s)))  /* read exponent */
-      exp1 = exp1 * 10 + *(s++) - '0';
-    if (neg1) exp1 = -exp1;
-    e += exp1;
-  }
-  *endptr = cast(char *, s);  /* valid up to here */
- ret:
+//  if (*s == 'p' || *s == 'P') {  /* exponent part? */
+//    int exp1 = 0;
+//    int neg1;
+//    s++;  /* skip 'p' */
+//    neg1 = isneg(&s);  /* signal */
+//    if (!lisdigit(cast_uchar(*s)))
+//      goto ret;  /* must have at least one digit */
+//    while (lisdigit(cast_uchar(*s)))  /* read exponent */
+//      exp1 = exp1 * 10 + *(s++) - '0';
+//    if (neg1) exp1 = -exp1;
+//    e += exp1;
+//  }
+//  *endptr = cast(char *, s);  /* valid up to here */
+// ret:
   if (neg) r = -r;
-  return ldexp(r, e);
+//  return ldexp(r, e);
+  return r;
 }
 
 #endif

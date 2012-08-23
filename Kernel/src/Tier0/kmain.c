@@ -107,6 +107,14 @@ void kmain_newstack(void)
                     "orq $0x600, %rax;"
                     "movq %rax, %cr4;");
 
+    double wat2 = 13.37;
+    wat2 *= 6.66;
+    kprintf("%x\n", wat2);
+
+    u64 wat;
+    __asm__ volatile("movq %%xmm0, %0;" : "=r" (wat));
+    kprintf("%x\n", wat);
+    
     for (;;) {}
     
     /*pic_init(0, 0);

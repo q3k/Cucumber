@@ -47,7 +47,7 @@ typedef unsigned char lu_byte;
 
 /* type to ensure maximum alignment */
 #if !defined(LUAI_USER_ALIGNMENT_T)
-#define LUAI_USER_ALIGNMENT_T	union { double u; void *s; long l; }
+#define LUAI_USER_ALIGNMENT_T	union { long long int u; void *s; long l; }
 #endif
 
 typedef LUAI_USER_ALIGNMENT_T L_Umaxalign;
@@ -271,20 +271,19 @@ union luai_Cast { double l_d; LUA_INT32 l_p[2]; };
 /* on several machines, coercion from unsigned to double is slow,
    so it may be worth to avoid */
 #define lua_unsigned2number(u)  \
-    (((u) <= (lua_Unsigned)INT_MAX) ? (lua_Number)(int)(u) : (lua_Number)(u))
+    (u)
 #endif
 
 
 
 #if defined(ltable_c) && !defined(luai_hashnum)
 
-#include <float.h>
 #include <math.h>
 
-#define luai_hashnum(i,n) { int e;  \
-  n = frexp(n, &e) * (lua_Number)(INT_MAX - DBL_MAX_EXP);  \
-  lua_number2int(i, n); i += e; }
-
+// not sure whether this is a good idea - q3k
+#define luai_hashnum(i,n) { \
+    ((i)=(int)(n)); \
+}
 #endif
 
 

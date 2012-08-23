@@ -3,10 +3,19 @@
 #include <stdarg.h>
 
 #include "setjmp.h"
+#include "stdio.h"
 #include "Tier0/panic.h"
 #include "Tier0/kstdio.h"
 
 int errno;
+
+// file descriptors for stdio...
+FILE _stdin = 0;
+FILE _stdout = 1;
+FILE _stderr = 2;
+FILE *stdin = &_stdin;
+FILE *stdout = &_stderr;
+FILE *stderr = &_stderr;
 
 // math.h implementation
 //double floor(double X)
@@ -66,6 +75,7 @@ int abs(int X)
 void abort(void)
 {
     PANIC("abort() stub.");
+    __builtin_unreachable();
 }
 
 // string.h implementation

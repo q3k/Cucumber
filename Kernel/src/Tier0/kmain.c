@@ -19,11 +19,30 @@
 #include "Tier0/exceptions.h"
 #include "Tier0/panic.h"
 //#include "Tier0/prng.h"
+#include "lua.h"
+#include "lauxlib.h"
 
 extern u64 _start;
 extern u64 _end;
 
 void kmain_newstack(void);
+
+static void *l_alloc (void *ud, void *ptr, size_t osize, size_t nsize) {
+    if (nsize == 0)
+    {
+        kfree(ptr);
+        return NULL;
+    }
+    if (ptr != 0)
+    {
+        void *newptr = kmalloc(nsize);
+        kmemcpy(newptr, ptr, nsize);
+        return newptr;
+    }
+
+    return kmalloc(nsize);;
+}
+
 
 // Real kernel entry point, called from loader
 void kmain(u32 LoadContextAddress)
@@ -81,6 +100,19 @@ void kmain(u32 LoadContextAddress)
     kmain_newstack_ptr();
 }
 
+int doluastring(lua_State *State, s8 *Code)
+{
+//    int Buffer = luaL_loadbuffer(State, Code, kstrlen(Code), "kmain-dostring");
+      luaL_loadbuffer(State, Code, kstrlen(Code), "kmain-dostring");
+//    if (Buffer != LUA_OK)
+//    {
+//        kprintf("[e] doluastring: Could not load Lua buffer!\n");
+//        return 1;
+//    }    
+
+    return 0;
+}
+
 void kmain_newstack(void)
 {
     
@@ -96,7 +128,7 @@ void kmain_newstack(void)
     exceptions_init_simple();
     apic_enable_lapic();
     heap_init_simple();
-
+    
     // enable FPU/SSE...
     __asm__ volatile(
                     "movq %cr0, %rax;"
@@ -107,13 +139,8 @@ void kmain_newstack(void)
                     "orq $0x600, %rax;"
                     "movq %rax, %cr4;");
 
-    double wat2 = 13.37;
-    wat2 *= 6.66;
-    kprintf("%x\n", wat2);
-
-    u64 wat;
-    __asm__ volatile("movq %%xmm0, %0;" : "=r" (wat));
-    kprintf("%x\n", wat);
+    lua_State *State = lua_newstate(l_alloc, NULL);
+    doluastring(State, "print 'test'");
     
     for (;;) {}
     

@@ -5,8 +5,9 @@
 
 //int printf(char *format, va_list args);
 #define BUFSIZ 1024
-#define FILE int
-int sprintf(char *str, const char *format, ...);
+typedef int FILE;
+
+//int sprintf(char *str, const char *format, ...);
 int feof(FILE *stream);
 unsigned int fread(void *ptr, unsigned long long int size, unsigned long long int count, FILE *stream);
 int getc(FILE *stream);
@@ -25,7 +26,7 @@ unsigned long long int fwrite(const void *ptr, unsigned long long int size, unsi
 int fseek(FILE *stream, long offset, int whence);
 int ftell(FILE *stream);
 int fputs(const char *s, FILE *stream);
-int printf(const char *format, ...);
+#define printf(format, ...) fprintf(stdout, format, ##__VA_ARGS__);
 
 #define EOF -1
 extern FILE *stdin;

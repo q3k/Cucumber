@@ -53,7 +53,6 @@ LUALIB_API void luaL_openlibs (lua_State *L) {
   const luaL_Reg *lib;
   /* call open functions from 'loadedlibs' and set results to global table */
   for (lib = loadedlibs; lib->func; lib++) {
-    printf("Lua: loading core lib %s\n", lib->name);
     luaL_requiref(L, lib->name, lib->func, 1);
     lua_pop(L, 1);  /* remove lib */
   }

@@ -115,6 +115,7 @@ static int traceback (lua_State *L) {
 
 int doluastring(lua_State *State, s8 *Code)
 {
+    kprintf("[i] Running Lua string:\n   %s\n", Code);
     int Buffer = luaL_loadbuffer(State, Code, kstrlen(Code), "kmain-dostring");
     if (Buffer != LUA_OK)
     {
@@ -125,7 +126,7 @@ int doluastring(lua_State *State, s8 *Code)
     lua_pushcfunction(State, traceback);
     lua_insert(State, Base);
 
-    lua_pcall(State, 0, 0, Base);
+    lua_pcall(State, 0, 0, 1);
     lua_remove(State, Base);
 
     return 0;
@@ -158,16 +159,9 @@ void kmain_newstack(void)
                     "movq %rax, %cr4;");
 
     lua_State *State = lua_newstate(l_alloc, NULL);
-    //luaL_checkversion(State);
-    //lua_gc(State, LUA_GCSTOP, 0);
+    luaL_checkversion(State);
     luaL_openlibs(State);
-    //lua_getfield(State, 0, "_G");
-    //luaopen_base(State);
-    //lua_gc(State, LUA_GCRESTART, 0);
-
-    doluastring(State, "_G.print('hello!');");
-    //doluastring(State, "tablee.a = 1337");
-    kprintf("back from lua.\n");    
+    doluastring(State, "print(table.concat({'Lua', 'is', 'awesome!'}, ' '))");
     for (;;) {}
     
     /*pic_init(0, 0);

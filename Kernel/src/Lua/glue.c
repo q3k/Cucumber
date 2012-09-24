@@ -8,7 +8,7 @@
 #include "Tier0/kstdio.h"
 #include "Tier0/heap.h"
 #include "Tier0/kstdlib.h"
-#include "Tier0/kstdio.h"
+#include "Tier0/kstdlib.h"
 
 int errno;
 #define NULL 0
@@ -42,13 +42,69 @@ FILE *stderr = &_stderr;
 // setjmp.h implementation
 int setjmp(jmp_buf env)
 {
-    //PANIC("setjmp() stub.");
-    return 0;
+    // gods help me
+    u64 Result;
+    __asm__ __volatile__(
+            // rax in our buffer is going to be set to the magic value of 
+            // 0, in order to let know code underneath that we are actually
+            // in the jump target, not the setting function
+            "movq $0,      0(%%rax)\n"
+            "movq %%rbx,   8(%%rax)\n"
+            "movq %%rcx,  16(%%rax)\n"
+            "movq %%rdx,  24(%%rax)\n"
+            "movq %%rsi,  32(%%rax)\n"
+            "movq %%rdi,  40(%%rax)\n"
+            "movq %%rsp,  48(%%rax)\n"
+            "movq %%rbp,  56(%%rax)\n"
+            "movq %%r8,   64(%%rax)\n"
+            "movq %%r9,   72(%%rax)\n"
+            "movq %%r10,  80(%%rax)\n"
+            "movq %%r11,  88(%%rax)\n"
+            "movq %%r12,  96(%%rax)\n"
+            "movq %%r13, 104(%%rax)\n"
+            "movq %%r14, 112(%%rax)\n"
+            "movq %%r15, 120(%%rax)\n"
+
+            "movq %%rax, %%rbx\n"
+            "call get_rip\n"
+            // two possibilities with rax here:
+            //  - if not zero, then we're in setjmp for the first time
+            //  - if zero, then we're in setjmp from longjmp
+
+            "test %%rax, %%rax\n"
+            "jnz setjmp_original\n"
+
+            // still here? then we just came from longjmp(). let's return the
+            // argument 'value', which we have on our stack
+            "popq %%rax\n"
+            "movq %%rax, %0\n"
+            "jmp setjmp_done\n"
+
+            // helper function (get rip)
+            "get_rip: movq (%%rsp), %%rax\n ret\n"
+
+            // original setting return
+            // don't forget to set rip!
+            "setjmp_original:\n"
+            "movq %%rax, 128(%%rbx)\n"
+            "mov $0, %0\n"
+            "setjmp_done:\n"
+            "nop"
+    :"=r"(Result):"a"(&env[0]));
+
+    kprintf("SETJMP! :D\n");
+    kprintf("%x %x %x %x\n", env[0].rax, env[0].rbx, env[0].rcx, env[0].rdx);
+    kprintf("%x %x %x %x\n", env[0].rsi, env[0].rdi, env[0].rsp, env[0].rbp);
+    kprintf("%x %x %x %x\n", env[0].r8,  env[0].r9,  env[0].r10, env[0].r11);
+    kprintf("%x %x %x %x\n", env[0].r12, env[0].r13, env[0].r14, env[0].rip);
+    kprintf("-------------\n");
+    return (int)Result;
 }
 
 void longjmp(jmp_buf env, int value)
 {
-    PANIC("longjmp() stub.");
+    kprintf("longjmp() stub.");
+    for (;;) {}
 }
 
 // stdio.h implementation
@@ -64,11 +120,11 @@ int fprintf(FILE *stream, const char *format, ...)
     char Buffer[1024];
     int Result = -1;
     if (stream == stdout)
-        Result = rpl_snprintf(Buffer, 1024, format, duplicate_args);
+        Result = rpl_vsnprintf(Buffer, 1024, format, duplicate_args);
     else if (stream == stderr)
     {
         kprintf("ERR: ");
-        Result = rpl_snprintf(Buffer, 1024, format, duplicate_args);
+        Result = rpl_vsnprintf(Buffer, 1024, format, duplicate_args);
     }
 
     if (Result >= 0)
@@ -141,7 +197,9 @@ int abs(int X)
 
 void abort(void)
 {
-    PANIC("Lua: abort() called.");
+    kprintf("\n\nabort()\n");
+    for (;;) {}
+    //PANIC("Lua: abort() called.");
     __builtin_unreachable();
 }
 

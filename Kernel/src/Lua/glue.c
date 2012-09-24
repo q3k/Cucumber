@@ -76,6 +76,7 @@ int setjmp(jmp_buf env)
 
             // still here? then we just came from longjmp(). let's return the
             // argument 'value', which we have on our stack
+            "popq %%rbx\n"
             "popq %%rax\n"
             "movq %%rax, %0\n"
             "jmp setjmp_done\n"
@@ -92,19 +93,51 @@ int setjmp(jmp_buf env)
             "nop"
     :"=r"(Result):"a"(&env[0]));
 
-    kprintf("SETJMP! :D\n");
+    /*kprintf("SETJMP! :D\n");
     kprintf("%x %x %x %x\n", env[0].rax, env[0].rbx, env[0].rcx, env[0].rdx);
     kprintf("%x %x %x %x\n", env[0].rsi, env[0].rdi, env[0].rsp, env[0].rbp);
     kprintf("%x %x %x %x\n", env[0].r8,  env[0].r9,  env[0].r10, env[0].r11);
     kprintf("%x %x %x %x\n", env[0].r12, env[0].r13, env[0].r14, env[0].rip);
-    kprintf("-------------\n");
+    kprintf("-------------\n");*/
     return (int)Result;
 }
 
 void longjmp(jmp_buf env, int value)
 {
-    kprintf("longjmp() stub.");
-    for (;;) {}
+    __asm__ __volatile__(
+            "movq  48(%%rax), %%rsp\n"
+            // we can now push to the setjmp env stack
+
+            // push 'value'
+            "pushq %%rbx\n"
+
+            // push saved rbx
+            "movq   8(%%rax), %%rbx\n"
+            "pushq %%rbx\n"
+
+            "movq  16(%%rax), %%rcx\n"
+            "movq  24(%%rax), %%rdx\n"
+            "movq  32(%%rax), %%rsi\n"
+            "movq  40(%%rax), %%rdi\n"
+            "movq  56(%%rax), %%rbp\n"
+            "movq  64(%%rax), %%r8\n"
+            "movq  72(%%rax), %%r9\n"
+            "movq  80(%%rax), %%r10\n"
+            "movq  88(%%rax), %%r11\n"
+            "movq  96(%%rax), %%r12\n"
+            "movq 104(%%rax), %%r13\n"
+            "movq 112(%%rax), %%r14\n"
+            "movq 120(%%rax), %%r15\n"
+
+            // get rip
+            "movq 128(%%rax), %%rbx\n"
+
+            // set rax to 0 so that setjmp knows we're not the original call
+            "xorq %%rax, %%rax\n"
+
+            // off we go!
+            "jmp %%rbx\n"
+   ::"a"(&env[0]), "b"(value));
 }
 
 // stdio.h implementation

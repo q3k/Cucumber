@@ -160,21 +160,14 @@ void kmain_newstack(void)
     lua_State *State = lua_newstate(l_alloc, NULL);
     //luaL_checkversion(State);
     //lua_gc(State, LUA_GCSTOP, 0);
-    //luaL_openlibs(State);
-    lua_newtable(State);
-    kprintf("%i\n", lua_isnil(State, -1));
-    lua_setglobal(State, "_G");
-    lua_getglobal(State, "_G");
-    kprintf("stack top: %i\n", lua_gettop(State));
-    kprintf("%i\n", lua_isnil(State, -1));
-    for (;;) {}
+    luaL_openlibs(State);
     //lua_getfield(State, 0, "_G");
     //luaopen_base(State);
     //lua_gc(State, LUA_GCRESTART, 0);
 
-    //doluastring(State, "a.print('hello!');");
+    doluastring(State, "_G.print('hello!');");
     //doluastring(State, "tablee.a = 1337");
-    
+    kprintf("back from lua.\n");    
     for (;;) {}
     
     /*pic_init(0, 0);

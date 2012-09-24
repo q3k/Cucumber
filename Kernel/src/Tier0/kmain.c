@@ -20,7 +20,9 @@
 #include "Tier0/panic.h"
 //#include "Tier0/prng.h"
 #include "lua.h"
+#include "lualib.h"
 #include "lauxlib.h"
+#include "lualib.h"
 
 extern u64 _start;
 extern u64 _end;
@@ -100,15 +102,31 @@ void kmain(u32 LoadContextAddress)
     kmain_newstack_ptr();
 }
 
+static int traceback (lua_State *L) {
+    const char *msg = lua_tostring(L, 1);
+    if (msg)
+    {
+        kprintf("Lua traceback: %s\n", msg);
+        return 0;
+    }
+    return 1;
+}
+
+
 int doluastring(lua_State *State, s8 *Code)
 {
-//    int Buffer = luaL_loadbuffer(State, Code, kstrlen(Code), "kmain-dostring");
-      luaL_loadbuffer(State, Code, kstrlen(Code), "kmain-dostring");
-//    if (Buffer != LUA_OK)
-//    {
-//        kprintf("[e] doluastring: Could not load Lua buffer!\n");
-//        return 1;
-//    }    
+    int Buffer = luaL_loadbuffer(State, Code, kstrlen(Code), "kmain-dostring");
+    if (Buffer != LUA_OK)
+    {
+        kprintf("[e] doluastring: Could not load Lua buffer!\n");
+        return 1;
+    }
+    int Base = lua_gettop(State);
+    lua_pushcfunction(State, traceback);
+    lua_insert(State, Base);
+
+    lua_pcall(State, 0, 0, Base);
+    lua_remove(State, Base);
 
     return 0;
 }
@@ -140,7 +158,22 @@ void kmain_newstack(void)
                     "movq %rax, %cr4;");
 
     lua_State *State = lua_newstate(l_alloc, NULL);
-    doluastring(State, "print 'test'");
+    //luaL_checkversion(State);
+    //lua_gc(State, LUA_GCSTOP, 0);
+    //luaL_openlibs(State);
+    lua_newtable(State);
+    kprintf("%i\n", lua_isnil(State, -1));
+    lua_setglobal(State, "_G");
+    lua_getglobal(State, "_G");
+    kprintf("stack top: %i\n", lua_gettop(State));
+    kprintf("%i\n", lua_isnil(State, -1));
+    for (;;) {}
+    //lua_getfield(State, 0, "_G");
+    //luaopen_base(State);
+    //lua_gc(State, LUA_GCRESTART, 0);
+
+    //doluastring(State, "a.print('hello!');");
+    //doluastring(State, "tablee.a = 1337");
     
     for (;;) {}
     

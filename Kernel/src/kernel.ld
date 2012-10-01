@@ -13,8 +13,15 @@ SECTIONS
     {
         _code = .;
         *(.text)
+        *(.text.startup)
         *(.rodata*)
-        
+
+        . = ALIGN(8);
+
+        _start_ctors = .;
+            *(.ctors)
+        _end_ctors = .;
+       
         . = ALIGN(4096);
     }
 
@@ -22,13 +29,6 @@ SECTIONS
    {
         _data = .;
         *(.data)
-        . = ALIGN(4096);
-   }
-
-   .ehframe : AT(ADDR(.ehframe) - KERNEL_VMA)
-   {
-       _ehframe = .;
-       *(.ehframe)
         . = ALIGN(4096);
    }
 
@@ -46,5 +46,6 @@ SECTIONS
    {
         *(.comment)
         *(.debug*)
+        *(.eh_frame)
    }
 }

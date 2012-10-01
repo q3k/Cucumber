@@ -3,7 +3,7 @@
 
 #include "types.h"
 #include "Tier1/CLogger.h"
-#include "Tier1/CTask.h"
+//#include "Tier1/CTask.h"
 
 #define CKERNEL_MAGIC 0x8BA67FE9
 
@@ -19,7 +19,7 @@ namespace cb {
             u32 m_dwMagic;
             CLogger *m_Logger;
             
-            CTask *CreateKernelTask(void);
+//            CTask *CreateKernelTask(void);
     };
 };
 

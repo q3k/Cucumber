@@ -106,7 +106,7 @@ emulate-nohdd: kernel.bin
 	@echo "[i] Building loader..."
 	@pushd ../Loader > /dev/null && $(MAKE) -f Makefile loader.bin && popd > /dev/null
 	@echo "[i] Starting QEMU..."
-	@qemu-system-x86_64 -d int -smp 4 -kernel ../Loader/loader.bin -initrd kernel.bin
+	@qemu-system-x86_64 --no-kvm -d int -smp 4 -kernel ../Loader/loader.bin -initrd kernel.bin
 
 emulate: hdd.img
 	@echo "[i] Starting QEmu..."

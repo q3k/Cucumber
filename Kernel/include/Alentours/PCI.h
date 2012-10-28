@@ -68,6 +68,9 @@ namespace Alentours
 		static CPCIDevice *GetDeviceByAddress(u16 Bus, u16 Device);
 		static void GetDeviceByIDPair(cb::CVector<CPCIDevice> &Devices, u16 Vendor, u16 Device);
 		static void GetAllDevices(cb::CVector<CPCIDevice> &Devices);
+
+		static u8 DBGetVendor(u16 VID, const s8 **VendorNameOut);
+		static u8 DBGetProduct(u16 VID, u16 PID, const s8 **ProductNameOut, const s8 **ProductDescriptionOut);
 	};
 };
 

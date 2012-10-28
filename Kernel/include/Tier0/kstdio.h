@@ -21,6 +21,7 @@ void kputi(s32 Number);
 void kprintf(const s8 *Format, ...);
 void kdump(u8 *bData, u32 Length);
 void kprint_hex(u64 Number);
+void kprint_hex_16(u16 Number);
 void kstdio_set_globals(u8 line, u8 cur_x, u8 cur_y);
 s32 kmemcmp(const u8 *MemA, const u8 *MemB, u32 Length);
 

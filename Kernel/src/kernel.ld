@@ -13,7 +13,7 @@ SECTIONS
     {
         _code = .;
         *(.text)
-        *(.text.startup)
+        *(.text.*)
         *(.rodata*)
 
         . = ALIGN(8);

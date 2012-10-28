@@ -6,6 +6,7 @@
 #include "Tier1/Util/CVector.h"
 #include "Tier1/Util/CLinearList.h"
 //#include "Tier1/CTimer.h"
+#include "Alentours/PCI.h"
 
 using namespace cb;
 
@@ -43,7 +44,7 @@ void CKernel::Start(void)
     }
     
     m_Logger = new CLogger();
-
+    Alentours::CPCIManager::Initialize();
     /*CTask *KernelTask = CreateKernelTask();
     kprintf("[i] Kernel task has TID %i.\n", KernelTask->GetPID());
     CScheduler::AddTask(KernelTask);

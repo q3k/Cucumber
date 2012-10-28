@@ -52,6 +52,13 @@ version-gen:
 	@echo "[i] Generating revision file..."
 	@contrib/rev-gen
 
+include/Alentours/PCIDB.h:
+	@echo "[i] Downloading pcidatabase.com header file..."
+	@echo "[w] WARNING: Please check include/Alentours/PCIDB.h for possible rootkits and stuff."
+	@curl http://www.pcidatabase.com/pci_c_header.php > include/Alentours/PCIDB.h
+	python2 contrib/fix-pci-db.py
+
+
 obj/src/%.xo : src/%.cpp
 	@echo "[i] Compiling $*.cpp ..."
 	@if [ -e obj/src/$*.xo ] ; then rm obj/src/$*.xo ; fi
@@ -78,7 +85,7 @@ ALENTOURSSRC += $(shell find src/Alentours -mindepth 1 -maxdepth 3 -name "*.asm"
 ALENTOURSOBJ := $(patsubst %.cpp,%.xo,$(ALENTOURSSRC))
 ALENTOURSOBJ := $(patsubst %.asm,%.nao,$(ALENTOURSOBJ))
 ALENTOURS := $(foreach i, $(ALENTOURSOBJ), obj/$(i))
-Alentours: $(ALENTOURS)
+Alentours: $(ALENTOURS) include/Alentours/PCIDB.h
 
 src/Lua/liblua.a:
 	@echo "[i] Building Lua..."

@@ -94,13 +94,13 @@ emulate-nohdd-debug: kernel.bin
 	@echo -e "target remote localhost:1234\n" > gdbcommands
 	@terminal -x /bin/bash -c "sleep 1 && gdb -x gdbcommands && rm gdbcommands" &
 	@echo "[i] Starting QEmu..."
-	@qemu-system-x86_64 -S -gdb tcp::1234 -d int -smp 4 -kernel ../Loader/loader.bin -initrd kernel.bin
+	@qemu-system-x86_64 --no-kvm -S -gdb tcp::1234 -d int -smp 4 -kernel ../Loader/loader.bin -initrd kernel.bin
 
 emulate-nohdd: kernel.bin
 	@echo "[i] Building loader..."
 	@pushd ../Loader > /dev/null && $(MAKE) -f Makefile loader.bin && popd > /dev/null
 	@echo "[i] Starting QEMU..."
-	@qemu-system-x86_64 -d int -smp 4 -kernel ../Loader/loader.bin -initrd kernel.bin
+	@qemu-system-x86_64 --no-kvm -d int -smp 4 -kernel ../Loader/loader.bin -initrd kernel.bin
 
 emulate: hdd.img
 	@echo "[i] Starting QEmu..."

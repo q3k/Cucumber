@@ -211,8 +211,8 @@
 */
 #if defined(LUA_LIB) || defined(lua_c)
 #include <stdio.h>
-#define luai_writestring(s,l)	fwrite((s), sizeof(char), (l), stdout)
-#define luai_writeline()	(luai_writestring("\n", 1), fflush(stdout))
+#define luai_writestring(s,l)	printf("%s", s)
+#define luai_writeline()	luai_writestring("\n", 1)
 #endif
 
 /*
@@ -399,6 +399,10 @@
 @@ lua_number2str converts a number to a string.
 @@ LUAI_MAXNUMBER2STR is maximum size of previous conversion.
 */
+// lolwut
+int rpl_snprintf(char *str, size_t size, const char *format, ...);
+#define snprintf rpl_snprintf
+#define sprintf(s, ...) snprintf(s, 9001, __VA_ARGS__)
 #define LUA_NUMBER_SCAN		"%i"
 #define LUA_NUMBER_FMT		"%i"
 #define lua_number2str(s,n)	sprintf((s), LUA_NUMBER_FMT, (n))
@@ -427,10 +431,10 @@
 /* the following operations need the math library */
 #if defined(lobject_c) || defined(lvm_c)
 //#include <math.h>
-//#define luai_nummod(L,a,b)	((a) - floor((a)/(b))*(b))
+#define luai_nummod(L,a,b)	((a) % (b))
 //#define luai_numpow(L,a,b)	(pow(a,b))
-LUA_NUMBER luai_nummod(void *L, LUA_NUMBER a, LUA_NUMBER b);
 LUA_NUMBER luai_numpow(void *L, LUA_NUMBER a, LUA_NUMBER b);
+
 #endif
 
 /* these are quite standard operations */

@@ -52,11 +52,11 @@ emulate-nohdd-debug: loader.bin
 	@echo "[i] Starting GDB..."
 	@gnome-terminal -x /bin/bash -c "gdb"
 	@echo "[i] Starting QEmu..."
-	@qemu -kernel loader.bin -S -gdb tcp::1234
+	@qemu --no-kvm -kernel loader.bin -S -gdb tcp::1234
 
 emulate-nohdd: loader.bin
 	@echo "[i] Starting QEMU..."
-	@qemu -kernel loader.bin
+	@qemu --no-kvm -kernel loader.bin
 
 clean:
 	@rm -Rf obj

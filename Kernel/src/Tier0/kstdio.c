@@ -41,6 +41,18 @@ u8 kinb(u16 Port)
     return Return;
 }
 
+void koutl(u16 Port, u32 Data)
+{
+    __asm__ volatile("outl %1, %0" :: "dN" (Port), "a" (Data));
+}
+
+u32 kinl(u16 Port)
+{
+    u32 Return;
+    __asm__ volatile("inl %1, %0" :"=a"(Return):"Nd"(Port));
+    return Return;
+}
+
 void kio_wait(void)
 {
     __asm__ volatile("jmp 1f;1:jmp 1f;1:");

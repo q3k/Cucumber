@@ -8,6 +8,8 @@
 void kstdio_init(void);
 void koutb(u16 Port, u8 Data);
 u8 kinb(u16 Port);
+void koutl(u16 Port, u32 Data);
+u32 kinl(u16 Port);
 void kio_wait(void);
 u32 kstrlen(const s8 *szString);
 void kmove_cursor(u8 X, u8 Y);

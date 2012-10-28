@@ -15,36 +15,15 @@
 //#include "Tier0/kbd_layout.h"
 #include "Tier0/physmem.h"
 #include "Tier0/heap.h"
-//#include "Tier0/cpp.h"
+#include "Tier0/cpp.h"
 #include "Tier0/exceptions.h"
 #include "Tier0/panic.h"
 //#include "Tier0/prng.h"
-#include "lua.h"
-#include "lualib.h"
-#include "lauxlib.h"
-#include "lualib.h"
 
 extern u64 _start;
 extern u64 _end;
 
 void kmain_newstack(void);
-
-static void *l_alloc (void *ud, void *ptr, size_t osize, size_t nsize) {
-    if (nsize == 0)
-    {
-        kfree(ptr);
-        return NULL;
-    }
-    if (ptr != 0)
-    {
-        void *newptr = kmalloc(nsize);
-        kmemcpy(newptr, ptr, nsize);
-        return newptr;
-    }
-
-    return kmalloc(nsize);;
-}
-
 
 // Real kernel entry point, called from loader
 void kmain(u32 LoadContextAddress)
@@ -102,36 +81,6 @@ void kmain(u32 LoadContextAddress)
     kmain_newstack_ptr();
 }
 
-static int traceback (lua_State *L) {
-    const char *msg = lua_tostring(L, 1);
-    if (msg)
-    {
-        kprintf("Lua traceback: %s\n", msg);
-        return 0;
-    }
-    return 1;
-}
-
-
-int doluastring(lua_State *State, s8 *Code)
-{
-    kprintf("[i] Running Lua string:\n   %s\n", Code);
-    int Buffer = luaL_loadbuffer(State, Code, kstrlen(Code), "kmain-dostring");
-    if (Buffer != LUA_OK)
-    {
-        kprintf("[e] doluastring: Could not load Lua buffer!\n");
-        return 1;
-    }
-    int Base = lua_gettop(State);
-    lua_pushcfunction(State, traceback);
-    lua_insert(State, Base);
-
-    lua_pcall(State, 0, 0, 1);
-    lua_remove(State, Base);
-
-    return 0;
-}
-
 void kmain_newstack(void)
 {
     
@@ -158,11 +107,14 @@ void kmain_newstack(void)
                     "orq $0x600, %rax;"
                     "movq %rax, %cr4;");
 
-    lua_State *State = lua_newstate(l_alloc, NULL);
-    luaL_checkversion(State);
-    luaL_openlibs(State);
-    doluastring(State, "print(table.concat({'Lua', 'is', 'awesome!'}, ' '))");
-    for (;;) {}
+    //lua_State *State = lua_newstate(l_alloc, NULL);
+    //luaL_checkversion(State);
+    //luaL_openlibs(State);
+    
+    cpp_call_ctors();
+    cpp_start_ckernel();
+    kprintf("[i] Returned from Tier1, sleeping forever.\n");
+    LOOPFOREVER;
     
     /*pic_init(0, 0);
     ps2_init_simple();
@@ -179,10 +131,5 @@ void kmain_newstack(void)
     for (u32 Rl = 0; Rl < R; Rl++)
     {
         krand();
-    }
-    
-    cpp_call_ctors();
-    cpp_start_ckernel();
-    kprintf("[i] Returned from Tier1, sleeping forever.\n");
-    LOOPFOREVER;*/
+    } */
 }

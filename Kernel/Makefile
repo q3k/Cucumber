@@ -24,9 +24,15 @@ CFLAGS:=-m64 -mcmodel=large -Wall -Werror -nostdlib -nostartfiles -nodefaultlibs
 CFLAGS+=-I ./include -Wno-packed-bitfield-compat -O2 -fno-optimize-sibling-calls -mcmodel=kernel
 CFLAGS+= -mno-red-zone -ffreestanding -I ./include/Lua -I ./src/Lua
 
-CXFLAGS:= -Wall -Werror -nostdlib -fno-builtin -nostartfiles -I ./include
-CXFLAGS+= -nodefaultlibs -fno-exceptions -fno-rtti -fno-stack-protector 
-CXFLAGS+= -Wno-packed-bitfield-compat -O3 -mcmodel=kernel
+#CXFLAGS:= -Wall -Werror -nostdlib -fno-builtin -nostartfiles -I ./include
+#CXFLAGS+= -nodefaultlibs -fno-exceptions -fno-rtti -fno-stack-protector 
+#CXFLAGS+= -Wno-packed-bitfield-compat -O3 -mcmodel=kernel
+
+CXFLAGS:=-m64 -mcmodel=large -Wall -Werror -nostdlib -nostartfiles -nodefaultlibs -g
+CXFLAGS+=-I ./include -Wno-packed-bitfield-compat -O2 -fno-optimize-sibling-calls -mcmodel=kernel
+CXFLAGS+= -mno-red-zone -ffreestanding -I ./include/Lua -I ./src/Lua -fno-exceptions -fno-rtti
+CXFLAGS+= -fno-stack-protector
+
 LFLAGS:=-nostdlib -nostartfiles -nodefaultlibs
 
 .PHONY: all clean kernel.bin emulate hdd.img
@@ -60,12 +66,12 @@ TIER0OBJ := $(patsubst %.asm,%.nao,$(TIER0OBJ))
 TIER0 := $(foreach i, $(TIER0OBJ), obj/$(i))
 Tier0: $(TIER0)
 
-#TIER1SRC := $(shell find src/Tier1 -mindepth 1 -maxdepth 3 -name "*.cpp")
-#TIER1SRC += $(shell find src/Tier1 -mindepth 1 -maxdepth 3 -name "*.asm")
-#TIER1OBJ := $(patsubst %.cpp,%.xo,$(TIER1SRC))
-#TIER1OBJ := $(patsubst %.asm,%.nao,$(TIER1OBJ))
-#TIER1 := $(foreach i, $(TIER1OBJ), obj/$(i))
-#Tier1: $(TIER1)
+TIER1SRC := $(shell find src/Tier1 -mindepth 1 -maxdepth 3 -name "*.cpp")
+TIER1SRC += $(shell find src/Tier1 -mindepth 1 -maxdepth 3 -name "*.asm")
+TIER1OBJ := $(patsubst %.cpp,%.xo,$(TIER1SRC))
+TIER1OBJ := $(patsubst %.asm,%.nao,$(TIER1OBJ))
+TIER1 := $(foreach i, $(TIER1OBJ), obj/$(i))
+Tier1: $(TIER1)
 
 src/Lua/liblua.a:
 	@echo "[i] Building Lua..."
@@ -74,7 +80,7 @@ src/Lua/liblua.a:
 LUA := src/Lua/liblua.a
 Lua: $(LUA)
 
-kernel.bin: version-gen Tier0 Lua
+kernel.bin: version-gen Tier0 Tier1 Lua
 	@echo "[i] Linking kernel.bin..."
 	@$(LD) -T src/kernel.ld -o kernel.bin $(TIER0) $(TIER1) -Lsrc/Lua -llua
 

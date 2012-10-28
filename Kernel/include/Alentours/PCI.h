@@ -43,15 +43,51 @@ namespace Alentours
 		u8 MultiFunction : 1;
 		u8 BIST;
 	} __attribute__((packed)) TPCIHeaderCommon;
+	typedef union
+	{
+		u32 Value;
+		struct
+		{
+			u8 Zero : 1;
+			u8 Type : 2;
+			u8 Prefetchable : 1;
+			u32 Address : 28;
+		} __attribute__((packed)) MemoryBAR;
+		struct
+		{
+			u8 One : 1;
+			u8 Reserved : 1;
+			u32 Address : 30;
+		} __attribute__((packed)) IOBAR;
+	} TPCIBAR;
+
+	typedef struct
+	{
+		TPCIBAR BAR[6];
+		u32 CardbusCISPointer;
+		u16 SubsystemVID;
+		u16 SubsystemID;
+		u32 ExpansionROMAddress;
+		u8 Capabilities;
+		u32 Reserved0 : 24;
+		u32 Reserved1;
+		u8 InterruptLine;
+		u8 InterruptPIN;
+		u8 MinGrant;
+		u8 MaxLatency;
+	} __attribute__((packed)) TPCIHeaderDevice;
 
 	class CPCIDevice
 	{
 	private:
 		u16 m_Bus, m_Device;
 		TPCIHeaderCommon m_Header;
+		TPCIHeaderDevice *m_DeviceHeader;
 	public:
 		CPCIDevice(u16 Bus, u16 Device);
 		u32 ConfigRead(u16 Function, u16 Offset);
+		void ConfigWrite(u16 Function, u16 Offset, u32 Data);
+
 	};
 
 	class CPCIManager

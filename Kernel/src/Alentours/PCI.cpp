@@ -105,13 +105,28 @@ u32 CPCIDevice::ConfigRead(u16 Function, u16 Offset)
 	return kinl(PCI_CONFIG_DATA);
 }
 
+void CPCIDevice::ConfigWrite(u16 Function, u16 Offset, u32 Data)
+{
+	TPCIConfigAddress Address;
+	Address.Fields.Zero = 0;
+	Address.Fields.Register = Offset >> 2;
+	Address.Fields.Function = Function;
+	Address.Fields.Device = m_Device;
+	Address.Fields.Bus = m_Bus;
+	Address.Fields.Reserved = 0;
+	Address.Fields.Enable = 1;
+
+	koutl(PCI_CONFIG_ADDRESS, Address.Value);
+	koutl(PCI_CONFIG_DATA, Data);
+}
+
 CPCIDevice::CPCIDevice(u16 Bus, u16 Device)
 {
 	m_Bus = Bus;
 	m_Device = Device;
+	m_DeviceHeader = 0;
 
 	kprintf("PCI device [%i:%i]\n", Bus, Device);
-
 	for (u8 i = 0; i < sizeof(m_Header); i += 4)
 	{
 		u32 Value = ConfigRead(0, i);
@@ -134,6 +149,7 @@ CPCIDevice::CPCIDevice(u16 Bus, u16 Device)
 			kprintf("Unknown.\n");
 			break;
 	}
+
 	kprintf("    Info: ");
 	const s8 *VendorName, *ProductName, *ProductDescription;
 	if (CPCIManager::DBGetVendor(m_Header.VendorID, &VendorName))
@@ -141,6 +157,47 @@ CPCIDevice::CPCIDevice(u16 Bus, u16 Device)
 	if (CPCIManager::DBGetProduct(m_Header.VendorID, m_Header.ProductID, &ProductName, &ProductDescription))
 		kprintf(" %s %s", ProductName, ProductDescription);
 	kprintf("\n");
+
+	switch (m_Header.HeaderType)
+	{
+		case 0x00:
+		{
+			m_DeviceHeader = new TPCIHeaderDevice;
+			for (u8 i = 0; i < sizeof(TPCIHeaderDevice); i += 4)
+				((u32 *)m_DeviceHeader)[i/4] = ConfigRead(0, 0x10 + i);
+			
+			for (u8 i = 0; i < 6; i++)
+			{
+				TPCIBAR *BAR = &m_DeviceHeader->BAR[i];
+				u32 Value = BAR->Value;
+				if (Value == 0)
+					continue;
+
+				kprintf("    BAR%i: ", i);
+				if (Value & 1)
+				{
+					kprintf("I/O ");
+					kprintf("Value: %x\n", Value);
+				}
+				else
+				{
+					if (BAR->MemoryBAR.Type != 0x00)
+					{
+						kprintf(" non 32-bit, ignoring.\n");
+						continue;
+					}
+					kprintf("Memory ");
+					kprintf("Value: %x ", Value);
+					ConfigWrite(0, 0x10 + (i * 4), 0xFFFFFFFF);
+					u32 NewValue = ConfigRead(0, 0x10 + (i * 4));
+					ConfigWrite(0, 0x10 + (i * 4), Value);
+					u32 Size = ~(NewValue & ~(0b1111)) + 1;
+					kprintf("Size: %x (%ik)\n", Size, Size/1024);
+				}
+			}
+			break;
+		}
+	}
 }
 
 cb::CVector<CPCIDevice> CPCIManager::m_Devices;

@@ -123,9 +123,17 @@ void kprintf(const s8 *szFormat, ...)
                     }
                 case 'X':
                 case 'x':
-                    ; u64 bData = va_arg(ap, u64);
-                    kprint_hex(bData);
-                    break;
+                    {
+                        u64 bData = va_arg(ap, u64);
+                        kprint_hex(bData);
+                        break;
+                    }
+                case 'h':
+                    {
+                        u16 bData = va_arg(ap, u32);
+                        kprint_hex_16(bData);
+                        break;
+                    }
                 default:
                     kprintf("printf: Unknown escape character %c!\n", szFormat[Offset + 1]);
             }
@@ -205,6 +213,16 @@ void kdump_nibble(u8 Nibble)
 void kprint_hex(u64 Number)
 {
     for (s8 i = 7; i >= 0; i--)
+    {
+        u8 Byte = (Number >> (i << 3)) & 0xFF; //switch i bytes to the right and mask as byte
+        kdump_nibble((Byte >> 4)  & 0x0F); //high nibble
+        kdump_nibble(Byte & 0x0F); //low nibble
+    }
+}
+
+void kprint_hex_16(u16 Number)
+{
+    for (s8 i = 1; i >= 0; i--)
     {
         u8 Byte = (Number >> (i << 3)) & 0xFF; //switch i bytes to the right and mask as byte
         kdump_nibble((Byte >> 4)  & 0x0F); //high nibble

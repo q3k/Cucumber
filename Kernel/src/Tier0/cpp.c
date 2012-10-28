@@ -27,7 +27,7 @@ void __cxa_pure_virtual()
     kprintf("[e] A pure virtual call happened. WTF?\n");
 }
 
-int __cxa_atexit(void (*f)(void *), void *objptr, void *dso)
+int __cxa_atexit(void (*f)(void *), void *arg, void *__dso_handle)
 {
     // Do nothing, for now.
     return 0;
@@ -37,3 +37,5 @@ void __cxa_finalize(void *f)
 {
     // -- " -- " --
 }
+
+void *__dso_handle = 0;

@@ -73,6 +73,13 @@ TIER1OBJ := $(patsubst %.asm,%.nao,$(TIER1OBJ))
 TIER1 := $(foreach i, $(TIER1OBJ), obj/$(i))
 Tier1: $(TIER1)
 
+ALENTOURSSRC := $(shell find src/Alentours -mindepth 1 -maxdepth 3 -name "*.cpp")
+ALENTOURSSRC += $(shell find src/Alentours -mindepth 1 -maxdepth 3 -name "*.asm")
+ALENTOURSOBJ := $(patsubst %.cpp,%.xo,$(ALENTOURSSRC))
+ALENTOURSOBJ := $(patsubst %.asm,%.nao,$(ALENTOURSOBJ))
+ALENTOURS := $(foreach i, $(ALENTOURSOBJ), obj/$(i))
+Alentours: $(ALENTOURS)
+
 src/Lua/liblua.a:
 	@echo "[i] Building Lua..."
 	@make -C src/Lua
@@ -80,9 +87,9 @@ src/Lua/liblua.a:
 LUA := src/Lua/liblua.a
 Lua: $(LUA)
 
-kernel.bin: version-gen Tier0 Tier1 Lua
+kernel.bin: version-gen Tier0 Tier1 Lua Alentours
 	@echo "[i] Linking kernel.bin..."
-	@$(LD) -T src/kernel.ld -o kernel.bin $(TIER0) $(TIER1) -Lsrc/Lua -llua
+	@$(LD) -T src/kernel.ld -o kernel.bin $(TIER0) $(TIER1) $(ALENTOURS) -Lsrc/Lua -llua
 
 hdd.img: kernel.bin
 	@echo "[i] Creating HDD image..."

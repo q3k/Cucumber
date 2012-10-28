@@ -22,7 +22,7 @@ LD:=$(ENV)/$(TARGET)-ld
 # -O2 sets -foptimize-sibling-calls which breaks code...
 CFLAGS:=-m64 -mcmodel=large -Wall -Werror -nostdlib -nostartfiles -nodefaultlibs -std=c99 -g
 CFLAGS+=-I ./include -Wno-packed-bitfield-compat -O2 -fno-optimize-sibling-calls -mcmodel=kernel
-CFLAGS+= -mno-red-zone -ffreestanding
+CFLAGS+= -mno-red-zone -ffreestanding -I ./include/Lua -I ./src/Lua
 
 CXFLAGS:= -Wall -Werror -nostdlib -fno-builtin -nostartfiles -I ./include
 CXFLAGS+= -nodefaultlibs -fno-exceptions -fno-rtti -fno-stack-protector 
@@ -76,7 +76,7 @@ Lua: $(LUA)
 
 kernel.bin: version-gen Tier0 Lua
 	@echo "[i] Linking kernel.bin..."
-	@$(LD) -T src/kernel.ld -o kernel.bin $(TIER0) $(TIER1) $(LUA)
+	@$(LD) -T src/kernel.ld -o kernel.bin $(TIER0) $(TIER1) -Lsrc/Lua -llua
 
 hdd.img: kernel.bin
 	@echo "[i] Creating HDD image..."

@@ -41,6 +41,10 @@ obj/src/%.nao : src/%.asm
 	@echo "[i] Assembling $*.asm..."
 	@$(AS) -f elf64 -o obj/src/$*.nao src/$*.asm
 
+obj/src/%.lo : src/%.lua
+	@echo "[i] Packing $*.lua..."
+	@contrib/luapack.py src/$*.lua obj/src/$*.lo
+
 obj/src/%.o : src/%.c
 	@echo "[i] Compiling $*.c ..."
 	@if [ -e obj/src/$*.o ] ; then rm obj/src/$*.o ; fi

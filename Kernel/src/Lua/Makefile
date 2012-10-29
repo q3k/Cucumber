@@ -31,9 +31,9 @@ PLATS= aix ansi bsd cucumber-kernel freebsd generic linux macosx mingw posix sol
 LUA_A=	liblua.a
 CORE_O=	lapi.o lcode.o lctype.o ldebug.o ldo.o ldump.o lfunc.o lgc.o llex.o \
 	lmem.o lobject.o lopcodes.o lparser.o lstate.o lstring.o ltable.o \
-	ltm.o lundump.o lvm.o lzio.o snprintf.o glue.o
-# removed mathlib, oslib, iolib, loadlib ~q3k
-LIB_O=	lauxlib.o lbaselib.o lbitlib.o lcorolib.o ldblib.o \
+	ltm.o lundump.o lvm.o lzio.o snprintf.o glue.o lauxlib.o
+# removed mathlib, oslib, iolib, loadlib,  ~q3k
+LIB_O=	lbaselib.o lbitlib.o lcorolib.o ldblib.o \
 	lstrlib.o ltablib.o linit.o
 BASE_O= $(CORE_O) $(LIB_O) $(MYOBJS)
 

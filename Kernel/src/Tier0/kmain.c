@@ -15,7 +15,7 @@
 //#include "Tier0/kbd_layout.h"
 #include "Tier0/physmem.h"
 #include "Tier0/heap.h"
-//#include "Tier0/cpp.h"
+#include "Tier0/cpp.h"
 #include "Tier0/exceptions.h"
 #include "Tier0/panic.h"
 //#include "Tier0/prng.h"
@@ -107,15 +107,14 @@ void kmain_newstack(void)
                     "orq $0x600, %rax;"
                     "movq %rax, %cr4;");
 
-    double wat2 = 13.37;
-    wat2 *= 6.66;
-    kprintf("%x\n", wat2);
-
-    u64 wat;
-    __asm__ volatile("movq %%xmm0, %0;" : "=r" (wat));
-    kprintf("%x\n", wat);
+    //lua_State *State = lua_newstate(l_alloc, NULL);
+    //luaL_checkversion(State);
+    //luaL_openlibs(State);
     
-    for (;;) {}
+    cpp_call_ctors();
+    cpp_start_ckernel();
+    kprintf("[i] Returned from Tier1, sleeping forever.\n");
+    LOOPFOREVER;
     
     /*pic_init(0, 0);
     ps2_init_simple();
@@ -132,10 +131,5 @@ void kmain_newstack(void)
     for (u32 Rl = 0; Rl < R; Rl++)
     {
         krand();
-    }
-    
-    cpp_call_ctors();
-    cpp_start_ckernel();
-    kprintf("[i] Returned from Tier1, sleeping forever.\n");
-    LOOPFOREVER;*/
+    } */
 }

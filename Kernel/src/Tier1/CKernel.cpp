@@ -1,11 +1,11 @@
 #include "Tier1/CKernel.h"
-#include "Tier1/CPageFaultDispatcher.h"
-#include "Tier1/CPageDirectory.h"
-#include "Tier1/CTask.h"
-#include "Tier1/CScheduler.h"
+//#include "Tier1/CPageFaultDispatcher.h"
+//#include "Tier1/CPageDirectory.h"
+//#include "Tier1/CTask.h"
+//#include "Tier1/CScheduler.h"
 #include "Tier1/Util/CVector.h"
 #include "Tier1/Util/CLinearList.h"
-#include "Tier1/CTimer.h"
+//#include "Tier1/CTimer.h"
 
 using namespace cb;
 
@@ -44,7 +44,7 @@ void CKernel::Start(void)
     
     m_Logger = new CLogger();
 
-    CTask *KernelTask = CreateKernelTask();
+    /*CTask *KernelTask = CreateKernelTask();
     kprintf("[i] Kernel task has TID %i.\n", KernelTask->GetPID());
     CScheduler::AddTask(KernelTask);
     CScheduler::Enable();
@@ -73,10 +73,10 @@ void CKernel::Start(void)
         	            }
             kprintf("[i] Hello! I'm the child process %i.\n", CTimer::GetTicks());
         }
-    }
+    }*/
 }
 
-extern T_PAGING_DIRECTORY g_kernel_page_directory;
+/*extern T_PAGING_DIRECTORY g_kernel_page_directory;
 extern CPageDirectory *g_KernelPageDirectory;
 CTask *CKernel::CreateKernelTask(void)
 {
@@ -101,5 +101,5 @@ CTask *CKernel::CreateKernelTask(void)
     Task->m_KernelSize = 0x20000000;
     
     return Task;
-}
+}*/
 

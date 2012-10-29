@@ -12,9 +12,9 @@ char *strstr(const char *haystack, const char *needle);
 unsigned long long int strspn(const char *s, const char *accept);
 void *memchr(const void *s, int c, unsigned long long int n);
 char *strcpy(char *dest, const char *src);
+int memcmp(const void *s1, const void *s2, unsigned long int n);
 
 #define strcoll(A, B) strcmp(A, B)
 #define strlen(A) kstrlen(A)
 #define memcpy(A, B, C) kmemcpy(A, B, C)
-#define memcmp(A, B, C) kmemcmp((const u8*)A, (const u8*)B, C)
 #endif

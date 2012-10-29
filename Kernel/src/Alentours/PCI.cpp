@@ -132,31 +132,31 @@ CPCIDevice::CPCIDevice(u16 Bus, u16 Device)
 		u32 Value = ConfigRead(0, i);
 		((u32 *)&m_Header)[i/4] = Value;
 	}
-	kprintf("    VID: %h, PID: %h\n", m_Header.VendorID, m_Header.ProductID);
-	kprintf("    Type: ");
-	switch (m_Header.HeaderType)
-	{
-		case 0x00:
-			kprintf("Generic Device\n");
-			break;
-		case 0x01:
-			kprintf("PCI-PCI Bridge\n");
-			break;
-		case 0x02:
-			kprintf("CardBus Bridge\n");
-			break;
-		default:
-			kprintf("Unknown.\n");
-			break;
-	}
+	// kprintf("    VID: %h, PID: %h\n", m_Header.VendorID, m_Header.ProductID);
+	// kprintf("    Type: ");
+	// switch (m_Header.HeaderType)
+	// {
+	// 	case 0x00:
+	// 		kprintf("Generic Device\n");
+	// 		break;
+	// 	case 0x01:
+	// 		kprintf("PCI-PCI Bridge\n");
+	// 		break;
+	// 	case 0x02:
+	// 		kprintf("CardBus Bridge\n");
+	// 		break;
+	// 	default:
+	// 		kprintf("Unknown.\n");
+	// 		break;
+	// }
 
-	kprintf("    Info: ");
-	const s8 *VendorName, *ProductName, *ProductDescription;
-	if (CPCIManager::DBGetVendor(m_Header.VendorID, &VendorName))
-		kprintf("%s", VendorName);
-	if (CPCIManager::DBGetProduct(m_Header.VendorID, m_Header.ProductID, &ProductName, &ProductDescription))
-		kprintf(" %s %s", ProductName, ProductDescription);
-	kprintf("\n");
+	// kprintf("    Info: ");
+	// const s8 *VendorName, *ProductName, *ProductDescription;
+	// if (CPCIManager::DBGetVendor(m_Header.VendorID, &VendorName))
+	// 	kprintf("%s", VendorName);
+	// if (CPCIManager::DBGetProduct(m_Header.VendorID, m_Header.ProductID, &ProductName, &ProductDescription))
+	// 	kprintf(" %s %s", ProductName, ProductDescription);
+	// kprintf("\n");
 
 	switch (m_Header.HeaderType)
 	{
@@ -173,11 +173,11 @@ CPCIDevice::CPCIDevice(u16 Bus, u16 Device)
 				if (Value == 0)
 					continue;
 
-				kprintf("    BAR%i: ", i);
+				// kprintf("    BAR%i: ", i);
 				if (Value & 1)
 				{
-					kprintf("I/O ");
-					kprintf("Value: %x\n", Value);
+					// kprintf("I/O ");
+					// kprintf("Value: %x\n", Value);
 				}
 				else
 				{
@@ -186,13 +186,13 @@ CPCIDevice::CPCIDevice(u16 Bus, u16 Device)
 						kprintf(" non 32-bit, ignoring.\n");
 						continue;
 					}
-					kprintf("Memory ");
-					kprintf("Value: %x ", Value);
+					// kprintf("Memory ");
+					// kprintf("Value: %x ", Value);
 					ConfigWrite(0, 0x10 + (i * 4), 0xFFFFFFFF);
-					u32 NewValue = ConfigRead(0, 0x10 + (i * 4));
+					// u32 NewValue = ConfigRead(0, 0x10 + (i * 4));
 					ConfigWrite(0, 0x10 + (i * 4), Value);
-					u32 Size = ~(NewValue & ~(0b1111)) + 1;
-					kprintf("Size: %x (%ik)\n", Size, Size/1024);
+					// u32 Size = ~(NewValue & ~(0b1111)) + 1;
+					// kprintf("Size: %x (%ik)\n", Size, Size/1024);
 				}
 			}
 			break;

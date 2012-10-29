@@ -9,8 +9,12 @@
 #define APIC_GET32(field) (*((u32*)(g_APIC.LAPIC + field)))
 #define APIC_SET32A(field, value) do { APIC_SET32(field, value); ASSERT(APIC_GET32(field) == (value));} while(0)
 
+#define APIC_CALIBRATION_SAMPLES 8
 struct {
     void *LAPIC;
+    volatile u32 CalibrationCounter;
+    volatile u32 CalibrationSamples[APIC_CALIBRATION_SAMPLES];
+    u32 BusSpeed;
 } g_APIC;
 
 void apic_eoi(void)
@@ -26,8 +30,26 @@ void apic_spurious_interrupt(T_ISR_REGISTERS Registers)
 void apic_timer_interrupt(T_ISR_REGISTERS Registers)
 {
     kprintf("ohai\n");
+    apic_eoi();
 }
 
+void apic_calibration_interrupt(T_ISR_REGISTERS Registers)
+{
+    u32 Sample = APIC_GET32(APIC_TimerCCR);
+    if (g_APIC.CalibrationCounter >= APIC_CALIBRATION_SAMPLES)
+    {
+        koutb(0x20, 0x20);
+        return;
+    }
+    g_APIC.CalibrationSamples[g_APIC.CalibrationCounter] = Sample;
+    g_APIC.CalibrationCounter++;
+
+    // is the APIC timer 0? well shit.
+    if (Sample == 0)
+        PANIC("APIC Calibration look reached null timer value. Too many saples?");
+
+    koutb(0x20, 0x20);
+}
 
 void apic_enable_lapic(void)
 {
@@ -46,6 +68,10 @@ void apic_enable_lapic(void)
     kprintf("[i] LAPIC will be @0x%x.\n", Virtual);
     paging_map_page(Virtual, 0xFEE00000);
 
+    // prepare interrupts ..
+    interrupts_setup_isr(39, (void *)apic_spurious_interrupt, E_INTERRUPTS_RING0);
+    interrupts_setup_isr(200, (void *)apic_timer_interrupt, E_INTERRUPTS_RING0);
+
     g_APIC.LAPIC = (void *)Virtual;
 
     // reset APIC to a kinda known state
@@ -53,47 +79,52 @@ void apic_enable_lapic(void)
     APIC_SET32(APIC_LDR, (APIC_GET32(APIC_LDR)&0x00FFFFFF)|1);
     APIC_SET32A(APIC_LVTTimer, 0x10000); // mask bit
     APIC_SET32A(APIC_LVTPerformanceCounter, 4 << 8); // NMI bit
-    APIC_SET32A(APIC_LVTLINT0, 0x10000); // mask bit
+    APIC_SET32A(APIC_LVTLINT0, 0x10000); // mask vit
     APIC_SET32A(APIC_LVTLINT1, 0x10000); // mask bit
     APIC_SET32A(APIC_TPR, 0); // task priority = 0 (accept all)
 
-    // prepare interrupts ..
-    interrupts_setup_isr(39, (void *)apic_spurious_interrupt, E_INTERRUPTS_RING0);
-    interrupts_setup_isr(32, (void *)apic_timer_interrupt, E_INTERRUPTS_RING0);
-
     APIC_SET32A(APIC_SVR, 39 | 0x100); // spurious interrupt + sw enable bit
-    APIC_SET32A(APIC_LVTTimer, 32); // apic timer interrupt
+    APIC_SET32A(APIC_LVTTimer, 0x1000); // mask bit
     APIC_SET32A(APIC_TimerDCR, 0x03); // timer divider = bus speed / 16
 
     kprintf("[i] LAPIC ready to calibrate timer.\n");
 
     // calibration time! let's use the PIT
-    koutb(0x61, kinb(0x61) | 0xFD); // disable speaker
-    koutb(0x43, 0xB2); // one shot, channel 2
+    // let's unmask IRQ0 only
+    koutb(0x21, 0xFE);
+    koutb(0xA1, 0xFF);
 
-    // to setup a 100Hz loop, wee need a divider of...
-    // 1193180 / 100 Hz = 11931 = 0x2e9b
-    koutb(0x42, 0x9b); // write low byte
-    kinb(0x60); // wait a bit
-    koutb(0x42, 0x2e); // write high bte
+    // let's make LINT0 trigger an extINT (yay PIC-time)
+    APIC_SET32(APIC_LVTLINT0, 0x8700);
 
-    // now we are ready to fire the PIT timer
-    kprintf("[i] Firing PIT for calibration...\n");
-    u8 Temporary = kinb(0x61) & 0xFE;
-    koutb(0x61, Temporary); // gate low
-    koutb(0x61, Temporary | 1); // gate high
-    // don't forget to actually fire the APIC timer at the same time...
+    // let's start the APIC timer and zero the calibration counter
     APIC_SET32(APIC_TimerICR, 0xFFFFFFFF);
-    // for(;;)
-    // {
-    //     kprintf("APIC: %x\n", APIC_GET32(APIC_TimerICR));
-    // }
+    g_APIC.CalibrationCounter = 0;
 
-    // wait for the PIT counter to reach zero...
-    while (!(kinb(0x61) & 0x020));
-    // disable APIC timer
+    // now let's program the PIT to run a channel0 (IRQ0) timer with a 100Hz loop
+    interrupts_setup_isr(32, (void *)apic_calibration_interrupt, E_INTERRUPTS_RING0);
+    koutb(0x43, 0x36);
+    koutb(0x40, 0x0B);
+    koutb(0x40, 0xE9);
+
+    // the timer is now running!
+    while (g_APIC.CalibrationCounter < APIC_CALIBRATION_SAMPLES) {};
+
+    // enough samples, let's clean up
+    kprintf("[i] Calibration loop finished.\n");
+    koutb(0x21, 0xFF);
+    koutb(0x21, 0xFF);
+    APIC_SET32(APIC_LVTLINT0, 0x1000); // mask bit
     APIC_SET32(APIC_LVTTimer, 0x10000); // mask bit
-    kprintf("[i] Timer reached zero, APIC Timer @%x.\n", APIC_GET32(APIC_TimerICR));
+    interrupts_setup_isr(32, (void *)apic_timer_interrupt, E_INTERRUPTS_RING0);
+
+    u64 Average = 0;
+    for (u32 i = 0; i < APIC_CALIBRATION_SAMPLES -1; i++)
+        Average += (g_APIC.CalibrationSamples[i] - g_APIC.CalibrationSamples[i + 1]);
+
+    Average /= (APIC_CALIBRATION_SAMPLES - 1);
+    g_APIC.BusSpeed = (Average * 16 * 50)/(1000000);
+    kprintf("[i] Bus speed %iMHz.\n", g_APIC.BusSpeed);
 }
 
 #undef APIC_SET

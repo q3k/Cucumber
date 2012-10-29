@@ -17,7 +17,7 @@ void kputs(const s8 *szString);
 void kputch(const s8 Character);
 void kclear(void);
 void kprint(const s8 *szString);
-void kputi(s32 Number);
+void kputi(s64 Number);
 void kprintf(const s8 *Format, ...);
 void kdump(u8 *bData, u32 Length);
 void kprint_hex(u64 Number);

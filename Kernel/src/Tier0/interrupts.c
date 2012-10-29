@@ -119,26 +119,40 @@ void interrupts_remap_pic(void)
 {
     // remap the PIC IRQ's to 0x20-0x27 and 0x28-0x2F
 
-    // save masks
-    u8 MaskMaster = kinb(0x21);
-    u8 MaskSlave = kinb(0xA1);
-
     koutb(0x20, 0x11); // start initialization sequence
+    kio_wait();
     koutb(0xA0, 0x11); // -   "   -
+    kio_wait();
 
     koutb(0x21, 0x20); // master from 0x20
+    kio_wait();
     koutb(0xA1, 0x28); // slave from 0x28
+    kio_wait();
     koutb(0x21, 0x04); // slave PIC at IRQ2
+    kio_wait();
     koutb(0xA1, 0x02); // cascade
+    kio_wait();
     koutb(0x21, 0x01); // 8086 mode
+    kio_wait();
     koutb(0xA1, 0x01); // 8086 mode
+    kio_wait();
 
-    // restore masks
-    koutb(0x21, MaskMaster);
-    koutb(0xA1, MaskSlave);
+    // set masks to accept no IRQs
+    koutb(0x21, 0xFF);
+    kio_wait();
+    koutb(0xA1, 0xFF);
+    kio_wait();
 }
 
-#define GENERIC_IRQ_DEF(i) void interrupts_irq##i##_isr(void) { kprintf("[w] OOPS: Unhandled IRQ"#i"\n"); }
+void interrupts_eoi_pic(u8 IRQ)
+{
+    if (IRQ > 7)
+        koutb(0xA0, 0x20);
+
+    koutb(0x20, 0x20);
+}
+
+#define GENERIC_IRQ_DEF(i) void interrupts_irq##i##_isr(void) { kprintf("[w] OOPS: Unhandled IRQ"#i"\n"); interrupts_eoi_pic(i); }
 #define GENERIC_IRQ_BIND(i) interrupts_setup_isr(0x20 + i, (void *)interrupts_irq##i##_isr, E_INTERRUPTS_RING0)
 PPHAX_DO16(GENERIC_IRQ_DEF);
 

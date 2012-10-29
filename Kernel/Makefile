@@ -115,7 +115,7 @@ hdd.img: kernel.bin
 
 emulate-nohdd-debug: kernel.bin
 	@echo "[i] Starting GDB..."
-	@echo -e "target remote localhost:1234\n" > gdbcommands
+	@echo -e "file kernel.bin\ntarget remote localhost:1234\n" > gdbcommands
 	@terminal -x /bin/bash -c "sleep 1 && gdb -x gdbcommands && rm gdbcommands" &
 	@echo "[i] Starting QEmu..."
 	@qemu-system-x86_64 --no-kvm -S -gdb tcp::1234 -d int -smp 4 -kernel ../Loader/loader.bin -initrd kernel.bin

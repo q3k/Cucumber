@@ -2,6 +2,7 @@
 #include "Tier0/paging.h"
 #include "Tier0/kstdio.h"
 #include "Tier0/pic.h"
+#include "preprocessor_hacks.h"
 
 struct {
     // IDT
@@ -113,10 +114,46 @@ void interrupts_setup_isr(u8 Interrupt, void *Handler, \
     *((u32*)&g_idt_entries[Interrupt]) = 0;
 }
 */
+
+void interrupts_remap_pic(void)
+{
+    // remap the PIC IRQ's to 0x20-0x27 and 0x28-0x2F
+
+    // save masks
+    u8 MaskMaster = kinb(0x21);
+    u8 MaskSlave = kinb(0xA1);
+
+    koutb(0x20, 0x11); // start initialization sequence
+    koutb(0xA0, 0x11); // -   "   -
+
+    koutb(0x21, 0x20); // master from 0x20
+    koutb(0xA1, 0x28); // slave from 0x28
+    koutb(0x21, 0x04); // slave PIC at IRQ2
+    koutb(0xA1, 0x02); // cascade
+    koutb(0x21, 0x01); // 8086 mode
+    koutb(0xA1, 0x01); // 8086 mode
+
+    // restore masks
+    koutb(0x21, MaskMaster);
+    koutb(0xA1, MaskSlave);
+}
+
+#define GENERIC_IRQ_DEF(i) void interrupts_irq##i##_isr(void) { kprintf("[w] OOPS: Unhandled IRQ"#i"\n"); }
+#define GENERIC_IRQ_BIND(i) interrupts_setup_isr(0x20 + i, (void *)interrupts_irq##i##_isr, E_INTERRUPTS_RING0)
+PPHAX_DO16(GENERIC_IRQ_DEF);
+
 void interrupts_init_simple(void)
 {
     interrupts_init_idt();
     interrupts_lidt();
+    interrupts_remap_pic();
+
+    // generic IRQ handlers
+    PPHAX_DO16(GENERIC_IRQ_BIND);
+
+    // enable hardware interrupts
+    __asm__ __volatile__("sti;");
+    kprintf("[i] Hardware interrupts enabled.\n");
 }
 /*
 void interrupts_irq_finish(u8 IRQ)

@@ -46,6 +46,9 @@ void exceptions_floating_point_isr(T_ISR_REGISTERS Registers)
 void exceptions_general_protection_isr(T_ISR_REGISTERS_ERR Registers)
 {
     T_ISR_REGISTERS NoErr;
+    kprintf("general protection fault %x.\n", Registers.Error);
+    __asm__ __volatile__("cli;");
+    for (;;)
     RERR_TO_R(Registers, NoErr);
     PANIC_EX("General protection fault in kernel task.", NoErr);
 }

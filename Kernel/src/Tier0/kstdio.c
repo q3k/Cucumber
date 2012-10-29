@@ -58,14 +58,14 @@ void kio_wait(void)
     __asm__ volatile("jmp 1f;1:jmp 1f;1:");
 }
 
-void kputi(s32 Number)
+void kputi(s64 Number)
 {
-    s32 Sign, i;
+    s64 Sign, i;
     
     if ((Sign = Number) < 0)
         Number = -Number;
 
-    u8 szString[11];
+    u8 szString[21];
 
     i = 0;
     do {
@@ -106,10 +106,10 @@ void kprintf(const s8 *szFormat, ...)
                     kputs(va_arg(ap, s8*));
                     break;
                 case 'i':
-                    kputi(va_arg(ap, s32));
+                    kputi(va_arg(ap, s64));
                     break;
                 case 'u':
-                    kputi(va_arg(ap, u32));
+                    kputi(va_arg(ap, u64));
                     break;
                 case 'm': //dump
                     ; u8 *szString = va_arg(ap, u8*); //stupid gcc bug

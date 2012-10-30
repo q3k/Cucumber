@@ -82,3 +82,14 @@ void physmem_read(u64 Base, u64 Size, void *Destination)
         OffsetInSource++;
     }
 }
+
+u64 physmem_get_free(void)
+{
+    u64 Accumulator = 0;
+    for (u64 i = g_TopFrame; i <= g_MemorySize; i += PHYSMEM_PAGE_SIZE)
+    {
+        if (system_memory_available(i, PHYSMEM_PAGE_SIZE))
+            Accumulator += PHYSMEM_PAGE_SIZE;
+    }
+    return Accumulator;
+}

@@ -14,4 +14,7 @@ u64 physmem_physical_to_page(u64 Physical);
 // Read physical data
 void physmem_read(u64 Base, u64 Size, void *Destination);
 
+// Return how much memory is free (including not reserved by system)
+u64 physmem_get_free(void);
+
 #endif

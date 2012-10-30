@@ -65,7 +65,6 @@ void kmain(u32 LoadContextAddress)
         system_get_kernel_virtual_start() + system_get_kernel_size());
 
     paging_temp_page_setup();
-    //paging_minivmm_setup((u64)&_end, SYSTEM_KERNEL_VIRTUAL + 511 * 0x1000);
     paging_minivmm_setup();
     // Let's create a new kernel stack
     u64 StackVirtual = paging_minivmm_allocate();
@@ -82,9 +81,6 @@ void kmain(u32 LoadContextAddress)
 
 void kmain_newstack(void)
 {
-    
-    // Not using GDT in 64-bit mode... We'll use the loader-provided one.
-    //gdt_create_flat();
     
     u64 RSDPAddress = acpi_find_rsdp();
     if (RSDPAddress == 0)

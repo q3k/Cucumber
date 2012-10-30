@@ -1,23 +1,9 @@
-// Yet another shot at a frame manager... This time, instead of focusing on
-// something unnecessarily complex, I'll try something simpler: an alloc-only
-// frame manager. I wasn't even freeing them anyway, and I don't think I'll ever
-// need that. All the hardcore memory allocation will be done on the kernel heap
-// anyway.
+// This is a frame allocator that uses bitmaps, and allocates space for these bitmaps via itself.
 //
-// tl;dr - want to free a frame? memory leaks ahoy.
-//
-// I want this to be as simple as a 'top' pointer, pointing to the next address
-// of the physical memory that is free. There are two things to watch out for,
-// though:
-//   o unusable memory regions
-//   o max memory size
-// We'll solve the first problem by asking system.c whether we can use a provided
-// region. It used to work the previosu way around, but I'm not going to keep a
-// list of unusable regions both here and in system.c...
-// The second problem is solved by also keeping a max memory size, and throwing
-// a kernel panic when we reach it. It could use an exception system, but since
-// this code will only be called from low-level system routines, if it actually 
-// happens that we run out of memory... We're probably badly screwed, anyway.
+// The funny / tragic part is that we will access the bitmaps via a temp page at first. It will be slow,
+// but it'll save us some mind-twisting if we would try to integrate a directory structure into it.
+
+// TODO: actually implement being able to used chained metadata - right now we are limited to ~128M of RAM.
 
 #include "Tier0/physmem.h"
 #include "Tier0/system.h"
@@ -25,32 +11,123 @@
 #include "Tier0/panic.h"
 #include "Tier0/paging.h"
 
-// The amount of memory in the system, or the top usable pointer.
-u64 g_MemorySize;
-// The current pointer to the top of the frame stack.
-u64 g_TopFrame;
+struct {
+    // The amount of memory in the system, or the top usable pointer.
+    u64 MemorySize;
+    // The first metadata structure
+    u64 FirstMetadata;
+    // for fast access
+    u64 MemoryFree ;
+} g_PhysicalMemory;
 
-void physmem_init(u64 MemorySize)
-{
-    g_TopFrame = 0;
-    g_MemorySize = MemorySize;
-}
+#define PHYSMEM_METADATA_BITS (64 * 511)
+#define PHYSMEM_METADATA_COVERS_BYTES (PHYSMEM_METADATA_BITS * 4096)
+#define PHYSMEM_METADATA_COVERS_BITS (PHYSMEM_METADATA_BITS)
+#define PHYSMEM_ADDRESS_TO_BIT_NUMBER(address) ((address) / 4096)
+#define PHYSMEM_BIT_NUMBER_TO_METADATA_NUMBER(bit) ((bit) / PHYSMEM_METADATA_COVERS_BITS)
+#define PHYSMEM_ADDRESS_TO_METADATA_NUMBER(address) ((address) / PHYSMEM_METADATA_COVERS_BYTES)
+#define PHYSMEM_ADDRESS_TO_BIT_IN_METADATA(address) ((address) % PHYSMEM_METADATA_COVERS_BYTES)
+#define PHYSMEM_BIT_NUMBER_TO_BIT_IN_METADATA(bit) ((bit) % PHYSMEM_METADATA_COVERS_BITS)
+#define PHYSMEM_METADATA_SET_BIT(mdp, bit) do { (mdp)->Bitmap[(bit)/64] |= (1 << ((bit)%64)); } while(0)
+#define PHYSMEM_METADATA_CLEAR_BIT(mdp, bit) do { (mdp)->Bitmap[(bit)/64] &= ~(1 << ((bit)%64)); } while(0)
 
-u64 physmem_allocate_page(void)
+typedef struct {
+    u64 Bitmap[511]; // covers 511*64 frames, or 130816KiB
+    u64 NextMetadata; // physical address of next metadata
+} __attribute__((packed)) T_PHYSMEM_METADATA; // exactly 4k in size, to fit in a frame
+
+u64 __physmem_allocate_first_page(void)
 {
-    u64 NextPageStart = g_TopFrame;
+    u64 NextPageStart = 0;
     
     while (!system_memory_available(NextPageStart, PHYSMEM_PAGE_SIZE))
     {
         NextPageStart += PHYSMEM_PAGE_SIZE;
         
-        if (NextPageStart > g_MemorySize)
+        if (NextPageStart > g_PhysicalMemory.MemorySize)
             PANIC("Out of memory!");
     }
     
-    return NextPageStart / PHYSMEM_PAGE_SIZE;
+    return NextPageStart;
 }
 
+void physmem_init(void)
+{
+    g_PhysicalMemory.MemorySize = system_get_memory_top();
+    g_PhysicalMemory.MemoryFree = system_get_memory_top();
+
+    // allocate the first frame, for metadata
+    u64 MetadataFrame = __physmem_allocate_first_page();
+    kprintf("[i] Physmem: First frame @%x\n", MetadataFrame);
+    kprintf("[i] Physmem: First bit: %i\n", PHYSMEM_ADDRESS_TO_BIT_NUMBER(MetadataFrame));
+    if (PHYSMEM_ADDRESS_TO_METADATA_NUMBER(MetadataFrame) > 0)
+        PANIC("Physmem: First allocated address > metadata covering!");
+
+    // map it to virtual mem so we can use it
+    paging_temp_page_set_physical(MetadataFrame);
+    T_PHYSMEM_METADATA *Metadata = (T_PHYSMEM_METADATA *)paging_temp_page_get_virtual();
+
+    // zero the metadata (the 512th bit overflows into the nextmatadata field)
+    for (u64 i = 0; i < 512; i++)
+        Metadata->Bitmap[i] = 0;
+    
+    // mask all the bits up to and including our metadata frame as used
+    for (u32 i = 0; i <= PHYSMEM_ADDRESS_TO_BIT_NUMBER(MetadataFrame); i++)
+    {
+        u32 Bit = PHYSMEM_BIT_NUMBER_TO_BIT_IN_METADATA(i);
+        PHYSMEM_METADATA_SET_BIT(Metadata, Bit);
+        g_PhysicalMemory.MemoryFree -= 4096;
+    }
+
+    // mask all the bits that are reserved accoriding to system
+    for (u32 i = PHYSMEM_ADDRESS_TO_BIT_NUMBER(MetadataFrame) + 1; i < PHYSMEM_METADATA_COVERS_BITS; i ++)
+    {
+        u64 Address = i * 4096;
+        if (!system_memory_available(Address, 4096))
+        {
+            PHYSMEM_METADATA_SET_BIT(Metadata, i);
+            g_PhysicalMemory.MemoryFree -= 4096;
+        }
+    }
+}
+
+
+u64 physmem_allocate_page(void)
+{
+    paging_temp_page_set_physical(g_PhysicalMemory.FirstMetadata);
+    T_PHYSMEM_METADATA *Metadata = (T_PHYSMEM_METADATA *)paging_temp_page_get_virtual();
+    for (u32 i = 0; i < PHYSMEM_METADATA_COVERS_BITS; i++)
+    {
+        if (Metadata->Bitmap[i] != 0xFFFFFFFFFFFF)
+        {
+            // scan the subbitmap
+            for (u8 j = 0; j < 64; j++)
+                if (((Metadata->Bitmap[i] >> j)&1) == 0)
+                {
+                    PHYSMEM_METADATA_SET_BIT(Metadata, i * 64 + j);
+                    g_PhysicalMemory.MemoryFree -= 4096;
+                    kprintf("-> %i\n", i * 64 + j);
+                    return i * 64 + j;
+                }
+        }
+    }
+    PANIC("physmem metadata addition not yet implemented - OOM!");
+    return 0;
+}
+
+void physmem_free_page(u64 Page)
+{
+    if (Page > PHYSMEM_METADATA_COVERS_BITS)
+        PANIC("...and where did you get that page index?");
+
+    paging_temp_page_set_physical(g_PhysicalMemory.FirstMetadata);
+    T_PHYSMEM_METADATA *Metadata = (T_PHYSMEM_METADATA *)paging_temp_page_get_virtual();
+
+    // todo: check for double frees
+    u32 Bit = PHYSMEM_BIT_NUMBER_TO_BIT_IN_METADATA(Page);
+    PHYSMEM_METADATA_CLEAR_BIT(Metadata, Bit);
+    g_PhysicalMemory.MemoryFree += 4096;
+}
 
 u64 physmem_page_to_physical(u64 Page)
 {
@@ -85,11 +162,5 @@ void physmem_read(u64 Base, u64 Size, void *Destination)
 
 u64 physmem_get_free(void)
 {
-    u64 Accumulator = 0;
-    for (u64 i = g_TopFrame; i <= g_MemorySize; i += PHYSMEM_PAGE_SIZE)
-    {
-        if (system_memory_available(i, PHYSMEM_PAGE_SIZE))
-            Accumulator += PHYSMEM_PAGE_SIZE;
-    }
-    return Accumulator;
+    return g_PhysicalMemory.MemoryFree;
 }

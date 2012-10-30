@@ -55,7 +55,7 @@ void kmain(u32 LoadContextAddress)
     if (!CPUID_HAS(APIC))
         PANIC("CPU doesn't support APIC!");
     
-    system_parse_load_context(LoadContext);
+    system_parse_load_context(LoadContext); 
     kprintf("[i] Booting via %s.\n", LoadContext->LoaderName);
     kprintf("[i] Memory available: %uk.\n", system_get_memory_upper());
     kprintf("[i] Kernel physical: %x-%x.\n", system_get_kernel_physical_start(),
@@ -65,6 +65,8 @@ void kmain(u32 LoadContextAddress)
         system_get_kernel_virtual_start() + system_get_kernel_size());
 
     paging_temp_page_setup();
+    physmem_init();
+
     paging_minivmm_setup();
     // Let's create a new kernel stack
     u64 StackVirtual = paging_minivmm_allocate();
@@ -104,5 +106,6 @@ void kmain_newstack(void)
     cpp_call_ctors();
     cpp_start_ckernel();
     kprintf("[i] Returned from Tier1, sleeping forever.\n");
+    kprintf("[i] Free memory: %i KiB.\n", physmem_get_free());
     LOOPFOREVER;
 }

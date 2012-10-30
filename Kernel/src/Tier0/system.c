@@ -143,7 +143,7 @@ void system_parse_load_context(T_LOAD_CONTEXT *LoadContext)
     g_SystemInfo.NumInvalidAreas++;
     
     kprintf("[i] Highest unavailable address is %x.\n", HighestUnavailable);
-    physmem_init(HighestUnavailable);
+    g_SystemInfo.MemoryTop = HighestUnavailable;
 }
 
 u64 system_get_memory_upper(void)
@@ -223,4 +223,9 @@ u64 system_get_kernel_physical_start(void)
 u64 system_get_kernel_virtual_start(void)
 {
     return g_SystemInfo.KernelVirtualStart;
+}
+
+u64 system_get_memory_top(void)
+{
+    return g_SystemInfo.MemoryTop;
 }

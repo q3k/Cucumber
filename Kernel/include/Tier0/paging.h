@@ -91,13 +91,18 @@ const inline u64 paging_temp_page_get_virtual(void)
 }
 void             paging_temp_page_set_physical(u64 Physical);
 
-// The MiniVMM is a mini virtual memory manager that manages, similarly to the
-// basic physical frame manager, allocation of _virtual_ frames, for use by
-// paging functions. This should be only used by major parts of the kernel, for
-// example to map some data structures to physical memory, or if physmem_read
-// calls would be too slow.
-void paging_minivmm_setup(void);
-u64 paging_minivmm_allocate(void);
+// We have to prepare for virtual memory allocation from 0xFFFFFFFF00000000
+// right from the beggining, because that's the mapping that we will be using
+// in later parts of the code (see Tier1/CKernelML4.h), and there's not sense
+// in remapping everything.
+// This means we have to set up a page directory for our managed pool, fill
+// it up with a heap (from Tier0/heap.c), and attach that directory to a DPT.
+// Then, when we offload page management to CKernelML4, we have to let it know
+// about the state of all these things.
+void paging_scratch_initialize(void);
+// Allocates 4096 of physical and virtual memory in the kernel scratch buffer.
+// Warning, this memory cannot be freed.
+void *paging_scratch_allocate(void);
 
 // A simple page map call. This does no checks! Triple faults ahoy.
 void paging_map_page(u64 Virtual, u64 Physical);

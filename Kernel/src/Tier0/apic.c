@@ -64,7 +64,8 @@ void apic_enable_lapic(void)
         system_msr_set(0x1B, APICMSR);
     }
     
-    u64 Virtual = paging_minivmm_allocate();
+    //u64 Virtual = paging_minivmm_allocate();
+    u64 Virtual = 0;
     kprintf("[i] LAPIC will be @0x%x.\n", Virtual);
     paging_map_page(Virtual, 0xFEE00000);
 

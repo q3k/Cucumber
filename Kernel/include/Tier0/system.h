@@ -3,6 +3,8 @@
 
 #include "load_context.h"
 
+#define SYSTEM_KERNEL_VIRTUAL 0xFFFFFFFF80000000
+
 struct S_SYSTEM_MLTBT_MMAP {
     u32 Size;
     u64 Base;
@@ -102,7 +104,12 @@ typedef struct {
     
     // Just a guess...
     T_SYSTEM_INVALID_RAM InvalidMemoryAreas[256];
-    u8 NumInvalidAreas;    
+    u8 NumInvalidAreas;
+
+    // kernel code size and location
+    u64 KernelSize;
+    u64 KernelPhysicalStart;
+    u64 KernelVirtualStart;
 } T_SYSTEM_INFO;
 
 u64 system_cpuid(u32 Code);
@@ -111,5 +118,10 @@ u64 system_cpuid(u32 Code);
 u8 system_msr_available(void);
 u64 system_msr_get(u32 MSR);
 void system_msr_set(u32 MSR, u64 Data);
+
+// kernel load address, size and mapping
+u64 system_get_kernel_size(void);
+u64 system_get_kernel_physical_start(void);
+u64 system_get_kernel_virtual_start(void);
 
 #endif

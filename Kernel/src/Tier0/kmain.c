@@ -20,9 +20,6 @@
 #include "Tier0/panic.h"
 //#include "Tier0/prng.h"
 
-extern u64 _start;
-extern u64 _end;
-
 void kmain_newstack(void);
 
 // Real kernel entry point, called from loader
@@ -61,12 +58,15 @@ void kmain(u32 LoadContextAddress)
     system_parse_load_context(LoadContext);
     kprintf("[i] Booting via %s.\n", LoadContext->LoaderName);
     kprintf("[i] Memory available: %uk.\n", system_get_memory_upper());
-    kprintf("[i] Kernel physical: %x-%x.\n", LoadContext->KernelPhysicalStart, LoadContext->KernelPhysicalEnd);
+    kprintf("[i] Kernel physical: %x-%x.\n", system_get_kernel_physical_start(),
+        system_get_kernel_physical_start() + system_get_kernel_size());
     kprintf("[i] Loader physical: %x-%x.\n", LoadContext->LoaderPhysicalStart, LoadContext->LoaderPhysicalEnd);
-    kprintf("[i] Kernel virtual:  %x-%x.\n", &_start, &_end);
+    kprintf("[i] Kernel virtual:  %x-%x.\n", system_get_kernel_virtual_start(),
+        system_get_kernel_virtual_start() + system_get_kernel_size());
 
     paging_temp_page_setup();
-    paging_minivmm_setup((u64)&_end, SYSTEM_KERNEL_VIRTUAL + 511 * 0x1000);
+    //paging_minivmm_setup((u64)&_end, SYSTEM_KERNEL_VIRTUAL + 511 * 0x1000);
+    paging_minivmm_setup();
     // Let's create a new kernel stack
     u64 StackVirtual = paging_minivmm_allocate();
     kprintf("[i] New kernel stack 0x%x\n", StackVirtual);

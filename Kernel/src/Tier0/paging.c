@@ -100,12 +100,12 @@ void paging_set_ml4(u64 ML4Physical)
     __asm volatile ( "mov %%rax, %%cr3\n" :: "a" (ML4Physical));
 }
 
-void paging_minivmm_setup(u64 Start, u64 End)
+void paging_minivmm_setup(void)
 {
-    g_MiniVMM.Start = Start;
-    g_MiniVMM.End = End;
-    g_MiniVMM.Top = Start;
-    kprintf("[i] MiniVMM: %x - %x.\n", Start, End);
+    g_MiniVMM.Start = system_get_kernel_virtual_start() + system_get_kernel_size();
+    g_MiniVMM.End = system_get_kernel_virtual_start() + 511 * 0x1000;
+    g_MiniVMM.Top = g_MiniVMM.Start;
+    kprintf("[i] MiniVMM: %x - %x.\n", g_MiniVMM.Start, g_MiniVMM.End);
 }
 
 u64 paging_minivmm_allocate(void)

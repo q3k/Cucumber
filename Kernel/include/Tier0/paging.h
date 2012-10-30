@@ -96,7 +96,7 @@ void             paging_temp_page_set_physical(u64 Physical);
 // paging functions. This should be only used by major parts of the kernel, for
 // example to map some data structures to physical memory, or if physmem_read
 // calls would be too slow.
-void paging_minivmm_setup(u64 Start, u64 End);
+void paging_minivmm_setup(void);
 u64 paging_minivmm_allocate(void);
 
 // A simple page map call. This does no checks! Triple faults ahoy.

@@ -56,6 +56,8 @@ void system_parse_load_context(T_LOAD_CONTEXT *LoadContext)
     g_SystemInfo.KernelPhysicalStart = LoadContext->KernelPhysicalStart;
     g_SystemInfo.KernelSize = LoadContext->KernelPhysicalEnd - LoadContext->KernelPhysicalStart;
     g_SystemInfo.KernelVirtualStart = SYSTEM_KERNEL_VIRTUAL;
+    ASSERT(SYSTEM_KERNEL_VIRTUAL == (u64)&_start);
+    ASSERT((SYSTEM_KERNEL_VIRTUAL + g_SystemInfo.KernelSize) == (u64)&_end);
     
     // Bootloader name from Multiboot header
     if ((Flags >> 9) & 1)

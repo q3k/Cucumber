@@ -88,7 +88,7 @@ void kmain_newstack(void)
     
     u64 RSDPAddress = acpi_find_rsdp();
     if (RSDPAddress == 0)
-        kprintf("[w] No ACPI!\n");
+        PANIC("ACPI not supported! What is this, 1999?");
     
     smp_initialize();
     interrupts_init_simple();
@@ -104,30 +104,9 @@ void kmain_newstack(void)
                     "movq %cr4, %rax;"
                     "orq $0x600, %rax;"
                     "movq %rax, %cr4;");
-
-    //lua_State *State = lua_newstate(l_alloc, NULL);
-    //luaL_checkversion(State);
-    //luaL_openlibs(State);
     
     cpp_call_ctors();
     cpp_start_ckernel();
     kprintf("[i] Returned from Tier1, sleeping forever.\n");
     LOOPFOREVER;
-    
-    /*pic_init(0, 0);
-    ps2_init_simple();
-    kbd_layout_set_default();
-    __asm__ volatile("sti");
-    kprintf("[i] Hardware interrupts are now enabled.\n");
-    
-    kprintf("[i] Initializing PRNG...\n");
-    u16 RLow, RHigh;
-    __asm__ __volatile__ ("rdtsc" : "=a" (RLow), "=d" (RHigh));
-    u32 R = (RHigh << 16) | RLow;
-    kprintf("[i] %i\n", R);
-    kseed(R);
-    for (u32 Rl = 0; Rl < R; Rl++)
-    {
-        krand();
-    } */
 }

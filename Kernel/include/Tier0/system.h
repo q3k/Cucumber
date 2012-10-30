@@ -101,6 +101,8 @@ typedef struct {
     s8* BootloaderName;
     
     T_CPUID_FEATURES CPUFeatures;
+
+    u64 MemoryTop;
     
     // Just a guess...
     T_SYSTEM_INVALID_RAM InvalidMemoryAreas[256];
@@ -123,5 +125,6 @@ void system_msr_set(u32 MSR, u64 Data);
 u64 system_get_kernel_size(void);
 u64 system_get_kernel_physical_start(void);
 u64 system_get_kernel_virtual_start(void);
+u64 system_get_memory_top(void);
 
 #endif

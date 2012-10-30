@@ -14,7 +14,7 @@ extern "C" {
 // LOWMEM  - 0x0000000000000000 - 0x0000000000100000 -> lower 1MiB of physical memory, common, fits in 1/2 of a Table
 // SCRATCH - 0xFFFFFFFF00000000 - 0xFFFFFFFF3FFFFFFF -> kernel scratch space & heap. 4GiB, common, fits in 1/1 of a Directory
 // STACK   - 0xFFFFFFFF40000000 - 0xFFFFFFFF4FFFFFFF -> kernel stack, unique per ML4, 256MiB, fits in 1/16 of a Directory,
-// TEXT    - 0xFFFFFFFF80000000 - 0xFFFFFFFF8xxxxxxx -> kernel code physical location, common, fits in x/16 of a Directory
+// TEXT    - 0xFFFFFFFF80000000 - 0xFFFFFFFF8xxxxxxx -> kernel code physical location and the temp page, common, fits in x/16 of a Directory
 
 namespace cb {
     class CKernelML4 {

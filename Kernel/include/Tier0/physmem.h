@@ -6,7 +6,7 @@
 #define PHYSMEM_PAGE_SIZE 4096
 
 // Page frame allocation
-void physmem_init(u64 MemorySize);
+void physmem_init(void);
 u64 physmem_allocate_page(void);
 u64 physmem_page_to_physical(u64 Page);
 u64 physmem_physical_to_page(u64 Physical);

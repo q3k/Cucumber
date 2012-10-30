@@ -3,19 +3,13 @@
 #include "Tier0/kstdlib.h"
 #include "Tier0/panic.h"
 #include "Tier0/system.h"
+#include "Tier0/physmem.h"
 #include "types.h"
 
 struct {
     T_PAGING_TAB_ENTRY *TempPage; // For temp page mapping.
     u64 TempPageVirtual;
 } g_KernelPaging;
-
-struct {
-    u64 Start;
-    u64 End;
-    
-    u64 Top;
-} g_MiniVMM;
 
 T_PAGING_ML4 *paging_get_ml4(void)
 {
@@ -100,23 +94,87 @@ void paging_set_ml4(u64 ML4Physical)
     __asm volatile ( "mov %%rax, %%cr3\n" :: "a" (ML4Physical));
 }
 
-void paging_minivmm_setup(void)
+struct {
+    u32 UnmanagedSize;
+    u8 HeapSetUp;
+    u64 DirectoryPhysical;
+} g_PagingScratch;
+
+void paging_scratch_initialize(void)
 {
-    g_MiniVMM.Start = system_get_kernel_virtual_start() + system_get_kernel_size();
-    g_MiniVMM.End = system_get_kernel_virtual_start() + 511 * 0x1000;
-    g_MiniVMM.Top = g_MiniVMM.Start;
-    kprintf("[i] MiniVMM: %x - %x.\n", g_MiniVMM.Start, g_MiniVMM.End);
+    // let's first allocate a physical frame for the DIR
+    u64 DirPhysical = physmem_allocate_page() * 4096;
+    // map it to our trusty temp page
+    paging_temp_page_set_physical(DirPhysical);
+    T_PAGING_DIR *Directory = (T_PAGING_DIR *)paging_temp_page_get_virtual();
+    // zero the entries
+    for (u16 i = 0; i < 512; i++)
+        Directory->Entries[i].Present = 0;
+
+    // attach the scratch to the DPT. we can do this without using a temp page,
+    // as the boot paging structures lie in the 2mib identity paged zone
+    u16 ML4Entry = PAGING_GET_ML4_INDEX(0xFFFFFFFF00000000);
+    T_PAGING_ML4 *ML4 = paging_get_ml4();
+
+    ASSERT(ML4->Entries[ML4Entry].Present);
+    u64 aDPT = ML4->Entries[ML4Entry].Physical << 12;
+    T_PAGING_DPT *DPT = (T_PAGING_DPT *)aDPT;
+    u16 DPTEntry = PAGING_GET_DPT_INDEX(0xFFFFFFFF00000000);
+
+    ASSERT(!DPT->Entries[DPTEntry].Present);
+    DPT->Entries[DPTEntry].Present = 1;
+    DPT->Entries[DPTEntry].RW = 1;
+    DPT->Entries[DPTEntry].Physical = DirPhysical >> 12;
+
+    g_PagingScratch.UnmanagedSize = 0;
+    g_PagingScratch.HeapSetUp = 0;
+    g_PagingScratch.DirectoryPhysical = DirPhysical;
 }
 
-u64 paging_minivmm_allocate(void)
+void *paging_scratch_allocate(void)
 {
-    if (g_MiniVMM.Top + 0x1000 > g_MiniVMM.End)
-        PANIC("MiniVMM out of memory!");
-    
-    u64 Result = g_MiniVMM.Top;
-    g_MiniVMM.Top += 4096;
-    
-    return Result;
+    if (g_PagingScratch.HeapSetUp)
+        PANIC("Trying to allocate unmanaged scratch after heap exists, abort!");
+
+    u64 Virtual = 0xFFFFFFFF00000000 + g_PagingScratch.UnmanagedSize;
+    u64 Physical = physmem_allocate_page() * 4096;
+    u16 DirEntry = PAGING_GET_DIR_INDEX(Virtual);
+
+    paging_temp_page_set_physical(g_PagingScratch.DirectoryPhysical);
+    T_PAGING_DIR *Directory = (T_PAGING_DIR *)paging_temp_page_get_virtual();
+
+    // create table if necessary
+    u64 TablePhysical;
+    if (!Directory->Entries[DirEntry].Present)
+    {
+        // create a new page table
+        TablePhysical = physmem_allocate_page() * 4096;
+        paging_temp_page_set_physical(TablePhysical);
+        T_PAGING_TAB *Table = (T_PAGING_TAB*)paging_temp_page_get_virtual();
+        // zero the table
+        for (u16 i  = 0; i < 512; i++)
+            Table->Entries[i].Present = 0;
+
+        // set the directory to point where it should
+        paging_temp_page_set_physical(g_PagingScratch.DirectoryPhysical);
+        Directory->Entries[DirEntry].Present = 1;
+        Directory->Entries[DirEntry].RW = 1;
+        Directory->Entries[DirEntry].Physical = TablePhysical >> 12;
+    }
+    else
+        TablePhysical = Directory->Entries[DirEntry].Physical << 12;
+
+    // set the table entry to point to our new page frame
+    paging_temp_page_set_physical(TablePhysical);
+    T_PAGING_TAB *Table = (T_PAGING_TAB*)paging_temp_page_get_virtual();
+    u16 TabEntry = PAGING_GET_TAB_INDEX(Virtual);
+    Table->Entries[TabEntry].Present = 1;
+    Table->Entries[TabEntry].RW = 1;
+    Table->Entries[TabEntry].Physical = Physical >> 12;
+
+    g_PagingScratch.UnmanagedSize += 4096;
+    __asm__ __volatile__("invlpg %0" :: "m"(Virtual));
+    return (void *)Virtual;
 }
 
 void paging_map_page(u64 Virtual, u64 Physical)
@@ -130,5 +188,5 @@ void paging_map_page(u64 Virtual, u64 Physical)
     T_PAGING_TAB *Tab = (T_PAGING_TAB *)aTab;
     
     Tab->Entries[PAGING_GET_TAB_INDEX(Virtual)].Physical = Physical >> 12;    
-    __asm__ volatile("invlpg %0" :: "m"(*(u32 *)Virtual));
+    __asm__ volatile("invlpg %0" :: "m"(Virtual));
 }

@@ -106,7 +106,6 @@ u64 physmem_allocate_page(void)
                 {
                     PHYSMEM_METADATA_SET_BIT(Metadata, i * 64 + j);
                     g_PhysicalMemory.MemoryFree -= 4096;
-                    kprintf("-> %i\n", i * 64 + j);
                     return i * 64 + j;
                 }
         }

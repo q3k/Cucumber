@@ -66,10 +66,14 @@ void kmain(u32 LoadContextAddress)
 
     paging_temp_page_setup();
     physmem_init();
-
-    paging_minivmm_setup();
+    paging_scratch_initialize();
+    void *a1 = paging_scratch_allocate();
+    void *a2 = paging_scratch_allocate();
+    kprintf("%x %x\n", a1, a2);
+    for (;;) {}
     // Let's create a new kernel stack
-    u64 StackVirtual = paging_minivmm_allocate();
+    //u64 StackVirtual = paging_minivmm_allocate();
+    u64 StackVirtual = 0;
     kprintf("[i] New kernel stack 0x%x\n", StackVirtual);
     
     // And now let's use it and forget ebp because we can.

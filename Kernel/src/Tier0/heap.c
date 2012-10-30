@@ -73,10 +73,10 @@ T_HEAP *heap_create(u64 Size)
     u64 Start = 0;
     for (u32 i = 0; i < NumPages; i++)
     {
-        if (!Start)
-            Start = paging_minivmm_allocate(); 
-        else
-            paging_minivmm_allocate();
+        // if (!Start)
+        //     Start = paging_minivmm_allocate(); 
+        // else
+        //     paging_minivmm_allocate();
     }
     kprintf("[i] Heap starts at 0x%x\n", Start);
     

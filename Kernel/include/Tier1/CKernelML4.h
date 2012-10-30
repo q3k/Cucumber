@@ -6,15 +6,12 @@ extern "C" {
     #include "Tier0/paging.h"
 };
 
-// This is more-or less just a C++ wrapper for T_PGAE_DIRECTORY.
+// This is more-or less just a C++ wrapper for T_PAGING_ML4.
 namespace cb {
-    class CPageDirectory {
-        friend class CKernel;
-        friend class CScheduler;
-        friend class CTask;
+    class CKernelML4 {
         protected:
             // The paging direcotry structure
-            T_PAGING_DIRECTORY *m_Directory;
+            T_PAGING_ML4 *m_Directory;
             
             // A bitmap precising whether a table is owned by the page directory
             // (== can we delete it when we delete the directory itself)

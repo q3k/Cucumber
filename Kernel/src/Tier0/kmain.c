@@ -65,9 +65,8 @@ void kmain(u32 LoadContextAddress)
     kprintf("[i] Loader physical: %x-%x.\n", LoadContext->LoaderPhysicalStart, LoadContext->LoaderPhysicalEnd);
     kprintf("[i] Kernel virtual:  %x-%x.\n", &_start, &_end);
 
-    paging_kernel_initialize((u64)&_start, LoadContext->KernelPhysicalStart, LoadContext->KernelPhysicalEnd - LoadContext->KernelPhysicalStart);
-    paging_temp_page_setup(LoadContext);
-    paging_minivmm_setup((u64)&_end, 0xFFFFFFFF80000000 + 511 * 0x1000);
+    paging_temp_page_setup();
+    paging_minivmm_setup((u64)&_end, SYSTEM_KERNEL_VIRTUAL + 511 * 0x1000);
     // Let's create a new kernel stack
     u64 StackVirtual = paging_minivmm_allocate();
     kprintf("[i] New kernel stack 0x%x\n", StackVirtual);

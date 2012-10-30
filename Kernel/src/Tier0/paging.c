@@ -2,15 +2,12 @@
 #include "Tier0/kstdio.h"
 #include "Tier0/kstdlib.h"
 #include "Tier0/panic.h"
+#include "Tier0/system.h"
 #include "types.h"
 
 struct {
     T_PAGING_TAB_ENTRY *TempPage; // For temp page mapping.
     u64 TempPageVirtual;
-
-    u64 KernelVirtualStart;
-    u64 KernelPhysicalStart;
-    u64 KernelSize;
 } g_KernelPaging;
 
 struct {
@@ -27,13 +24,15 @@ T_PAGING_ML4 *paging_get_ml4(void)
 	return (T_PAGING_ML4*)Address;
 }
 
-void paging_temp_page_setup(T_LOAD_CONTEXT *LoadContext)
+void paging_temp_page_setup(void)
 {
+    u64 KernelVirtualStart = system_get_kernel_virtual_start();
+    u64 KernelSize = system_get_kernel_size();
+
     // Try using page 511 (last) from kernel table
-    u64 PageVirtual = 0xFFFFFFFF80000000 + 511 * 4096;
+    u64 PageVirtual = KernelVirtualStart + 511 * 4096;
     u64 MaxMapped = 4096 * 512; // first 2Mib by loader
     
-    u64 KernelSize = LoadContext->KernelPhysicalEnd - LoadContext->KernelPhysicalStart;
     if (KernelSize >= MaxMapped)
         PANIC("Cannot set up temp page, kernel > 2Mib!");
     
@@ -76,13 +75,6 @@ void paging_temp_page_set_physical(u64 Physical)
 
     g_KernelPaging.TempPage->Physical = Physical >> 12;
     __asm__ volatile("invlpg %0" :: "m"(*(u64 *)g_KernelPaging.TempPageVirtual));
-}
-
-void paging_kernel_initialize(u64 KernelVirtualStart, u64 KernelPhysicalStart, u64 KernelSize)
-{
-    g_KernelPaging.KernelVirtualStart = KernelVirtualStart;
-    g_KernelPaging.KernelPhysicalStart = KernelPhysicalStart;
-    g_KernelPaging.KernelSize = KernelSize;
 }
 
 /*u8 paging_get_physical_ex(u64 Virtual, u64 *Physical, T_PAGING_ML4 *ML4)

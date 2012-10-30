@@ -51,6 +51,11 @@ void system_parse_load_context(T_LOAD_CONTEXT *LoadContext)
         g_SystemInfo.MemoryLower = (u64)((u8*)Header)[4];
         g_SystemInfo.MemoryUpper = (u64)((u8*)Header)[8];
     }
+
+    // Kernel location in memory
+    g_SystemInfo.KernelPhysicalStart = LoadContext->KernelPhysicalStart;
+    g_SystemInfo.KernelSize = LoadContext->KernelPhysicalEnd - LoadContext->KernelPhysicalStart;
+    g_SystemInfo.KernelVirtualStart = SYSTEM_KERNEL_VIRTUAL;
     
     // Bootloader name from Multiboot header
     if ((Flags >> 9) & 1)
@@ -201,4 +206,19 @@ u64 system_msr_get(u32 MSR)
 void system_msr_set(u32 MSR, u64 Data)
 {
     __asm__ volatile("wrmsr" :: "a"((u32)(Data & 0xFFFFFFFF)), "d"((u32)(Data >> 32)), "c"(MSR));
+}
+
+u64 system_get_kernel_size(void)
+{
+    return g_SystemInfo.KernelSize;
+}
+
+u64 system_get_kernel_physical_start(void)
+{
+    return g_SystemInfo.KernelPhysicalStart;
+}
+
+u64 system_get_kernel_virtual_start(void)
+{
+    return g_SystemInfo.KernelVirtualStart;
 }

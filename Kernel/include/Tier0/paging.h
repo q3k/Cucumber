@@ -84,7 +84,7 @@ void paging_kernel_initialize(u64 KernelVirtualStart, u64 KernelPhysicalStart, u
 
 // The temporary page is a page you can use to access some temporary physical
 // location. There is only one page, 4096 bytes large. Deal with it.
-void             paging_temp_page_setup(T_LOAD_CONTEXT *LoadContext);
+void             paging_temp_page_setup(void);
 const inline u64 paging_temp_page_get_virtual(void)
 {
     return 0xFFFFFFFF80000000 + 511 * 0x1000;

@@ -3,8 +3,8 @@
 
 #include "types.h"
 
-#define HEAP_HEADER_MAGIC 0x8A4DF92E
-#define HEAP_FOOTER_MAGIC 0x9AFE352B
+#define HEAP_HEADER_MAGIC 0x8A4DF92ED6EAB782
+#define HEAP_FOOTER_MAGIC 0x9AFE352B73FE48AB
 
 #define HEAP_INITIAL_SIZE 0x00010000
 #define HEAP_MIN_SIZE     0x00010000
@@ -12,13 +12,13 @@
 #define HEAP_INDEX_SIZE   0x00002000
 
 typedef struct {
-   u32 Magic;
+   u64 Magic;
    u8 Hole;
    u64 Size;
 } T_HEAP_HEADER;
 
 typedef struct {
-    u32 Magic;
+    u64 Magic;
     T_HEAP_HEADER *Header;
 } T_HEAP_FOOTER;
 

@@ -74,29 +74,28 @@ T_HEAP *heap_create(u64 Size)
     for (u32 i = 0; i < NumPages; i++)
     {
         if (!Start)
-            kprintf("%x\n", Start = (u64)paging_scratch_allocate()); 
+            Start = (u64)paging_scratch_allocate(); 
         else
-            kprintf("%x\n", paging_scratch_allocate());
+            paging_scratch_allocate();
     }
-    //kprintf("[i] Heap starts at 0x%x\n", Start);
     
     T_HEAP* Heap = (T_HEAP *)Start;
-    Start += sizeof(T_HEAP);
+    u64 DataStart = Start;
+    DataStart += sizeof(T_HEAP);
     
-    Heap->Index = heap_index_initialize((void*)Start, HEAP_INDEX_SIZE / 4);
+    Heap->Index = heap_index_initialize((void*)DataStart, HEAP_INDEX_SIZE / 4);
     
-    Start += HEAP_INDEX_SIZE;
-    kprintf("[[i] Heap %x - %x\n", Start, Start + NumPages * 4096);
-    Heap->Start = Start;
+    DataStart += HEAP_INDEX_SIZE;
+    kprintf("[i] Heap %x - %x\n", DataStart, Start + NumPages * 4096);
+    Heap->Start = DataStart;
     Heap->End = Start + NumPages * 4096;
     
-    T_HEAP_HEADER *Hole = (T_HEAP_HEADER *)Start;
-    Hole->Size = Size;
+    T_HEAP_HEADER *Hole = (T_HEAP_HEADER *)DataStart;
+    Hole->Size = Heap->End - Heap->Start;
     Hole->Magic = HEAP_HEADER_MAGIC;
     Hole->Hole = 1;
     
     heap_index_insert(&Heap->Index, (void*)Hole);
-    //for (;;) {}
     return Heap;
 }
 
@@ -190,7 +189,6 @@ void *heap_alloc(T_HEAP *Heap, u64 Size, u8 Aligned)
 {
     u64 RealSize = Size + sizeof(T_HEAP_HEADER) + sizeof(T_HEAP_FOOTER);
     s64 Iterator = _heap_find_smallest_hole(Heap, RealSize, Aligned);
-    kprintf("%i\n", Iterator);
     if (Iterator == -1)
     {
         u64 OldSize = Heap->End - Heap->Start;
@@ -245,7 +243,6 @@ void *heap_alloc(T_HEAP *Heap, u64 Size, u8 Aligned)
                             Iterator);
     u64 HoleStart = (u64)Header;
     u64 HoleSize = Header->Size;
-    kprintf("%x %x, %x, %i\n", Heap, &Heap->Index, HoleStart, HoleSize);
 
     if (HoleSize - RealSize < sizeof(T_HEAP_HEADER) + sizeof(T_HEAP_FOOTER))
     {
@@ -276,7 +273,6 @@ void *heap_alloc(T_HEAP *Heap, u64 Size, u8 Aligned)
     BlockHeader->Magic = HEAP_HEADER_MAGIC;
     BlockHeader->Size = RealSize;
     BlockHeader->Hole = 0;
-
 
     T_HEAP_FOOTER *BlockFooter = (T_HEAP_FOOTER *)(HoleStart + RealSize
                                 - sizeof(T_HEAP_FOOTER));

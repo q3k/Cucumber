@@ -69,8 +69,6 @@ void kpanic_ex(const s8 *Error, const s8 *File, u64 Line, T_ISR_REGISTERS R)
         
         kprintf("%x\n", Line);
     }
-
-    for(;;) {}
     
     // Dumping registers
     
@@ -85,10 +83,10 @@ void kpanic_ex(const s8 *Error, const s8 *File, u64 Line, T_ISR_REGISTERS R)
     kprintf("    cr0: 0x%X cr3: 0x%x  cs: 0x%x\n", cr0, cr3, R.cs, ds);
     kprintf("    rip  0x%X rax: 0x%X rbx: 0x%x\n", R.rip, R.rax, R.rbx);
     kprintf("    rcx: 0x%x rdx: 0x%x rsi: 0x%x\n", R.rcx, R.rdx, R.rsi);
-    kprintf("    rdi: 0x%x rbp: 0x%x rsp: 0x%x\n", R.rdi, R.rbp, R.rsp);
-    kprintf("    r8 : 0x%x r9 : 0x%x r10: 0x%x\n", R.r8, R.r9, R.r10);
-    kprintf("    r11: 0x%x r12: 0x%x r13: 0x%x\n", R.r11, R.r12, R.r13);
-    kprintf("    r14: 0x%x r15: 0x%x\n", R.r14, R.r15);
+    // kprintf("    rdi: 0x%x rbp: 0x%x rsp: 0x%x\n", R.rdi, R.rbp, R.rsp);
+    // kprintf("    r8 : 0x%x r9 : 0x%x r10: 0x%x\n", R.r8, R.r9, R.r10);
+    // kprintf("    r11: 0x%x r12: 0x%x r13: 0x%x\n", R.r11, R.r12, R.r13);
+    // kprintf("    r14: 0x%x r15: 0x%x\n", R.r14, R.r15);
     
 //    s64 FrameSize = R.rbp - R.rsp;
     

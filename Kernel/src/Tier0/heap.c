@@ -73,12 +73,12 @@ T_HEAP *heap_create(u64 Size)
     u64 Start = 0;
     for (u32 i = 0; i < NumPages; i++)
     {
-        // if (!Start)
-        //     Start = paging_minivmm_allocate(); 
-        // else
-        //     paging_minivmm_allocate();
+        if (!Start)
+            kprintf("%x\n", Start = (u64)paging_scratch_allocate()); 
+        else
+            kprintf("%x\n", paging_scratch_allocate());
     }
-    kprintf("[i] Heap starts at 0x%x\n", Start);
+    //kprintf("[i] Heap starts at 0x%x\n", Start);
     
     T_HEAP* Heap = (T_HEAP *)Start;
     Start += sizeof(T_HEAP);
@@ -86,7 +86,7 @@ T_HEAP *heap_create(u64 Size)
     Heap->Index = heap_index_initialize((void*)Start, HEAP_INDEX_SIZE / 4);
     
     Start += HEAP_INDEX_SIZE;
-    
+    kprintf("[[i] Heap %x - %x\n", Start, Start + NumPages * 4096);
     Heap->Start = Start;
     Heap->End = Start + NumPages * 4096;
     
@@ -96,7 +96,7 @@ T_HEAP *heap_create(u64 Size)
     Hole->Hole = 1;
     
     heap_index_insert(&Heap->Index, (void*)Hole);
-    
+    //for (;;) {}
     return Heap;
 }
 
@@ -190,7 +190,7 @@ void *heap_alloc(T_HEAP *Heap, u64 Size, u8 Aligned)
 {
     u64 RealSize = Size + sizeof(T_HEAP_HEADER) + sizeof(T_HEAP_FOOTER);
     s64 Iterator = _heap_find_smallest_hole(Heap, RealSize, Aligned);
-
+    kprintf("%i\n", Iterator);
     if (Iterator == -1)
     {
         u64 OldSize = Heap->End - Heap->Start;
@@ -245,6 +245,7 @@ void *heap_alloc(T_HEAP *Heap, u64 Size, u8 Aligned)
                             Iterator);
     u64 HoleStart = (u64)Header;
     u64 HoleSize = Header->Size;
+    kprintf("%x %x, %x, %i\n", Heap, &Heap->Index, HoleStart, HoleSize);
 
     if (HoleSize - RealSize < sizeof(T_HEAP_HEADER) + sizeof(T_HEAP_FOOTER))
     {
@@ -252,7 +253,7 @@ void *heap_alloc(T_HEAP *Heap, u64 Size, u8 Aligned)
         RealSize = HoleSize;
     }
 
-    if (Aligned && HoleStart & 0xFFFFF000)
+    if (Aligned && HoleStart & 0xFFFFFFFFFFFFF000)
     {
         u64 NewLocation = HoleStart + 0x1000 - (HoleStart & 0xFFF)
                           - sizeof(T_HEAP_HEADER);
@@ -291,7 +292,7 @@ void *heap_alloc(T_HEAP *Heap, u64 Size, u8 Aligned)
 
         T_HEAP_FOOTER *NewHoleFooter = (T_HEAP_FOOTER*)((u64)NewHoleHeader
             + NewHoleHeader->Size - sizeof(T_HEAP_FOOTER));
-
+//for (;;) {}
         if ((u64)NewHoleFooter < Heap->End)
         {
             NewHoleFooter->Magic = HEAP_FOOTER_MAGIC;

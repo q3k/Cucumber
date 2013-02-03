@@ -35,7 +35,11 @@ CXFLAGS+= -fno-stack-protector
 
 LFLAGS:=-nostdlib -nostartfiles -nodefaultlibs
 
-.PHONY: all clean kernel.bin emulate hdd.img
+debug: CFLAGS += -DDEBUG -gdwarf-4 -fvar-tracking-assignments -O0
+debug: CXFLAGS += -DDEBUG -gdwarf-4 -fvar-tracking-assignments -O0
+debug: kernel.bin
+
+.PHONY: all clean emulate hdd.img debug
 
 obj/src/%.nao : src/%.asm
 	@echo "[i] Assembling $*.asm..."
@@ -101,6 +105,10 @@ Lua: $(LUA)
 kernel.bin: version-gen Tier0 Tier1 Lua Alentours
 	@echo "[i] Linking kernel.bin..."
 	@$(LD) -T src/kernel.ld -o kernel.bin $(TIER0) $(TIER1) $(ALENTOURS) -Lsrc/Lua -llua
+	@echo "[i] Creating debug symbols."
+	@cp kernel.bin ksyms.elf
+	@strip --only-keep-debug ksyms.elf
+	@strip --strip-debug --strip-unneeded kernel.bin
 
 hdd.img: kernel.bin
 	@echo "[i] Creating HDD image..."
@@ -113,10 +121,10 @@ hdd.img: kernel.bin
 	@mcopy -i hdd_temp.img dst/syslinux.cfg ::syslinux.cfg
 	@mv hdd_temp.img hdd.img
 
-emulate-nohdd-debug: kernel.bin
+emulate-nohdd-debug: debug
 	@echo "[i] Starting GDB..."
-	@echo -e "file kernel.bin\ntarget remote localhost:1234\n" > gdbcommands
-	@terminal -x /bin/bash -c "sleep 1 && gdb -x gdbcommands && rm gdbcommands" &
+	@echo -e "file kernel.bin\nsymbol-file ksyms.elf\ntarget remote localhost:1234\n" > gdbcommands
+	@terminal -x /bin/bash -c "sleep 1 && gdb -tui -x gdbcommands && rm gdbcommands" &
 	@echo "[i] Starting QEmu..."
 	@qemu-system-x86_64 --no-kvm -S -gdb tcp::1234 -d int -smp 4 -kernel ../Loader/loader.bin -initrd kernel.bin
 

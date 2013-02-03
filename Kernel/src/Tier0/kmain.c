@@ -67,13 +67,8 @@ void kmain(u32 LoadContextAddress)
     paging_temp_page_setup();
     physmem_init();
     paging_scratch_initialize();
-    void *a1 = paging_scratch_allocate();
-    void *a2 = paging_scratch_allocate();
-    kprintf("%x %x\n", a1, a2);
-    for (;;) {}
     // Let's create a new kernel stack
-    //u64 StackVirtual = paging_minivmm_allocate();
-    u64 StackVirtual = 0;
+    u64 StackVirtual = (u64)paging_scratch_allocate();
     kprintf("[i] New kernel stack 0x%x\n", StackVirtual);
     
     // And now let's use it and forget ebp because we can.
@@ -92,11 +87,13 @@ void kmain_newstack(void)
     if (RSDPAddress == 0)
         PANIC("ACPI not supported! What is this, 1999?");
     
-    smp_initialize();
+    //smp_initialize();
     interrupts_init_simple();
     exceptions_init_simple();
     apic_enable_lapic();
     heap_init_simple();
+    kprintf("%x\n", kmalloc(1337));
+    for (;;) {}
     // enable FPU/SSE...
     __asm__ volatile(
                     "movq %cr0, %rax;"

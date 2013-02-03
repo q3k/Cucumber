@@ -72,6 +72,7 @@ void physmem_init(void)
         Metadata->Bitmap[i] = 0;
     
     // mask all the bits up to and including our metadata frame as used
+    kprintf("[i] Marking physical memory up to 0x%x (bit %i) as used.\n", MetadataFrame, PHYSMEM_ADDRESS_TO_BIT_NUMBER(MetadataFrame));
     for (u32 i = 0; i <= PHYSMEM_ADDRESS_TO_BIT_NUMBER(MetadataFrame); i++)
     {
         u32 Bit = PHYSMEM_BIT_NUMBER_TO_BIT_IN_METADATA(i);
@@ -89,6 +90,8 @@ void physmem_init(void)
             g_PhysicalMemory.MemoryFree -= 4096;
         }
     }
+
+    g_PhysicalMemory.FirstMetadata = MetadataFrame;
 }
 
 
@@ -98,7 +101,7 @@ u64 physmem_allocate_page(void)
     T_PHYSMEM_METADATA *Metadata = (T_PHYSMEM_METADATA *)paging_temp_page_get_virtual();
     for (u32 i = 0; i < PHYSMEM_METADATA_COVERS_BITS; i++)
     {
-        if (Metadata->Bitmap[i] != 0xFFFFFFFFFFFF)
+        if (Metadata->Bitmap[i] != 0xFFFFFFFFFFFFFFFF)
         {
             // scan the subbitmap
             for (u8 j = 0; j < 64; j++)

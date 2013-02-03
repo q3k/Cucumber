@@ -9,7 +9,7 @@
 #define PANIC_EX_HEX(m, R, h) kpanic_ex(m, 0, h, R)
 #define ASSERT(m) kassert(m, __FILE__, __LINE__)
 
-void kpanic_ex(const s8 *Error, const s8 *File, u32 Line, T_ISR_REGISTERS R);
+void kpanic_ex(const s8 *Error, const s8 *File, u64 Line, T_ISR_REGISTERS R);
 void kpanic(const s8 *Error, const s8 *File, u32 Line);
 void kassert(u8 Value, const s8 *File, u32 Line);
 

@@ -5,13 +5,13 @@
 #include "Tier0/interrupts.h"
 #include "Tier0/panic.h"
 
-#define APIC_SET32(field, value) do { *((u32 *)(g_APIC.LAPIC + field)) = (value);} while(0)
-#define APIC_GET32(field) (*((u32*)(g_APIC.LAPIC + field)))
+#define APIC_SET32(field, value) do { *((volatile u32 *)(g_APIC.LAPIC + field)) = (value);} while(0)
+#define APIC_GET32(field) (*((volatile u32*)(g_APIC.LAPIC + field)))
 #define APIC_SET32A(field, value) do { APIC_SET32(field, value); ASSERT(APIC_GET32(field) == (value));} while(0)
 
 #define APIC_CALIBRATION_SAMPLES 8
 struct {
-    void *LAPIC;
+    volatile void *LAPIC;
     volatile u32 CalibrationCounter;
     volatile u32 CalibrationSamples[APIC_CALIBRATION_SAMPLES];
     u32 BusSpeed;
@@ -64,19 +64,15 @@ void apic_enable_lapic(void)
         system_msr_set(0x1B, APICMSR);
     }
     
-    //u64 Virtual = paging_minivmm_allocate();
-    u64 Virtual = 0;
-    kprintf("[i] LAPIC will be @0x%x.\n", Virtual);
-    paging_map_page(Virtual, 0xFEE00000);
+    g_APIC.LAPIC = paging_scratch_map(0xFEE00000);
+    kprintf("[i] LAPIC will be @0x%x.\n", g_APIC.LAPIC);
 
     // prepare interrupts ..
     interrupts_setup_isr(39, (void *)apic_spurious_interrupt, E_INTERRUPTS_RING0);
     interrupts_setup_isr(200, (void *)apic_timer_interrupt, E_INTERRUPTS_RING0);
 
-    g_APIC.LAPIC = (void *)Virtual;
-
     // reset APIC to a kinda known state
-    APIC_SET32A(APIC_DFR, 0xFFFFFFFF);
+    APIC_SET32(APIC_DFR, 0xFFFFFFFF);
     APIC_SET32(APIC_LDR, (APIC_GET32(APIC_LDR)&0x00FFFFFF)|1);
     APIC_SET32A(APIC_LVTTimer, 0x10000); // mask bit
     APIC_SET32A(APIC_LVTPerformanceCounter, 4 << 8); // NMI bit

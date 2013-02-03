@@ -92,7 +92,6 @@ void kmain_newstack(void)
     exceptions_init_simple();
     apic_enable_lapic();
     heap_init_simple();
-    for (;;) {}
     // enable FPU/SSE...
     __asm__ volatile(
                     "movq %cr0, %rax;"

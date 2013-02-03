@@ -132,31 +132,31 @@ CPCIDevice::CPCIDevice(u16 Bus, u16 Device)
 		u32 Value = ConfigRead(0, i);
 		((u32 *)&m_Header)[i/4] = Value;
 	}
-	// kprintf("    VID: %h, PID: %h\n", m_Header.VendorID, m_Header.ProductID);
-	// kprintf("    Type: ");
-	// switch (m_Header.HeaderType)
-	// {
-	// 	case 0x00:
-	// 		kprintf("Generic Device\n");
-	// 		break;
-	// 	case 0x01:
-	// 		kprintf("PCI-PCI Bridge\n");
-	// 		break;
-	// 	case 0x02:
-	// 		kprintf("CardBus Bridge\n");
-	// 		break;
-	// 	default:
-	// 		kprintf("Unknown.\n");
-	// 		break;
-	// }
+	kprintf("    VID: %h, PID: %h\n", m_Header.VendorID, m_Header.ProductID);
+	kprintf("    Type: ");
+	switch (m_Header.HeaderType)
+	{
+		case 0x00:
+			kprintf("Generic Device\n");
+			break;
+		case 0x01:
+			kprintf("PCI-PCI Bridge\n");
+			break;
+		case 0x02:
+			kprintf("CardBus Bridge\n");
+			break;
+		default:
+			kprintf("Unknown.\n");
+			break;
+	}
 
-	// kprintf("    Info: ");
-	// const s8 *VendorName, *ProductName, *ProductDescription;
-	// if (CPCIManager::DBGetVendor(m_Header.VendorID, &VendorName))
-	// 	kprintf("%s", VendorName);
-	// if (CPCIManager::DBGetProduct(m_Header.VendorID, m_Header.ProductID, &ProductName, &ProductDescription))
-	// 	kprintf(" %s %s", ProductName, ProductDescription);
-	// kprintf("\n");
+	kprintf("    Info: ");
+	const s8 *VendorName, *ProductName, *ProductDescription;
+	if (CPCIManager::DBGetVendor(m_Header.VendorID, &VendorName))
+		kprintf("%s", VendorName);
+	if (CPCIManager::DBGetProduct(m_Header.VendorID, m_Header.ProductID, &ProductName, &ProductDescription))
+		kprintf(" %s %s", ProductName, ProductDescription);
+	kprintf("\n");
 
 	switch (m_Header.HeaderType)
 	{

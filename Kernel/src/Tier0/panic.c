@@ -30,11 +30,11 @@ char *kpanic_get_random_message(void)
     return KPANIC_HEADER0;
 }
 
-void kpanic_ex(const s8 *Error, const s8 *File, u32 Line, T_ISR_REGISTERS R)
+void kpanic_ex(const s8 *Error, const s8 *File, u64 Line, T_ISR_REGISTERS R)
 {
     __asm__ volatile("cli");
     
-    kclear();
+    //kclear();
     
     char *Message = kpanic_get_random_message();
     
@@ -69,6 +69,8 @@ void kpanic_ex(const s8 *Error, const s8 *File, u32 Line, T_ISR_REGISTERS R)
         
         kprintf("%x\n", Line);
     }
+
+    for(;;) {}
     
     // Dumping registers
     

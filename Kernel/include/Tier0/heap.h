@@ -23,6 +23,7 @@ typedef struct {
 } T_HEAP_FOOTER;
 
 typedef struct {
+    // wat
     void **Array;
     u64 Size;
     u64 MaxSize;

@@ -71,6 +71,11 @@ void paging_temp_page_set_physical(u64 Physical)
     __asm__ volatile("invlpg %0" :: "m"(*(u64 *)g_KernelPaging.TempPageVirtual));
 }
 
+inline volatile const u64 paging_temp_page_get_virtual(void)
+{
+    return 0xFFFFFFFF80000000 + 511 * 0x1000;
+}
+
 /*u8 paging_get_physical_ex(u64 Virtual, u64 *Physical, T_PAGING_ML4 *ML4)
 {
     if (Virtual < g_KernelPaging.KernelVirtualStart || Virtual > g_KernelPaging.KernelVirtualStart + g_KernelPaging.KernelSize)
@@ -118,6 +123,9 @@ void paging_scratch_initialize(void)
 
     ASSERT(ML4->Entries[ML4Entry].Present);
     u64 aDPT = ML4->Entries[ML4Entry].Physical << 12;
+    kprintf("[i] DPT Physical 0x%x, ML4 index %i.\n", aDPT, ML4Entry);
+
+    kprintf("[i] Scratch DIR Physical 0x%x\n", DirPhysical);
     T_PAGING_DPT *DPT = (T_PAGING_DPT *)aDPT;
     u16 DPTEntry = PAGING_GET_DPT_INDEX(0xFFFFFFFF00000000);
 
@@ -131,13 +139,13 @@ void paging_scratch_initialize(void)
     g_PagingScratch.DirectoryPhysical = DirPhysical;
 }
 
-void *paging_scratch_allocate(void)
+void *paging_scratch_map(u64 Physical)
 {
     if (g_PagingScratch.HeapSetUp)
         PANIC("Trying to allocate unmanaged scratch after heap exists, abort!");
 
     u64 Virtual = 0xFFFFFFFF00000000 + g_PagingScratch.UnmanagedSize;
-    u64 Physical = physmem_allocate_page() * 4096;
+    
     u16 DirEntry = PAGING_GET_DIR_INDEX(Virtual);
 
     paging_temp_page_set_physical(g_PagingScratch.DirectoryPhysical);
@@ -175,6 +183,12 @@ void *paging_scratch_allocate(void)
     g_PagingScratch.UnmanagedSize += 4096;
     __asm__ __volatile__("invlpg %0" :: "m"(Virtual));
     return (void *)Virtual;
+}
+
+void *paging_scratch_allocate(void)
+{
+    u64 Physical = physmem_allocate_page() * 4096;
+    return paging_scratch_map(Physical);
 }
 
 void paging_map_page(u64 Virtual, u64 Physical)

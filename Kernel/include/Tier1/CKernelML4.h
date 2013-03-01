@@ -33,13 +33,15 @@ namespace cb {
 
             // static pointers to common areas
             static T_PAGING_TAB *m_LOWMEM;
+            static u64 m_LOWMEM_Physical;
             static T_PAGING_DIR *m_SCRATCH;
+            static u64 m_SCRATCH_Physical;
             static T_PAGING_DIR *m_TEXT;
+            static u64 m_TEXT_Physical;
         public:
+            static void PopulateCommonPointers(void);
             // Creates a new page directory for a kernel task, with new stack and other internal stuff
-            // Allocator is a function pointer to an allocator to use, Destructor is the same but for
-            // deallocation
-            CKernelML4(void *(*Allocator)(u64), void (*Destructor)(void *));
+            CKernelML4(void);
 
             // Destroys the structures and frees the segments, if needed
             ~CKernelML4(void);

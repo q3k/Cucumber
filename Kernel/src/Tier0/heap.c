@@ -388,6 +388,11 @@ void *kmalloc(u64 Size)
     return heap_alloc(g_Heap, Size, 0);
 }
 
+void *kmalloc_aligned(u64 Size)
+{
+    return heap_alloc(g_Heap, Size, 1);
+}
+
 /*void *kmalloc_p(u64 Size, u8 Aligned, u64 *Physical)
 {
     return heap_alloc_p(g_Heap, Size, Aligned, Physical);

@@ -47,6 +47,7 @@ void heap_free(T_HEAP *Heap, void *Address);
 
 void heap_init_simple(void);
 void *kmalloc(u64 Size);
+void *kmalloc_aligned(u64 Size);
 void *kmalloc_p(u64 Size, u8 Aligned, u64 *Physical);
 void kfree(void *Data);
 

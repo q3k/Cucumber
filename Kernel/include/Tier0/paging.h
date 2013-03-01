@@ -101,6 +101,7 @@ void paging_scratch_initialize(void);
 // Warning, this memory cannot be freed.
 void *paging_scratch_map(u64 Physical);
 void *paging_scratch_allocate(void);
+u64 paging_scratch_get_physical(void *Virtual);
 
 // A simple page map call. This does no checks! Triple faults ahoy.
 void paging_map_page(u64 Virtual, u64 Physical);

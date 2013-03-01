@@ -1,6 +1,6 @@
 #include "Tier1/CKernel.h"
 //#include "Tier1/CPageFaultDispatcher.h"
-//#include "Tier1/CPageDirectory.h"
+#include "Tier1/CKernelML4.h"
 //#include "Tier1/CTask.h"
 //#include "Tier1/CScheduler.h"
 #include "Tier1/Util/CVector.h"
@@ -45,6 +45,7 @@ void CKernel::Start(void)
     
     m_Logger = new CLogger();
     Alentours::CPCIManager::Initialize();
+    CKernelML4::PopulateCommonPointers();
     /*CTask *KernelTask = CreateKernelTask();
     kprintf("[i] Kernel task has TID %i.\n", KernelTask->GetPID());
     CScheduler::AddTask(KernelTask);

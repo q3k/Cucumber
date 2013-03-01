@@ -31,7 +31,7 @@ CFLAGS+= -mno-red-zone -ffreestanding -I ./include/Lua -I ./src/Lua
 CXFLAGS:=-m64 -mcmodel=large -Wall -Werror -nostdlib -nostartfiles -nodefaultlibs -g
 CXFLAGS+=-I ./include -Wno-packed-bitfield-compat -O2 -fno-optimize-sibling-calls -mcmodel=kernel
 CXFLAGS+= -mno-red-zone -ffreestanding -I ./include/Lua -I ./src/Lua -fno-exceptions -fno-rtti
-CXFLAGS+= -fno-stack-protector
+CXFLAGS+= -fno-stack-protector -std=c++11
 
 LFLAGS:=-nostdlib -nostartfiles -nodefaultlibs
 

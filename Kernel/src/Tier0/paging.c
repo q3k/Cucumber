@@ -204,3 +204,23 @@ void paging_map_page(u64 Virtual, u64 Physical)
     Tab->Entries[PAGING_GET_TAB_INDEX(Virtual)].Physical = Physical >> 12;    
     __asm__ volatile("invlpg %0" :: "m"(Virtual));
 }
+
+u64 paging_scratch_get_physical(void* Virtual)
+{
+    u16 DirEntry = PAGING_GET_DIR_INDEX(Virtual);
+    paging_temp_page_set_physical(g_PagingScratch.DirectoryPhysical);
+    T_PAGING_DIR *Directory = (T_PAGING_DIR *)paging_temp_page_get_virtual();
+
+    if (!Directory->Entries[DirEntry].Present)
+        PANIC("Address not in directory!");
+
+    u64 TablePhysical = Directory->Entries[DirEntry].Physical << 12;
+    paging_temp_page_set_physical(TablePhysical);
+    T_PAGING_TAB *Table = (T_PAGING_TAB*)paging_temp_page_get_virtual();
+    u16 TabEntry = PAGING_GET_TAB_INDEX(Virtual);
+
+    if (!Table->Entries[TabEntry].Present)
+        PANIC("Address not in table!");
+
+    return Table->Entries[TabEntry].Physical << 12;
+}

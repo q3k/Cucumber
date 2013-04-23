@@ -12,11 +12,10 @@
 default: emulate-nohdd
 
 SHELL:=/bin/bash
-ENV:=/usr/xdev/bin
 TARGET:=i586-elf
-CC:=$(ENV)/$(TARGET)-gcc
+CC:=$(TARGET)-gcc
 AS:=nasm
-LD:=$(ENV)/$(TARGET)-ld
+LD:=$(TARGET)-ld
 
 # -O2 sets -foptimize-sibling-calls which breaks code...
 CFLAGS:=-Wall -Werror -nostdlib -nostartfiles -nodefaultlibs -std=c99 -g

@@ -68,7 +68,7 @@ void CKernelML4::PopulateCommonPointers(void)
     for (u16 i = 0; i < 256; i++)
         LowmemDirectory->Entries[i].Present = 0;
 
-    POPULATE_PAGING_ENTRY(LowmemDPT-Entries[0], paging_scratch_get_physical(LowmemDirectory));
+    POPULATE_PAGING_ENTRY(LowmemDPT->Entries[0], paging_scratch_get_physical(LowmemDirectory));
     ASSERT_ALIGNED(paging_scratch_get_physical(LowmemDirectory));
 
     T_PAGING_TAB *LowmemTable = (T_PAGING_TAB*)kmalloc_aligned(sizeof(T_PAGING_TAB));

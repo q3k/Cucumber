@@ -6,13 +6,13 @@
 # Your platform. See PLATS for possible values.
 PLAT= cucumber-kernel
 
-CC= /usr/xdev/bin/x86_64-elf-gcc
+CC=x86_64-elf-gcc
 CFLAGS= -O2 -Wall -DLUA_COMPAT_ALL $(SYSCFLAGS) $(MYCFLAGS)
 LDFLAGS= $(SYSLDFLAGS) $(MYLDFLAGS)
 LIBS= -lm $(SYSLIBS) $(MYLIBS)
 
 AR= ar rcu
-RANLIB= /usr/xdev/bin/x86_64-elf-ranlib
+RANLIB=x86_64-elf-ranlib
 RM= rm -f
 
 SYSCFLAGS=

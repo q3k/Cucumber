@@ -12,12 +12,12 @@
 default: emulate-nohdd
 
 SHELL:=/bin/bash
-ENV:=/usr/xdev/bin
+#ENV:=/usr/xdev/bin
 TARGET:=x86_64-elf
-CC:=$(ENV)/$(TARGET)-gcc
-CX:=$(ENV)/$(TARGET)-g++
+CC:=$(TARGET)-gcc
+CX:=$(TARGET)-g++
 AS:=nasm
-LD:=$(ENV)/$(TARGET)-ld
+LD:=$(TARGET)-ld
 
 # -O2 sets -foptimize-sibling-calls which breaks code...
 CFLAGS:=-m64 -mcmodel=large -Wall -Werror -nostdlib -nostartfiles -nodefaultlibs -std=c99 -g
@@ -132,7 +132,7 @@ emulate-nohdd: kernel.bin
 	@echo "[i] Building loader..."
 	@pushd ../Loader > /dev/null && $(MAKE) -f Makefile loader.bin && popd > /dev/null
 	@echo "[i] Starting QEMU..."
-	@qemu-system-x86_64 --no-kvm -d int -smp 4 -kernel ../Loader/loader.bin -initrd kernel.bin
+	@qemu-system-x86_64 $(QEMU_FLAGS) --no-kvm -d int -smp 4 -kernel ../Loader/loader.bin -initrd kernel.bin
 
 emulate: hdd.img
 	@echo "[i] Starting QEmu..."

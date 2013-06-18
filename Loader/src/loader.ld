@@ -9,6 +9,11 @@ SECTIONS
     
     _start = .;
 
+    .mboot :
+    {
+        *(.mboot)
+    }
+
     .text :
     {
         *(.text)

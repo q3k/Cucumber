@@ -12,16 +12,15 @@
 default: emulate-nohdd
 
 SHELL:=/bin/bash
-TARGET:=i586-elf
-CC:=$(TARGET)-gcc
+CC:=clang
 AS:=nasm
-LD:=$(TARGET)-ld
+LD:=ld
 
 # -O2 sets -foptimize-sibling-calls which breaks code...
-CFLAGS:=-Wall -Werror -nostdlib -nostartfiles -nodefaultlibs -std=c99 -g
-CFLAGS+=-I ./include -Wno-packed-bitfield-compat -O2 -fno-optimize-sibling-calls
-CFLAGS+= -fno-builtin
-LFLAGS:=-nostdlib -nostartfiles -nodefaultlibs
+CFLAGS:=-Wall -Werror -nostdlib -std=c99 -g -ffreestanding
+CFLAGS+=-I ./include -O2 -fno-optimize-sibling-calls
+CFLAGS+= -fno-builtin -nostdinc -target i586-elf
+LFLAGS:=-nostdlib -nostartfiles -nodefaultlibs -m elf_i386
 
 .PHONY: all clean loader.bin emulate hdd.img
 
@@ -45,17 +44,17 @@ Loader: $(OBJ_ALL)
 
 loader.bin: Loader
 	@echo "[i] Linking loader.bin..."
-	@$(LD) -T src/loader.ld -o loader.bin $(OBJ_ALL)
+	@$(LD) $(LFLAGS) -T src/loader.ld -o loader.bin $(OBJ_ALL)
 
 emulate-nohdd-debug: loader.bin
 	@echo "[i] Starting GDB..."
 	@gnome-terminal -x /bin/bash -c "gdb"
 	@echo "[i] Starting QEmu..."
-	@qemu --no-kvm -kernel loader.bin -S -gdb tcp::1234
+	@qemu-system-x86_64 --no-kvm -kernel loader.bin -S -gdb tcp::1234
 
 emulate-nohdd: loader.bin
 	@echo "[i] Starting QEMU..."
-	@qemu --no-kvm -kernel loader.bin
+	@qemu-system-x86_64 --no-kvm -kernel loader.bin
 
 clean:
 	@rm -Rf obj

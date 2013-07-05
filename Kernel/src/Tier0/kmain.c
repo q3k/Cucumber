@@ -25,6 +25,7 @@ void kmain_newstack(void);
 // Real kernel entry point, called from loader
 void kmain(u32 LoadContextAddress)
 {
+    for(;;){}
     T_LOAD_CONTEXT *LoadContext = (T_LOAD_CONTEXT*)(u64)LoadContextAddress;
     kstdio_init();
     

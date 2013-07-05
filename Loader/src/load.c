@@ -321,7 +321,6 @@ u32 create_ia32e_paging(u64 KernelPhysicalStart, u64 KernelVirtualStart, u64 Ker
         
         Address += 0x1000;
     }
-
     return 0;
 }
 

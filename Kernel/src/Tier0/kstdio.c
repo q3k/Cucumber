@@ -2,7 +2,7 @@
 #include "Tier0/kstdio.h"
 #include "Tier0/kstdlib.h"
 //#include "Tier0/semaphore.h"
-#include <stdarg.h>
+// #include <stdarg.h>
 
 #define va_start(v,l) __builtin_va_start(v,l)
 #define va_arg(v,l)   __builtin_va_arg(v,l)

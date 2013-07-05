@@ -9,7 +9,7 @@ SECTIONS
     
     _start = .;
 
-    .text : AT(ADDR(.text) - KERNEL_VMA)
+    .text :
     {
         _code = .;
         *(.text)
@@ -21,29 +21,32 @@ SECTIONS
         _start_ctors = .;
             *(.ctors)
         _end_ctors = .;
-       
-        . = ALIGN(4096);
     }
 
-   .data : AT(ADDR(.data) - KERNEL_VMA)
+    . = ALIGN(4096);
+
+   .data :
    {
         _data = .;
         *(.data)
-        . = ALIGN(4096);
    }
 
-   .bss : AT(ADDR(.bss) - KERNEL_VMA)
+   . = ALIGN(4096);
+
+   .bss :
    {
        _bss = .;
        *(.bss)
-        *(COMMON)
-       . = ALIGN(4096);
+       *(COMMON)
    }
 
    _end = .;
 
    /DISCARD/ :
    {
-        *(.eh_frame)
+        *(.eh_frame*)
+        *(.ehframe*)
+        *(.debug*)
+
    }
 }

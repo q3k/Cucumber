@@ -12,28 +12,19 @@
 default: emulate-nohdd
 
 SHELL:=/bin/bash
-#ENV:=/usr/xdev/bin
-TARGET:=x86_64-elf
-CC:=$(TARGET)-gcc
-CX:=$(TARGET)-g++
+CC:=clang
+CX:=clang++
 AS:=nasm
-LD:=$(TARGET)-ld
+LD:=ld
 
 # -O2 sets -foptimize-sibling-calls which breaks code...
-CFLAGS:=-m64 -mcmodel=large -Wall -Werror -nostdlib -nostartfiles -nodefaultlibs -std=c99 -g
-CFLAGS+=-I ./include -Wno-packed-bitfield-compat -O2 -fno-optimize-sibling-calls -mcmodel=kernel
-CFLAGS+= -mno-red-zone -ffreestanding -I ./include/Lua -I ./src/Lua
+CFLAGS:= -mcmodel=large -Wall -Werror -nostdlib -ffreestanding -std=c99 -g
+CFLAGS+=-I ./include -nostdinc -O2 -fno-optimize-sibling-calls -mcmodel=kernel
+CFLAGS+= -mno-red-zone -ffreestanding -I ./include/Lua -I ./src/Lua -target x86_64-elf
 
-#CXFLAGS:= -Wall -Werror -nostdlib -fno-builtin -nostartfiles -I ./include
-#CXFLAGS+= -nodefaultlibs -fno-exceptions -fno-rtti -fno-stack-protector 
-#CXFLAGS+= -Wno-packed-bitfield-compat -O3 -mcmodel=kernel
+CXFLAGS:= $(CFLAGS) -fno-rtti -fno-stack-protector -fno-exceptions -std=c++11
 
-CXFLAGS:=-m64 -mcmodel=large -Wall -Werror -nostdlib -nostartfiles -nodefaultlibs -g
-CXFLAGS+=-I ./include -Wno-packed-bitfield-compat -O2 -fno-optimize-sibling-calls -mcmodel=kernel
-CXFLAGS+= -mno-red-zone -ffreestanding -I ./include/Lua -I ./src/Lua -fno-exceptions -fno-rtti
-CXFLAGS+= -fno-stack-protector -std=c++11
-
-LFLAGS:=-nostdlib -nostartfiles -nodefaultlibs
+LFLAGS:=-nostdlib -nostartfiles -nodefaultlibs -m elf_x86_64 -nostdinc -z nodefaultlib -n
 
 debug: CFLAGS += -DDEBUG -gdwarf-4 -fvar-tracking-assignments -O0
 debug: CXFLAGS += -DDEBUG -gdwarf-4 -fvar-tracking-assignments -O0
@@ -104,11 +95,11 @@ Lua: $(LUA)
 
 kernel.bin: version-gen Tier0 Tier1 Lua Alentours
 	@echo "[i] Linking kernel.bin..."
-	@$(LD) -T src/kernel.ld -o kernel.bin $(TIER0) $(TIER1) $(ALENTOURS) -Lsrc/Lua -llua
+	@$(LD) $(LFLAGS) -T src/kernel.ld -o kernel.bin $(TIER0) $(TIER1) $(ALENTOURS) -Lsrc/Lua -llua
 	@echo "[i] Creating debug symbols."
 	@cp kernel.bin ksyms.elf
-	@strip --only-keep-debug ksyms.elf
-	@strip --strip-debug --strip-unneeded kernel.bin
+	#@strip --only-keep-debug ksyms.elf
+	#@strip --strip-debug --strip-unneeded kernel.bin
 
 hdd.img: kernel.bin
 	@echo "[i] Creating HDD image..."
@@ -124,7 +115,7 @@ hdd.img: kernel.bin
 emulate-nohdd-debug: debug
 	@echo "[i] Starting GDB..."
 	@echo -e "file kernel.bin\nsymbol-file ksyms.elf\ntarget remote localhost:1234\n" > gdbcommands
-	@terminal -x /bin/bash -c "sleep 1 && gdb -tui -x gdbcommands && rm gdbcommands" &
+	xterm -e /bin/bash -c "sleep 1 && gdb -tui -x gdbcommands && rm gdbcommands" &
 	@echo "[i] Starting QEmu..."
 	@qemu-system-x86_64 --no-kvm -S -gdb tcp::1234 -d int -smp 4 -kernel ../Loader/loader.bin -initrd kernel.bin
 

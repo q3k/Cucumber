@@ -1,220 +1,12 @@
-
-typedef unsigned char u8;
-typedef unsigned short u16;
-typedef unsigned int u32;
-typedef unsigned long long u64;
-typedef char s8;
-
-struct S_LOAD_CONTEXT {
-    u64 KernelPhysicalStart;
-    u64 KernelPhysicalEnd;
-    
-    u64 LoaderPhysicalStart;
-    u64 LoaderPhysicalEnd;
-    s8 LoaderName[80];
-    
-    // VGA text mode 0
-    u8 VGATextModeUsed : 1;
-    u32 VGACurrentLine;
-    u32 VGACursorX;
-    u32 VGACursorY;
-    
-    // Multiboot
-    u8 MultibootUsed : 1;
-    u64 MultibootHeader;
-} __attribute__((packed));
-typedef struct S_LOAD_CONTEXT T_LOAD_CONTEXT;
-
-
-u8 stdio_current_line = 0;
-u8 stdio_cur_x = 0, stdio_cur_y = 0;
+#include "types.h"
+#include "io.h"
+#include "context.h"
+#include "elf.h"
 
 extern u64 omg64;
 extern u64 _end;
 extern u64 _start;
 
-void outb(u16 Port, u8 Data)
-{
-    __asm__ volatile("outb %1, %0" :: "dN" (Port), "a" (Data));
-}
-
-void *memcpy(void* Destination, const void *Source, u32 Count)
-{
-    u8* Destination8 = (u8*)Destination;
-    u8* Source8 = (u8*)Source;
-
-    while (Count--)
-    {
-        *Destination8++ = *Source8++;
-    }
-    return Destination;
-}
-
-void *memset(void *Destination, u8 Value, u32 Count)
-{
-    u8 *us = (u8 *)Destination;
-    while (Count-- != 0)
-        *us++ = Value;
-    return Destination;
-}
-
-void *memsetw(void *Destination, u16 Value, u32 Count)
-{
-    u16 *us = (u16 *)Destination;
-    while (Count-- != 0)
-        *us++ = Value;
-    return Destination;
-}
-
-
-void scroll_up(void)
-{
-   //semaphore_acquire(&ScreenWriteLock);
-   u16 Blank = 0x20 | (0x0F << 8);
-   u16 Temp;
-
-   if (stdio_cur_y >= 25)
-   {
-        Temp = stdio_cur_y - 25 + 1;
-        memcpy((void*)0xB8000, (void*)(0xB8000 + Temp * 80 * 2), (25 - Temp) * 80 * 2);
-
-        memsetw((void*)(0xB8000 + (25 - Temp) * 160), Blank, 160);
-        stdio_cur_y = 25 - 1;
-   }
-   //semaphore_release(&ScreenWriteLock);
-}
-
-void move_cursor(u8 X, u8 Y)
-{
-    stdio_cur_x = X;
-    stdio_cur_y = Y;
-
-    //wraparound
-    if (stdio_cur_x >= 80)
-    {
-        stdio_cur_y += stdio_cur_y / 80;
-        stdio_cur_x = 0;
-    }
-
-    //wrapup
-    scroll_up();
-
-    if (Y > 24)
-        Y = 24;
-
-    u16 Position = Y * 80 + X;
-
-    outb(0x3D4, 0x0F);
-    outb(0x3D5, (u8)(Position & 0xFF));
-
-    outb(0x3D4, 0x0E);
-    outb(0x3D5, (u8)(Position >> 8 & 0xFF));
-}
-
-void putch(s8 Character)
-{
-    volatile u8 *VideoMemory = (u8 *)0xB8000;
-    u16 Offset = (stdio_cur_y * 80 + stdio_cur_x) << 1;
-
-    if (Character == '\n')
-        move_cursor(0, stdio_cur_y + 1);
-    else
-    {
-        VideoMemory[Offset] = Character;
-        VideoMemory[Offset+1] = 0x0F;
-        if (stdio_cur_x + 1 >= 80)
-            move_cursor(0, stdio_cur_y + 1);
-        else
-            move_cursor(stdio_cur_x + 1, stdio_cur_y);
-    }
-}
-
-void puts(const s8 *szString)
-{
-    while (*szString != 0)
-    {
-        putch(*szString);
-        szString++;
-    }
-}
-
-void clear(void)
-{
-    volatile u8 *VideoMemory = (u8 *)0xB8000;
-    u32 Size = (80 * 25 ) << 1;
-    for (u32 i = 0; i < Size; i += 2)
-    {
-        VideoMemory[i] = 0;
-        VideoMemory[i+1] = 0xF;
-    }
-    move_cursor(0, 0);
-}
-
-void dump_nibble(u8 Nibble)
-{
-    if (Nibble < 10)
-        putch(Nibble + 48);
-    else
-        putch(Nibble + 55);
-}
-
-void print_hex_32(u32 Number)
-{
-    for (s8 i = 3; i >= 0; i--)
-    {
-        u8 Byte = (Number >> (i << 3)) & 0xFF; //switch i bytes to the right and mask as byte
-        dump_nibble((Byte >> 4)  & 0x0F); //high nibble
-        dump_nibble(Byte & 0x0F); //low nibble
-    }
-}
-
-void print_hex(u64 Number)
-{
-    for (s8 i = 7; i >= 0; i--)
-    {
-        u8 Byte = (Number >> (i << 3)) & 0xFF; //switch i bytes to the right and mask as byte
-        dump_nibble((Byte >> 4)  & 0x0F); //high nibble
-        dump_nibble(Byte & 0x0F); //low nibble
-    }
-}
-
-struct elf_ident {
-    u32 Magic; // \x7FELF
-    u8 Class;
-    u8 Data;
-    u8 Version;
-    u8 Padding[9];
-};
-
-struct elf_header {
-    struct elf_ident Identification;
-    u16 Type;
-    u16 Machine;
-    u32 Version;
-    u64 Entry;
-    u64 ProgramHeaderOffset;
-    u64 SectionHeaderOffset;
-    u32 Flags;
-    u16 HeaderSize;
-    u16 ProgramHeaderEntrySize;
-    u16 NumProgramHeaderEntries;
-    u16 SectionHeaderEntrySize;
-    u16 NumSectionHeaderEntries;
-    u16 SectionEntryStrings;
-};
-
-struct elf_section_header {
-    u32 Name;
-    u32 Type;
-    u64 Flags;
-    u64 Address;
-    u64 Offset;
-    u64 Size;
-    u32 Link;
-    u32 Info;
-    u64 Alignment;
-    u64 FixedSize;
-};
 
 static inline void cpuid(u32 code, u32 *a, u32 *d) {
     __asm__ volatile("cpuid":"=a"(*a),"=d"(*d):"0"(code):"ecx","ebx");
@@ -450,15 +242,6 @@ u32 load(void *Multiboot, unsigned int Magic)
             if (!StartPhysical)
                 StartPhysical = PhysicalAddress;
 
-            if (ContinuityTest && VirtualAddress != ContinuityTest)
-            {
-                puts("Error: kernel is not continuous!\n");
-                return 0;
-            }
-
-            ContinuityTest = VirtualAddress + Sections[i].Size;
-            Size += Sections[i].Size;
-
             puts("-> Section ");
             puts(Name);
             puts(", 0x");
@@ -466,6 +249,16 @@ u32 load(void *Multiboot, unsigned int Magic)
             puts(" will be located at 0x");
             print_hex(VirtualAddress);
             puts(".\n");
+
+            if (ContinuityTest && VirtualAddress != ContinuityTest)
+            {
+                puts("Error: kernel is not continuous!\n");
+                puts("Previous section ended at 0x"); print_hex(ContinuityTest); puts("\n");
+                return 0;
+            }
+
+            ContinuityTest = VirtualAddress + Sections[i].Size;
+            Size += Sections[i].Size;
         }
     }
 
@@ -521,9 +314,7 @@ u32 load(void *Multiboot, unsigned int Magic)
                         "movl %%ebx, %%cr0;":::"eax","ebx","ecx");
 
     puts("Now in 32-bit compability mode, jumping to the kernel...\n");
-    g_Context.VGACurrentLine = stdio_current_line;
-    g_Context.VGACursorX = stdio_cur_x;
-    g_Context.VGACursorY = stdio_cur_y;
+    update_load_context(&g_Context);
 
     ldrEntryLow = Header->Entry & 0xFFFFFFFF;
     ldrEntryHigh = Header->Entry >> 32;

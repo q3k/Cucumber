@@ -16,6 +16,7 @@ void clear(void);
 void dump_nibble(u8 Nibble);
 void print_hex_32(u32 Number);
 void print_hex(u64 Number);
-void update_load_context(T_LOAD_CONTEXT *Context);
+void io_update_load_context(T_LOAD_CONTEXT *Context);
+void printf(const s8 *szFormat, ...);
 
 #endif

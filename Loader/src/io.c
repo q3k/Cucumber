@@ -82,6 +82,32 @@ void move_cursor(u8 X, u8 Y)
     outb(0x3D5, (u8)(Position >> 8 & 0xFF));
 }
 
+
+void puti(s32 Number)
+{
+    s32 Sign, i;
+    
+    if ((Sign = Number) < 0)
+        Number = -Number;
+
+    u8 szString[21];
+
+    i = 0;
+    do {
+        szString[i++] = Number % 10 + '0';
+    } while (( Number /= 10) > 0);
+
+    if (Sign < 0)
+        szString[i] = '-';
+    else
+        i--;
+    
+    for (s32 j = i; j >= 0; j--)
+    {
+        putch(szString[j]);
+    }
+}
+
 void putch(s8 Character)
 {
     volatile u8 *VideoMemory = (u8 *)0xB8000;
@@ -149,9 +175,72 @@ void print_hex(u64 Number)
     }
 }
 
-void update_load_context(T_LOAD_CONTEXT* Context)
+void io_update_load_context(T_LOAD_CONTEXT* Context)
 {
     Context->VGACurrentLine = stdio_current_line;
     Context->VGACursorX = stdio_cur_x;
     Context->VGACursorY = stdio_cur_y;
+}
+
+u32 strlen(const s8 *szString)
+{
+    const s8 *s;
+    for (s = szString; *s; ++s)
+    {}
+    return s - szString;
+}
+
+#define va_start(v,l) __builtin_va_start(v,l)
+#define va_arg(v,l)   __builtin_va_arg(v,l)
+#define va_end(v)     __builtin_va_end(v)
+#define va_copy(d,s)  __builtin_va_copy(d,s)
+typedef __builtin_va_list va_list;
+
+void printf(const s8 *szFormat, ...)
+{
+    va_list ap;
+    va_start(ap, szFormat);
+    
+    u32 Offset = 0;
+    while (Offset < strlen(szFormat))
+    {
+        if (szFormat[Offset] == '%')
+        {
+            switch (szFormat[Offset + 1])
+            {
+                case '%':
+                    putch('%');
+                    break;
+                case 'c':
+                    putch(va_arg(ap, u32));
+                    break;
+                case 's':
+                    puts(va_arg(ap, s8*));
+                    break;
+                case 'i':
+                    puti(va_arg(ap, s64));
+                    break;
+                case 'u':
+                    puti(va_arg(ap, u64));
+                    break;
+                case 'X':
+                case 'x':
+                    {
+                        u64 bData = va_arg(ap, u64);
+                        print_hex(bData);
+                        break;
+                    }
+                default:
+                    printf("printf: Unknown escape character %c!\n", szFormat[Offset + 1]);
+            }
+            Offset += 2;
+        }
+        else
+        {
+            putch(szFormat[Offset]);
+            Offset++;
+        }
+    }
+    
+    va_end(ap);
 }

@@ -61,11 +61,7 @@ u32 load(void *Multiboot, unsigned int Magic)
 
     u32 KernelStart = g_Multiboot->Modules[0].ModuleStart;
     u32 KernelEnd = g_Multiboot->Modules[0].ModuleEnd;
-    puts("Kernel is ");
-    print_hex(KernelStart);
-    puts("-");
-    print_hex(KernelEnd);
-    puts(".\n");
+    printf("Kernel is at 0x%x - 0x%x\n", KernelStart, KernelEnd);
 
     struct elf_header *Header = (struct elf_header *)KernelStart;
     if (Header->Identification.Magic != 0x464C457F)
@@ -86,9 +82,7 @@ u32 load(void *Multiboot, unsigned int Magic)
         return 0;
     }
 
-    puts("Entry point @");
-    print_hex(Header->Entry);
-    puts(".\n");
+    printf("Kernel entry: 0x%x\n", Header->Entry);
 
     if (Header->SectionHeaderEntrySize != sizeof(struct elf_section_header))
     {
@@ -99,11 +93,7 @@ u32 load(void *Multiboot, unsigned int Magic)
     struct elf_section_header *Sections = (struct elf_section_header *)((u32)Header + (u32)Header->SectionHeaderOffset);
     struct elf_section_header *StringSection = &Sections[Header->SectionEntryStrings];
 
-    //u32 *Strings = (u32*)(ModulesAddress + (u32)StringSection->Offset);
-
-    puts("Kernel ELF has 0x");
-    print_hex(Header->NumSectionHeaderEntries);
-    puts(" sections.\n");
+    printf("Kernel ELF has %i sections.", Header->NumSectionHeaderEntries);
 
     // Loop through ELF sections to find physical space occupied by them
     u64 StartPhysical = 0;
@@ -141,7 +131,8 @@ u32 load(void *Multiboot, unsigned int Magic)
         puts("Kernel will probably not fit in extended memory. Failing.\n");
         for(;;) {}
     }
-    puts("Paging frames will be allocated from 0x"); print_hex(FreeSpaceStart); puts("\n");
+    printf("Allocating frames from 0x%x\n", FreeSpaceStart);
+
     paging_setup(FreeSpaceStart);
     // allocate idnetity mapping of low & extended memory (up to 0x00EFFFFF)
     paging_map_address(0, 0, 0x00EFFFFF);
@@ -161,20 +152,20 @@ u32 load(void *Multiboot, unsigned int Magic)
                 SizeAligned = (SizeAligned + 0x1000) & 0xFFFFF000;
             u8 *Destination = paging_allocate(VirtualAddress, SizeAligned);
 
-            puts(" -> "); puts(Name); puts(" at "); print_hex(VirtualAddress);
+            printf(" -> %s at %X", Name, VirtualAddress);
             if (!(Sections[i].Type & SHT_NOBITS))
             {
                 // not .bss - copy data
-                puts(" (copy from "); print_hex(PhysicalAddress); puts(")\n");
                 u8 *Source = (u8 *)((u32)PhysicalAddress);
                 for (u32 j = 0; j < Size; j++)
                     Destination[j] = Source[j];
+                printf(" (copied %i bytes from 0x%x)\n", Size, PhysicalAddress);
             }
             else
             {
                 for (u32 j = 0; j < Size; j++)
                     Destination[j] = 0;
-                puts(" (zeroed out)\n");
+                printf(" (zeroed %i bytes)\n", Size);
             }
         }
     }
@@ -194,15 +185,10 @@ u32 load(void *Multiboot, unsigned int Magic)
     g_Context.LoaderPhysicalStart = (u32)&_start;
     g_Context.LoaderPhysicalEnd = (u32)&_end;
     
-    puts("Load context 0x");
-    print_hex((u32)&g_Context);
-    puts(".\n");
+    printf("Load context at 0x%x\n", (u64)&g_Context);
 
     __asm__ volatile ("movl %cr4, %eax; bts $5, %eax; movl %eax, %cr4");
     __asm__ volatile ("movl %%eax, %%cr3" :: "a" (paging_get_pml4()));
-    puts("CR3 is now pointing to PML4 (0x");
-    print_hex((u32)paging_get_pml4());
-    puts(")\n");
 
     puts("Here it goes, enabling long mode...\n");
 

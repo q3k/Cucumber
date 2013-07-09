@@ -32,7 +32,6 @@ void paging_setup(u32 AllocateFramesFrom)
     _zero_paging_structure(g_PML4);
 }
 
-u8 dbg = 0;
 void paging_map_page(u64 Virtual, u64 Physical)
 {
     if (Virtual % 0x1000 || Physical % 0x1000)
@@ -41,18 +40,15 @@ void paging_map_page(u64 Virtual, u64 Physical)
         print_hex(Virtual);
         for (;;) {}
     }
-    // printf("Mapping %x\n", Virtual);
-    
+
     u64 PML4I = GET_PML4_ENTRY(Virtual);
     u64 PDPI = GET_PDP_ENTRY(Virtual);
     u64 DIRI = GET_DIR_ENTRY(Virtual);
     u64 TABI = GET_TAB_ENTRY(Virtual);
-    // printf("%x %i/%i/%i/%i\n", Virtual, PML4I, PDPI, DIRI, TABI);
 
     u64 *PDP = (u64 *)(g_PML4[PML4I] & 0xFFFFF000);
     if (PDP == 0)
     {
-        // printf("-> Creating PDP @%i\n", PML4I);
         PDP = (u64 *)_allocate_frame_4k();
         _zero_paging_structure(PDP);
         g_PML4[PML4I] = ((u64)PDP) | 3;
@@ -60,28 +56,16 @@ void paging_map_page(u64 Virtual, u64 Physical)
     u64 *Directory = (u64 *)(PDP[PDPI] & 0xFFFFF000);
     if (Directory == 0)
     {
-        // printf("-> Creating Dirctory @%i/%i\n", PML4I, PDPI);
         Directory = (u64 *)_allocate_frame_4k();
         _zero_paging_structure(Directory);
         PDP[PDPI] = ((u64)Directory) | 3;
-        printf("P%x[%i] < d%x\n", (u64)PDP, PDPI, (u64)Directory);
-        dbg = 0;
     }
     u64 *Table = (u64 *)(Directory[DIRI] & 0xFFFFF000);
     if (Table == 0)
     {
-        if (dbg < 3)
-        {
-            printf("P%x[%i] == D%x\n", (u64)PDP, PDPI, (u64)Directory);
-            dbg += 1;
-        }
-        // printf("P@ %x D@ %x, De %x\n", (u64)PDP, (u64)Directory, Directory[DIRI]);
-        // printf("-> Creating Table @%i/%i/%i\n", PML4I, PDPI, DIRI);
         Table = (u64 *)_allocate_frame_4k();
-        // printf("aT %x\n", Table);
         _zero_paging_structure(Table);
         Directory[DIRI] = ((u64)Table) | 3;
-        // printf("De <- %x\n", Directory[DIRI]);
     }
     Table[TABI] = ((u64)Physical) | 3;
 }

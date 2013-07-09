@@ -224,10 +224,15 @@ void printf(const s8 *szFormat, ...)
                     puti(va_arg(ap, u64));
                     break;
                 case 'X':
-                case 'x':
                     {
                         u64 bData = va_arg(ap, u64);
                         print_hex(bData);
+                        break;
+                    }
+                case 'x':
+                    {
+                        u32 bData = va_arg(ap, u32);
+                        print_hex_32(bData);
                         break;
                     }
                 default:

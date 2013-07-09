@@ -26,6 +26,9 @@ struct elf_header {
     u16 SectionEntryStrings;
 };
 
+#define SHT_PROGBITS 1
+#define SHT_NOBITS 8
+
 struct elf_section_header {
     u32 Name;
     u32 Type;

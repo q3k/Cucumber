@@ -18,8 +18,9 @@ LD:=ld
 
 # -O2 sets -foptimize-sibling-calls which breaks code...
 CFLAGS:=-Wall -Werror -nostdlib -std=c99 -g -ffreestanding
-CFLAGS+=-I ./include -O2 -fno-optimize-sibling-calls
-CFLAGS+= -fno-builtin -nostdinc -target i586-elf
+CFLAGS+=-I ./include -O1 -fno-optimize-sibling-calls
+CFLAGS+= -fno-builtin -nostdinc -target i586-elf -nostdlib
+
 LFLAGS:=-nostdlib -nostartfiles -nodefaultlibs -m elf_i386
 
 .PHONY: all clean loader.bin emulate hdd.img

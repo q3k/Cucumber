@@ -122,9 +122,6 @@ u64 system_msr_get(u32 MSR);
 void system_msr_set(u32 MSR, u64 Data);
 
 // kernel load address, size and mapping
-u64 system_get_kernel_size(void);
-u64 system_get_kernel_physical_start(void);
-u64 system_get_kernel_virtual_start(void);
 u64 system_get_memory_top(void);
 
 #endif

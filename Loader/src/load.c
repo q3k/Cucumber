@@ -122,8 +122,6 @@ u32 load(void *Multiboot, unsigned int Magic)
         FreeSpaceStart = KernelEnd;
     if (FreeSpaceStart % 0x1000)
         FreeSpaceStart = (FreeSpaceStart + 0x1000) & 0xFFFFF000;
-
-    g_Context.KernelPhysicalStart = FreeSpaceStart;
     
     u32 KernelApproximateSize = FreeSpaceStart - StartPhysical;
     if (FreeSpaceStart + KernelApproximateSize > 0x00EFFFFF)
@@ -169,7 +167,8 @@ u32 load(void *Multiboot, unsigned int Magic)
             }
         }
     }
-    g_Context.KernelPhysicalEnd = paging_get_last_frame();
+    g_Context.ReservedPhysicalStart = (u32)&_start;
+    g_Context.ReservedPhysicalEnd = paging_get_last_frame();
     
     s8 *LoaderName = "Cucumber x86-64 loader";
     u8 i = 0;
@@ -182,8 +181,6 @@ u32 load(void *Multiboot, unsigned int Magic)
     g_Context.VGATextModeUsed = 1;
     g_Context.MultibootUsed = 1;
     g_Context.MultibootHeader = (u32)Multiboot;
-    g_Context.LoaderPhysicalStart = (u32)&_start;
-    g_Context.LoaderPhysicalEnd = (u32)&_end;
     
     printf("Load context at 0x%x\n", (u64)&g_Context);
 

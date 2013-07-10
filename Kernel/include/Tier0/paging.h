@@ -77,33 +77,4 @@ typedef struct {
 T_PAGING_ML4 *   paging_get_ml4(void);
 void             paging_set_ml4(u64 ML4Physical);
 
-u8               paging_get_physical(u64 Virtual, u64 *Physical);
-u8               paging_get_physical_ex(u64 Virtual, u64 *Physical,T_PAGING_ML4 *ML4);
-
-void paging_kernel_initialize(u64 KernelVirtualStart, u64 KernelPhysicalStart, u64 KernelSize);
-
-// The temporary page is a page you can use to access some temporary physical
-// location. There is only one page, 4096 bytes large. Deal with it.
-void             paging_temp_page_setup(void);
-volatile const u64 paging_temp_page_get_virtual(void);
-void             paging_temp_page_set_physical(u64 Physical);
-
-// We have to prepare for virtual memory allocation from 0xFFFFFFFF00000000
-// right from the beggining, because that's the mapping that we will be using
-// in later parts of the code (see Tier1/CKernelML4.h), and there's not sense
-// in remapping everything.
-// This means we have to set up a page directory for our managed pool, fill
-// it up with a heap (from Tier0/heap.c), and attach that directory to a DPT.
-// Then, when we offload page management to CKernelML4, we have to let it know
-// about the state of all these things.
-void paging_scratch_initialize(void);
-// Allocates 4096 of physical and virtual memory in the kernel scratch buffer.
-// Warning, this memory cannot be freed.
-void *paging_scratch_map(u64 Physical);
-void *paging_scratch_allocate(void);
-u64 paging_scratch_get_physical(void *Virtual);
-
-// A simple page map call. This does no checks! Triple faults ahoy.
-void paging_map_page(u64 Virtual, u64 Physical);
-
 #endif

@@ -64,7 +64,8 @@ void apic_enable_lapic(void)
         system_msr_set(0x1B, APICMSR);
     }
     
-    g_APIC.LAPIC = paging_scratch_map(0xFEE00000);
+    // g_APIC.LAPIC = paging_scratch_map(0xFEE00000);
+    PANIC("nanananoapic");
     kprintf("[i] LAPIC will be @0x%x.\n", g_APIC.LAPIC);
 
     // prepare interrupts ..

@@ -2,11 +2,9 @@
 #define __CONTEXT_H__
 
 struct S_LOAD_CONTEXT {
-    u64 KernelPhysicalStart;
-    u64 KernelPhysicalEnd;
+    u64 ReservedPhysicalStart;
+    u64 ReservedPhysicalEnd;
     
-    u64 LoaderPhysicalStart;
-    u64 LoaderPhysicalEnd;
     s8 LoaderName[80];
     
     // VGA text mode 0

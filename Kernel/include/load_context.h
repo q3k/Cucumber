@@ -24,6 +24,9 @@ struct S_LOAD_CONTEXT {
     // Multiboot
     u8 MultibootUsed : 1;
     u64 MultibootHeader;
+
+    // Kernel ELF
+    void *KernelELF;
 } __attribute__((packed));
 typedef struct S_LOAD_CONTEXT T_LOAD_CONTEXT;
 

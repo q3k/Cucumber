@@ -71,13 +71,14 @@ T_HEAP *heap_create(u64 Size)
             NumPages, Size / 1000);
     
     u64 Start = 0;
-    for (u32 i = 0; i < NumPages; i++)
-    {
-        if (!Start)
-            Start = (u64)paging_scratch_allocate(); 
-        else
-            paging_scratch_allocate();
-    }
+    // for (u32 i = 0; i < NumPages; i++)
+    // {
+    //     if (!Start)
+    //         Start = (u64)paging_scratch_allocate(); 
+    //     else
+    //         paging_scratch_allocate();
+    // }
+    PANIC("nananananoheap");
     
     T_HEAP* Heap = (T_HEAP *)Start;
     u64 DataStart = Start;

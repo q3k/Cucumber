@@ -47,14 +47,13 @@ u64 __physmem_allocate_first_page(void)
         if (NextPageStart > g_PhysicalMemory.MemorySize)
             PANIC("Out of memory!");
     }
-    
+    kprintf("%x\n", NextPageStart);
     return NextPageStart;
 }
 
 void physmem_init(void)
 {
     g_PhysicalMemory.MemorySize = system_get_memory_top();
-    g_PhysicalMemory.MemoryFree = system_get_memory_top();
 
     // allocate the first frame, for metadata
     u64 MetadataFrame = __physmem_allocate_first_page();
@@ -63,14 +62,14 @@ void physmem_init(void)
     if (PHYSMEM_ADDRESS_TO_METADATA_NUMBER(MetadataFrame) > 0)
         PANIC("Physmem: First allocated address > metadata covering!");
 
-    // map it to virtual mem so we can use it
-    paging_temp_page_set_physical(MetadataFrame);
-    T_PHYSMEM_METADATA *Metadata = (T_PHYSMEM_METADATA *)paging_temp_page_get_virtual();
-
+    // Let's make sure that frame is mapped into our memory...
+    if (MetadataFrame >= 0xEFFFFF)
+        PANIC("Physmem: first allocated address > memory mapped by loader!");
+    T_PHYSMEM_METADATA *Metadata = (T_PHYSMEM_METADATA *)MetadataFrame;
+    
     // zero the metadata (the 512th bit overflows into the nextmatadata field)
     for (u64 i = 0; i < 512; i++)
         Metadata->Bitmap[i] = 0;
-    
     // mask all the bits up to and including our metadata frame as used
     kprintf("[i] Marking physical memory up to 0x%x (bit %i) as used.\n", MetadataFrame, PHYSMEM_ADDRESS_TO_BIT_NUMBER(MetadataFrame));
     for (u32 i = 0; i <= PHYSMEM_ADDRESS_TO_BIT_NUMBER(MetadataFrame); i++)
@@ -97,8 +96,8 @@ void physmem_init(void)
 
 u64 physmem_allocate_page(void)
 {
-    paging_temp_page_set_physical(g_PhysicalMemory.FirstMetadata);
-    T_PHYSMEM_METADATA *Metadata = (T_PHYSMEM_METADATA *)paging_temp_page_get_virtual();
+    ASSERT(g_PhysicalMemory.FirstMetadata <= 0xEFFFFF);
+    T_PHYSMEM_METADATA *Metadata = (T_PHYSMEM_METADATA *)g_PhysicalMemory.FirstMetadata;
     for (u32 i = 0; i < PHYSMEM_METADATA_COVERS_BITS; i++)
     {
         if (Metadata->Bitmap[i] != 0xFFFFFFFFFFFFFFFF)
@@ -122,8 +121,8 @@ void physmem_free_page(u64 Page)
     if (Page > PHYSMEM_METADATA_COVERS_BITS)
         PANIC("...and where did you get that page index?");
 
-    paging_temp_page_set_physical(g_PhysicalMemory.FirstMetadata);
-    T_PHYSMEM_METADATA *Metadata = (T_PHYSMEM_METADATA *)paging_temp_page_get_virtual();
+    ASSERT(g_PhysicalMemory.FirstMetadata <= 0xEFFFFF);
+    T_PHYSMEM_METADATA *Metadata = (T_PHYSMEM_METADATA *)g_PhysicalMemory.FirstMetadata;
 
     // todo: check for double frees
     u32 Bit = PHYSMEM_BIT_NUMBER_TO_BIT_IN_METADATA(Page);
@@ -143,22 +142,14 @@ u64 physmem_physical_to_page(u64 Physical)
 
 void physmem_read(u64 Base, u64 Size, void *Destination)
 {
-    u8 *DataSource = (u8 *)paging_temp_page_get_virtual();
-    u64 OffsetInSource = Base & 0xFFF;
-    
-    u64 PreviousPageBase = Base & ~((u64)0xFFF);
-    paging_temp_page_set_physical(PreviousPageBase);
-    for (u64 i = 0; i < Size; i++)
+    if ((u64)Destination <= 0xEFFFFF)
     {
-        u64 PageBase = (Base + i) & ~((u64)0xFFF);
-        
-        if (PageBase != PreviousPageBase)
-            paging_temp_page_set_physical(PageBase);
-        
-        PreviousPageBase = PageBase;
-        
-        *((u8 *)Destination + i) = DataSource[OffsetInSource % 4096];
-        OffsetInSource++;
+        for (u64 i = 0; i < Size; i++)
+            ((u8 *)Destination)[i] = ((u8 *)Base)[i];
+    }
+    else
+    {
+        PANIC("physmem_read > extmem not implemented!");
     }
 }
 

@@ -25,7 +25,6 @@ void kmain_newstack(void);
 // Real kernel entry point, called from loader
 void kmain(u32 LoadContextAddress)
 {
-    for(;;){}
     T_LOAD_CONTEXT *LoadContext = (T_LOAD_CONTEXT*)(u64)LoadContextAddress;
     kstdio_init();
     
@@ -59,30 +58,23 @@ void kmain(u32 LoadContextAddress)
     system_parse_load_context(LoadContext); 
     kprintf("[i] Booting via %s.\n", LoadContext->LoaderName);
     kprintf("[i] Memory available: %uk.\n", system_get_memory_upper());
-    kprintf("[i] Kernel physical: %x-%x.\n", system_get_kernel_physical_start(),
-        system_get_kernel_physical_start() + system_get_kernel_size());
-    kprintf("[i] Loader physical: %x-%x.\n", LoadContext->LoaderPhysicalStart, LoadContext->LoaderPhysicalEnd);
-    kprintf("[i] Kernel virtual:  %x-%x.\n", system_get_kernel_virtual_start(),
-        system_get_kernel_virtual_start() + system_get_kernel_size());
-
-    paging_temp_page_setup();
     physmem_init();
-    paging_scratch_initialize();
-    // Let's create a new kernel stack
-    u64 StackVirtual = (u64)paging_scratch_allocate();
-    kprintf("[i] New kernel stack 0x%x\n", StackVirtual);
     
-    // And now let's use it and forget ebp because we can.
-    __asm__ volatile("mov %0, %%rsp" : : "r" (StackVirtual + 4096));
+//     // Let's create a new kernel stack
+//     u64 StackVirtual = (u64)paging_scratch_allocate();
+//     kprintf("[i] New kernel stack 0x%x\n", StackVirtual);
+//     for (;;) {}    
+//     // And now let's use it and forget ebp because we can.
+//     __asm__ volatile("mov %0, %%rsp" : : "r" (StackVirtual + 4096));
 
-    // And let's create a new stack frame.
-    // (and prevent gcc from inlinin the function call)
-    void (*kmain_newstack_ptr)() = kmain_newstack;
-    kmain_newstack_ptr();
-}
+//     // And let's create a new stack frame.
+//     // (and prevent gcc from inlinin the function call)
+//     void (*kmain_newstack_ptr)() = kmain_newstack;
+//     kmain_newstack_ptr();
+// }
 
-void kmain_newstack(void)
-{
+// void kmain_newstack(void)
+// {
     
     u64 RSDPAddress = acpi_find_rsdp();
     if (RSDPAddress == 0)

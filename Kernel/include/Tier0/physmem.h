@@ -7,7 +7,11 @@
 
 // Page frame allocation
 void physmem_init(void);
+// This retrns a frame number, not an address!
 u64 physmem_allocate_page(void);
+// But this returns an address:
+u64 physmem_allocate_physical(void);
+
 u64 physmem_page_to_physical(u64 Page);
 u64 physmem_physical_to_page(u64 Physical);
 

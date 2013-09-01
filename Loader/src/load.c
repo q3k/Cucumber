@@ -181,6 +181,8 @@ u32 load(void *Multiboot, unsigned int Magic)
     g_Context.VGATextModeUsed = 1;
     g_Context.MultibootUsed = 1;
     g_Context.MultibootHeader = (u32)Multiboot;
+    g_Context.KernelELF = (u64)KernelStart;
+    g_Context.KernelELFSize = (u64)(KernelEnd - KernelStart);
     
     printf("Load context at 0x%x\n", (u64)&g_Context);
 

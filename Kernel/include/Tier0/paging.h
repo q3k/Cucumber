@@ -5,8 +5,8 @@
 #include "load_context.h"
 
 // Some helpful macros
-#define PAGING_GET_ML4_INDEX(x) (((u64)x >> 39) & 0x1FF)
-#define PAGING_GET_DPT_INDEX(x) (((u64)x >> 30) & 0x1FF)
+#define PAGING_GET_PML4_INDEX(x) (((u64)x >> 39) & 0x1FF)
+#define PAGING_GET_PDP_INDEX(x) (((u64)x >> 30) & 0x1FF)
 #define PAGING_GET_DIR_INDEX(x) (((u64)x >> 21) & 0x1FF)
 #define PAGING_GET_TAB_INDEX(x) (((u64)x >> 12) & 0x1FF)
 #define PAGING_GET_PAGE_OFFSET(x) (x & 0xFFF)
@@ -34,7 +34,7 @@ struct S_PAGING_DIR_ENTRY {
 } __attribute__((packed));
 typedef struct S_PAGING_DIR_ENTRY T_PAGING_DIR_ENTRY;
 
-struct S_PAGING_DPT_ENTRY {
+struct S_PAGING_PDP_ENTRY {
 	u8  Present    :  1;
 	u8  RW         :  1;
 	u8  User       :  1;
@@ -43,7 +43,7 @@ struct S_PAGING_DPT_ENTRY {
 	u64 Physical   : 40; // The physical address is limited by MAXPHYADDR
 	u64 Zero       : 12;
 } __attribute__((packed));
-typedef struct S_PAGING_DPT_ENTRY T_PAGING_DPT_ENTRY;
+typedef struct S_PAGING_PDP_ENTRY T_PAGING_PDP_ENTRY;
 
 struct S_PAGING_ML4_ENTRY {
 	u8  Present    :  1;
@@ -67,14 +67,22 @@ typedef struct {
 } __attribute__((packed)) T_PAGING_DIR;
 
 typedef struct {
-	T_PAGING_DPT_ENTRY Entries[512]; // For use by the CPU
-} __attribute__((packed)) T_PAGING_DPT;
+	T_PAGING_PDP_ENTRY Entries[512]; // For use by the CPU
+} __attribute__((packed)) T_PAGING_PDP;
 
 typedef struct {
 	T_PAGING_ML4_ENTRY Entries[512]; // For use by the CPU
 } __attribute__((packed)) T_PAGING_ML4;
 
+// Generic funcitons
 T_PAGING_ML4 *   paging_get_ml4(void);
 void             paging_set_ml4(u64 ML4Physical);
+
+// Management of kernel paging structures
+void paging_kernel_init(void);
+// Map a 4k page from Physical to Virtual. AccessBits is undefined right now.
+void paging_map_page(u64 Virtual, u64 Physical, void *AccessBits);
+// Map an arbitrary Size range from Physical to Virtual. Must still be kinda aligned.
+void paging_map_area(u64 PhysicalStart, u64 VirtualStart, u64 Size, void *AccessBits);
 
 #endif

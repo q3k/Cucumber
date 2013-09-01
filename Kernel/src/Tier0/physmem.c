@@ -47,7 +47,6 @@ u64 __physmem_allocate_first_page(void)
         if (NextPageStart > g_PhysicalMemory.MemorySize)
             PANIC("Out of memory!");
     }
-    kprintf("%x\n", NextPageStart);
     return NextPageStart;
 }
 
@@ -114,6 +113,11 @@ u64 physmem_allocate_page(void)
     }
     PANIC("physmem metadata addition not yet implemented - OOM!");
     return 0;
+}
+
+u64 physmem_allocate_physical(void)
+{
+    return (physmem_allocate_page() * PHYSMEM_PAGE_SIZE);
 }
 
 void physmem_free_page(u64 Page)

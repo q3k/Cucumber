@@ -55,10 +55,16 @@ void kmain(u32 LoadContextAddress)
     if (!CPUID_HAS(APIC))
         PANIC("CPU doesn't support APIC!");
     
+    interrupts_init_simple();
+    exceptions_init_simple();
+    
     system_parse_load_context(LoadContext); 
     kprintf("[i] Booting via %s.\n", LoadContext->LoaderName);
     kprintf("[i] Memory available: %uk.\n", system_get_memory_upper());
     physmem_init();
+    paging_kernel_init();
+    for(;;){}
+    
     
 //     // Let's create a new kernel stack
 //     u64 StackVirtual = (u64)paging_scratch_allocate();
@@ -80,20 +86,18 @@ void kmain(u32 LoadContextAddress)
     if (RSDPAddress == 0)
         PANIC("ACPI not supported! What is this, 1999?");
     
-    //smp_initialize();
-    interrupts_init_simple();
-    exceptions_init_simple();
-    apic_enable_lapic();
+    smp_initialize();
+    // apic_enable_lapic();
     heap_init_simple();
-    // enable FPU/SSE...
-    __asm__ volatile(
-                    "movq %cr0, %rax;"
-                    "and $0xfffb, %ax;"
-                    "or $0x2, %rax;"
-                    "movq %rax, %cr0;"
-                    "movq %cr4, %rax;"
-                    "orq $0x600, %rax;"
-                    "movq %rax, %cr4;");
+    // // enable FPU/SSE...
+    // __asm__ volatile(
+    //                 "movq %cr0, %rax;"
+    //                 "and $0xfffb, %ax;"
+    //                 "or $0x2, %rax;"
+    //                 "movq %rax, %cr0;"
+    //                 "movq %cr4, %rax;"
+    //                 "orq $0x600, %rax;"
+    //                 "movq %rax, %cr4;");
     
     cpp_call_ctors();
     cpp_start_ckernel();

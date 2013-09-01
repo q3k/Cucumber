@@ -25,6 +25,7 @@ struct S_LOAD_CONTEXT {
 
     // Kernel ELF
     void *KernelELF;
+    u64 KernelELFSize;
 } __attribute__((packed));
 typedef struct S_LOAD_CONTEXT T_LOAD_CONTEXT;
 

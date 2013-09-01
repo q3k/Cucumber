@@ -2,6 +2,7 @@
 #define __SYSTEM_H__
 
 #include "load_context.h"
+#include "Tier0/elf.h"
 
 #define SYSTEM_KERNEL_VIRTUAL 0xFFFFFFFF80000000
 
@@ -108,10 +109,7 @@ typedef struct {
     T_SYSTEM_INVALID_RAM InvalidMemoryAreas[256];
     u8 NumInvalidAreas;
 
-    // kernel code size and location
-    u64 KernelSize;
-    u64 KernelPhysicalStart;
-    u64 KernelVirtualStart;
+    TELF KernelELF;
 } T_SYSTEM_INFO;
 
 u64 system_cpuid(u32 Code);

@@ -111,7 +111,7 @@ void system_parse_load_context(T_LOAD_CONTEXT *LoadContext)
     BIOSArea->Size = 1024 *1024;
     g_SystemInfo.NumInvalidAreas++;
     
-    // Mark the loader physical location ad unavailable.
+    // Mark the loader physical location as unavailable.
     T_SYSTEM_INVALID_RAM *LoaderArea = &g_SystemInfo.InvalidMemoryAreas[g_SystemInfo.NumInvalidAreas];
     LoaderArea->Base = LoadContext->ReservedPhysicalStart;
     LoaderArea->Size = LoadContext->ReservedPhysicalEnd - LoadContext->ReservedPhysicalStart;
@@ -128,6 +128,31 @@ void system_parse_load_context(T_LOAD_CONTEXT *LoadContext)
     LAPICArea->Base = 0xFEE00000;
     LAPICArea->Size = 0xFEEFFFFF - 0xFEE00000;
     g_SystemInfo.NumInvalidAreas++;
+
+    // Parse the kernel ELF
+    TELF *ELF = &g_SystemInfo.KernelELF;
+    if (elf_open(ELF, LoadContext->KernelELF, LoadContext->KernelELFSize))
+        PANIC("Error parsing kernel ELF file.\n");
+    else
+    {
+        kprintf("[i] Kernel has the following sections:\n");
+        for (u32 i = 0; i < ELF->SectionCount; i++)
+        {
+            u64 Virtual = elf_section_get_virtual_address(ELF, i);
+            u64 HasBits = elf_section_has_bits(ELF, i);
+            if (Virtual && HasBits)
+                kprintf(" - %s (virt: 0x%X, phys: 0x%x, %i bytes)\n",
+                    elf_section_get_name(ELF, i),
+                    Virtual,
+                    elf_section_get_physical_address(ELF, i),
+                    elf_section_get_size(ELF, i));
+            else if (Virtual)
+                kprintf(" - %s (virt: 0x%X, (zero'd bits), %i bytes)\n",
+                    elf_section_get_name(ELF, i),
+                    Virtual,
+                    elf_section_get_size(ELF, i));
+        }
+    }
     
     kprintf("[i] Highest unavailable address is %x.\n", HighestUnavailable);
     g_SystemInfo.MemoryTop = HighestUnavailable;
@@ -195,16 +220,6 @@ u64 system_msr_get(u32 MSR)
 void system_msr_set(u32 MSR, u64 Data)
 {
     __asm__ volatile("wrmsr" :: "a"((u32)(Data & 0xFFFFFFFF)), "d"((u32)(Data >> 32)), "c"(MSR));
-}
-
-u64 system_get_kernel_size(void)
-{
-    return g_SystemInfo.KernelSize;
-}
-
-u64 system_get_kernel_virtual_start(void)
-{
-    return g_SystemInfo.KernelVirtualStart;
 }
 
 u64 system_get_memory_top(void)

@@ -36,7 +36,7 @@ CLogger &CKernel::Logger(void)
 void CKernel::Start(void)
 {
     kprintf("[i] Hello from C++ land!\n");
-       
+    for (;;) {}
     if (m_dwMagic != CKERNEL_MAGIC)
     {
         kprintf("[e] Error! My constructor wasn't called properly.\n");

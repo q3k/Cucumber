@@ -19,6 +19,7 @@ struct S_LOAD_CONTEXT {
 
     // Kernel ELF
     u64 KernelELF;
+    u64 KernelELFSize;
 } __attribute__((packed));
 typedef struct S_LOAD_CONTEXT T_LOAD_CONTEXT;
 

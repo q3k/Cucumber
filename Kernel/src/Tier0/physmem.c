@@ -61,6 +61,8 @@ void physmem_init(void)
     if (PHYSMEM_ADDRESS_TO_METADATA_NUMBER(MetadataFrame) > 0)
         PANIC("Physmem: First allocated address > metadata covering!");
 
+    g_PhysicalMemory.MemoryFree = g_PhysicalMemory.MemorySize - MetadataFrame;
+
     // Let's make sure that frame is mapped into our memory...
     if (MetadataFrame >= 0xEFFFFF)
         PANIC("Physmem: first allocated address > memory mapped by loader!");

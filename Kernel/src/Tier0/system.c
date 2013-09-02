@@ -226,3 +226,8 @@ u64 system_get_memory_top(void)
 {
     return g_SystemInfo.MemoryTop;
 }
+
+TELF *system_get_kernel_elf(void)
+{
+    return &g_SystemInfo.KernelELF;
+}

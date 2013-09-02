@@ -121,5 +121,6 @@ void system_msr_set(u32 MSR, u64 Data);
 
 // kernel load address, size and mapping
 u64 system_get_memory_top(void);
+TELF *system_get_kernel_elf(void);
 
 #endif

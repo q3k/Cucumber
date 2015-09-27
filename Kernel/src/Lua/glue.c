@@ -136,7 +136,7 @@ void longjmp(jmp_buf env, int value)
             "xorq %%rax, %%rax\n"
 
             // off we go!
-            "jmp %%rbx\n"
+            "jmp *%%rbx\n"
    ::"a"(&env[0]), "b"(value));
 }
 

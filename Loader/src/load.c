@@ -201,7 +201,6 @@ u32 load(void *Multiboot, unsigned int Magic)
 
     puts("Now in 32-bit compability mode, jumping to the kernel...\n");
     io_update_load_context(&g_Context);
-    // for (;;) {}
     ldrEntryLow = Header->Entry & 0xFFFFFFFF;
     ldrEntryHigh = Header->Entry >> 32;
     return 1;

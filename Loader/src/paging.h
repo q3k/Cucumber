@@ -1,5 +1,5 @@
 #ifndef __PAGING_H__
-#define __PAGING_G__
+#define __PAGING_H__
 
 #include "types.h"
 

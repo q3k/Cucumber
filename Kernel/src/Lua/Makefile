@@ -6,13 +6,14 @@
 # Your platform. See PLATS for possible values.
 PLAT= cucumber-kernel
 
-CC=x86_64-elf-gcc
+CC=clang
 CFLAGS= -O2 -Wall -DLUA_COMPAT_ALL $(SYSCFLAGS) $(MYCFLAGS)
+
 LDFLAGS= $(SYSLDFLAGS) $(MYLDFLAGS)
 LIBS= -lm $(SYSLIBS) $(MYLIBS)
 
 AR= ar rcu
-RANLIB=x86_64-elf-ranlib
+RANLIB=ranlib
 RM= rm -f
 
 SYSCFLAGS=
@@ -98,8 +99,8 @@ ansi:
 bsd:
 	$(MAKE) $(ALL) SYSCFLAGS="-DLUA_USE_POSIX -DLUA_USE_DLOPEN" SYSLIBS="-Wl,-E"
 
-CUCUMBERCFLAGS:=-m64 -mcmodel=large -Wall -nostdlib -nostartfiles -nodefaultlibs -std=c99 -g
-CUCUMBERCFLAGS+=-I ./include -Wno-packed-bitfield-compat -O2 -fno-optimize-sibling-calls -mcmodel=kernel
+CUCUMBERCFLAGS:=-m64 -mcmodel=large -Wall -nostdlib -std=c99 -g
+CUCUMBERCFLAGS+=-I ./include -O2 -fno-optimize-sibling-calls -mcmodel=kernel
 CUCUMBERCFLAGS+= -mno-red-zone -ffreestanding
 
 %.o:

@@ -70,26 +70,21 @@ T_HEAP *heap_create(u64 Size)
     kprintf("[i] Allocating %i pages (%i KB) for heap.\n", 
             NumPages, Size / 1000);
     
-    u64 Start = 0;
-    // for (u32 i = 0; i < NumPages; i++)
-    // {
-    //     if (!Start)
-    //         Start = (u64)paging_scratch_allocate(); 
-    //     else
-    //         paging_scratch_allocate();
-    // }
-    PANIC("nananananoheap");
-    
-    T_HEAP* Heap = (T_HEAP *)Start;
-    u64 DataStart = Start;
-    DataStart += sizeof(T_HEAP);
+    for (u32 i = 0; i < NumPages; i++)
+    {
+        u64 Physical = physmem_allocate_physical();
+        paging_map_page(HEAP_START + i * PHYSMEM_PAGE_SIZE, Physical, 0);
+
+    }
+    T_HEAP* Heap = (T_HEAP *)HEAP_START;
+    u64 DataStart = HEAP_START + sizeof(T_HEAP);
     
     Heap->Index = heap_index_initialize((void*)DataStart, HEAP_INDEX_SIZE / 4);
     
     DataStart += HEAP_INDEX_SIZE;
-    kprintf("[i] Heap %x - %x\n", DataStart, Start + NumPages * 4096);
+    kprintf("[i] Heap %x - %x\n", DataStart, HEAP_START + NumPages * 4096);
     Heap->Start = DataStart;
-    Heap->End = Start + NumPages * 4096;
+    Heap->End = HEAP_START + NumPages * 4096;
     
     T_HEAP_HEADER *Hole = (T_HEAP_HEADER *)DataStart;
     Hole->Size = Heap->End - Heap->Start;

@@ -1,6 +1,7 @@
 #include "Tier0/interrupts.h"
 #include "Tier0/paging.h"
 #include "Tier0/kstdio.h"
+#include "Tier0/kstdlib.h"
 #include "Tier0/pic.h"
 #include "preprocessor_hacks.h"
 
@@ -25,14 +26,7 @@ u8 interrupts_init_idt(void)
     kprintf("[i] IDT Entry size %i bytes.\n", sizeof(T_IDT_ENTRY));
 
     // Null those entries!
-    for (u16 i = 0; i < 256; i++)
-    {
-        // Maybe I should access the struct's members...
-        // Or i can just cast that to to u32's and null them.
-        // This will set the Present flag to 0 either way
-        *((u64 *)(&g_Interrupts.IDTEntries[i])) = 0;
-        *(((u64 *)(&g_Interrupts.IDTEntries[i]) + 1)) = 0;
-    }
+    kmemset(g_Interrupts.IDTEntries, 0, sizeof(g_Interrupts.IDTEntries));
 
     return 1; 
 }

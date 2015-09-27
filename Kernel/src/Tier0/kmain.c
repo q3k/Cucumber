@@ -62,8 +62,8 @@ void kmain(u32 LoadContextAddress)
     kprintf("[i] Booting via %s.\n", LoadContext->LoaderName);
     kprintf("[i] Memory available: %uk.\n", system_get_memory_upper());
     physmem_init();
+    kprintf("[i] Memory free: %uM.\n", physmem_get_free()/(1024*1024));
     paging_kernel_init();
-    for(;;){}
     
     
 //     // Let's create a new kernel stack

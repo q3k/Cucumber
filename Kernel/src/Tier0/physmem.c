@@ -119,7 +119,8 @@ u64 physmem_allocate_page(void)
 
 u64 physmem_allocate_physical(void)
 {
-    return (physmem_allocate_page() * PHYSMEM_PAGE_SIZE);
+    u64 Physical = (physmem_allocate_page() * PHYSMEM_PAGE_SIZE);
+    return Physical;
 }
 
 void physmem_free_page(u64 Page)
@@ -148,7 +149,7 @@ u64 physmem_physical_to_page(u64 Physical)
 
 void physmem_read(u64 Base, u64 Size, void *Destination)
 {
-    if ((u64)Destination <= 0xEFFFFF)
+    if ((u64)Base <= 0xEFFFFF)
     {
         for (u64 i = 0; i < Size; i++)
             ((u8 *)Destination)[i] = ((u8 *)Base)[i];

@@ -11,6 +11,8 @@
 
 #define HEAP_INDEX_SIZE   0x00002000
 
+#define HEAP_START 0xFFFFFFFF00000000
+
 typedef struct {
    u64 Magic;
    u8 Hole;

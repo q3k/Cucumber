@@ -202,7 +202,7 @@ void smp_parse_configuration_table(u32 TableAddress)
     kprintf("[i] SMP OEM: %s\n", OEMName);
     kprintf("[i] SMP Product: %s\n", ProductName);
     
-    kprintf("[i] SMP Base Configuration Table length: %i bytes.\n", Header.BaseTableLength);
+    kprintf("[i] SMP Base Configuration Table address: %x, length: %i bytes.\n", TableAddress, Header.BaseTableLength);
     
     if (Header.BaseTableLength > SMP_TESMP_BUFFER_LENGTH)
         PANIC("SMP BCT too big!");

@@ -28,6 +28,7 @@ void _zero_paging_structure(void *Structure)
 
 struct {
     T_PAGING_ML4 *ML4;
+    u8 FullIdentityMapping;
 } g_KernelPaging;
 
 // allocate a page frame and make sure that it is accessible before
@@ -37,7 +38,8 @@ struct {
 void *_early_alloc(void)
 {
     u64 Address = physmem_allocate_physical();
-    ASSERT(Address < 0x00EFFFFF - 0x1000);
+    if (!g_KernelPaging.FullIdentityMapping)
+        ASSERT(Address < 0x00EFFFFF - 0x1000);
     return (void*)Address;
 }
 
@@ -136,11 +138,10 @@ void paging_map_area(u64 PhysicalStart, u64 VirtualStart, u64 Size, void *Access
 void paging_kernel_init(void)
 {
     g_KernelPaging.ML4 = _early_alloc();
+    g_KernelPaging.FullIdentityMapping = 0;
     kprintf("[i] Setting up new paging structures...\n");
-    // Identity map all the BIOS EMM (extended memory). This covers a lot of 
-    // classic PC I/O mapped stuff (eg. video RAM) and probably our kernel and
-    // loader artifacts.
-    paging_map_area(0x0, 0x0, 0x00EFFFFF, 0);
+    // Identity map a whole bunch of memory - TODO, make this map all of physmem..?
+    paging_map_area(0x0, 0x0, 0x0FFFFFFF, 0);
 
     // Copy all the necessary ELF sections of our kernel image
     // However, we need to copy them from the currently running kernel,
@@ -217,6 +218,7 @@ void paging_kernel_init(void)
 
     // Immediately apply new paging structures.
     __asm__ volatile ("movq %%rax, %%cr3" :: "a" (g_KernelPaging.ML4));
+    g_KernelPaging.FullIdentityMapping = 1;
 
     // TODO: release loader-provided paging in order to conserver memory.
 }

@@ -9,7 +9,7 @@ LD:=ld
 # -O2 sets -foptimize-sibling-calls which breaks code...
 CFLAGS:= -mcmodel=large -Wall -Werror -nostdlib -ffreestanding -std=c99 -g
 CFLAGS+=-I ./include -nostdinc -O2 -fno-optimize-sibling-calls -mcmodel=kernel
-CFLAGS+= -mno-red-zone -ffreestanding -I ./include/Lua -I ./src/Lua -target x86_64-elf
+CFLAGS+= -mno-red-zone -ffreestanding -I ./include/Lua -I ./src/Lua -target x86_64-elf -mno-sse
 
 CXFLAGS:= $(CFLAGS) -fno-rtti -fno-stack-protector -fno-exceptions -std=c++11
 

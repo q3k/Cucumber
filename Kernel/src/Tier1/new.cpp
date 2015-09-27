@@ -18,13 +18,13 @@ void *operator new[](size_t size)
     return kmalloc(size);
 }
  
-void operator delete(void *p)
+void operator delete(void *p) throw()
 {
     PANIC("nodel4u");
     kfree(p);
 }
  
-void operator delete[](void *p)
+void operator delete[](void *p) throw()
 {
     PANIC("nodel4u");
     kfree(p);

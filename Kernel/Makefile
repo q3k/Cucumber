@@ -1,14 +1,3 @@
-# I hate GNU Make
-#
-# Seriously.
-#
-# Fuck M4. I do this because it's probably the most portable way, and I don't
-# want to write Yet Another Compile System because fuck that shit. I could
-# use cmake but I don't know whether it is flexible enough. It probably is
-# but whatever. I wrote this piece of shit below, let's just keep it that
-# way. There are better way to do the hthings I do below, but who gives a
-# shit.
-
 default: emulate-nohdd
 
 SHELL:=/bin/bash

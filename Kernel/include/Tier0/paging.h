@@ -84,5 +84,9 @@ void paging_kernel_init(void);
 void paging_map_page(u64 Virtual, u64 Physical, void *AccessBits);
 // Map an arbitrary Size range from Physical to Virtual. Must still be kinda aligned.
 void paging_map_area(u64 PhysicalStart, u64 VirtualStart, u64 Size, void *AccessBits);
-
+u8 _paging_resolve(u64 Virtual, u64 *PhysicalOut);
+// Get directory of SCRATCH memory region, for use by Tier1 allocators
+u64 paging_get_scratch_directory(void);
+// Get directory of TEXT memory region, for use by Tier1 allocators
+u64 paging_get_text_directory(void);
 #endif

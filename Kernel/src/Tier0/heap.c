@@ -389,6 +389,14 @@ void *kmalloc_aligned(u64 Size)
     return heap_alloc(g_Heap, Size, 1);
 }
 
+void *kmalloc_aligned_physical(u64 Size)
+{
+    void *Virtual = heap_alloc(g_Heap, Size, 1);
+    u64 Physical;
+    ASSERT(_paging_resolve((u64)Virtual, &Physical) == 0);
+    return (void*)Physical;
+}
+
 /*void *kmalloc_p(u64 Size, u8 Aligned, u64 *Physical)
 {
     return heap_alloc_p(g_Heap, Size, Aligned, Physical);

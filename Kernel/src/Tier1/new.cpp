@@ -8,24 +8,20 @@ typedef long unsigned int size_t;
 
 void *operator new(size_t size)
 {
-    PANIC("nonew4u");
     return kmalloc(size);
 }
  
 void *operator new[](size_t size)
 {
-    PANIC("nonew4u");
     return kmalloc(size);
 }
  
 void operator delete(void *p) throw()
 {
-    PANIC("nodel4u");
     kfree(p);
 }
  
 void operator delete[](void *p) throw()
 {
-    PANIC("nodel4u");
     kfree(p);
 }

@@ -56,7 +56,7 @@ namespace cb {
             bool m_User;
             volatile u64 m_PID;
             
-            volatile u64 m_ESP, m_EIP, m_EBP;
+            volatile u64 m_RSP, m_RIP, m_RBP;
             volatile ETaskStatus m_Status;
             volatile u64 m_StatusData;
             
@@ -89,18 +89,18 @@ namespace cb {
             CTask *Fork(void);
             
             inline u64 GetPID(void) { return m_PID; }
-            inline u64 GetESP(void) { return m_ESP; }
-            inline u64 GetEIP(void) { return m_EIP; }
-            inline u64 GetEBP(void) { return m_EBP; }
+            inline u64 GetESP(void) { return m_RSP; }
+            inline u64 GetEIP(void) { return m_RIP; }
+            inline u64 GetEBP(void) { return m_RBP; }
             
             /*inline u64 GetPageDirectoryPhysicalAddress(void)
             {
                 return m_Directory->m_Directory->PhysicalAddress;
             }*/
             
-            inline void SetESP(u64 ESP) { m_ESP = ESP; }
-            inline void SetEIP(u64 EIP) { m_EIP = EIP; }
-            inline void SetEBP(u64 EBP) { m_EBP = EBP; }
+            inline void SetESP(u64 RSP) { m_RSP = RSP; }
+            inline void SetEIP(u64 RIP) { m_RIP = RIP; }
+            inline void SetEBP(u64 RBP) { m_RBP = RBP; }
             
             /*inline void SetPageDirectory(CPageDirectory *Directory)
             {

@@ -48,8 +48,12 @@ void *heap_alloc_p(T_HEAP *Heap, u64 Size, u8 Aligned, u64 *Physical);
 void heap_free(T_HEAP *Heap, void *Address);
 
 void heap_init_simple(void);
+// Allocate, return virtual address
 void *kmalloc(u64 Size);
+// Allocate aligned to 0x1000, return virtual address
 void *kmalloc_aligned(u64 Size);
+// Allocate aligned to 0x1000, return physical address
+void *kmalloc_aligned_physical(u64 Size);
 void *kmalloc_p(u64 Size, u8 Aligned, u64 *Physical);
 void kfree(void *Data);
 

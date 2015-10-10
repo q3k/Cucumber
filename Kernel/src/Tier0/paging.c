@@ -72,6 +72,38 @@ u8 _paging_resolve(u64 Virtual, u64 *PhysicalOut)
     return 0;
 }
 
+u64 paging_get_text_directory(void)
+{
+    u64 Virtual = 0xFFFFFFFF80000000;
+    u64 PML4I = PAGING_GET_PML4_INDEX(Virtual);
+    u64 PDPI = PAGING_GET_PDP_INDEX(Virtual);
+
+    T_PAGING_ML4_ENTRY *ML4E = &g_KernelPaging.ML4->Entries[PML4I];
+    if (!ML4E->Present)
+        PANIC("Cannot get text ML4E!");
+    T_PAGING_PDP *PDP = (T_PAGING_PDP *)(ML4E->Physical << 12);
+    T_PAGING_PDP_ENTRY *PDPE = &PDP->Entries[PDPI];
+    if (!PDPE->Present)
+        PANIC("Cannot get text PDPE!");
+    return PDPE->Physical << 12;
+}
+
+u64 paging_get_scratch_directory(void)
+{
+    u64 Virtual = 0xFFFFFFFF00000000;
+    u64 PML4I = PAGING_GET_PML4_INDEX(Virtual);
+    u64 PDPI = PAGING_GET_PDP_INDEX(Virtual);
+
+    T_PAGING_ML4_ENTRY *ML4E = &g_KernelPaging.ML4->Entries[PML4I];
+    if (!ML4E->Present)
+        PANIC("Cannot get scratch ML4E!");
+    T_PAGING_PDP *PDP = (T_PAGING_PDP *)(ML4E->Physical << 12);
+    T_PAGING_PDP_ENTRY *PDPE = &PDP->Entries[PDPI];
+    if (!PDPE->Present)
+        PANIC("Cannot get scratch PDPE!");
+    return PDPE->Physical << 12;
+}
+
 // AccessBits is reserved for future use
 void paging_map_page(u64 Virtual, u64 Physical, void *AccessBits)
 {

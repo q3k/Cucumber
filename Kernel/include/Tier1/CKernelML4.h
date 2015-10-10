@@ -4,6 +4,10 @@
 #include "types.h"
 extern "C" {
     #include "Tier0/paging.h"
+    #include "Tier0/panic.h"
+    #include "Tier0/kstdlib.h"
+    #include "Tier0/kstdio.h"
+    #include "Tier0/heap.h"
 };
 
 // This is more-or less just a C++ wrapper for T_PAGING_ML4. For use for pure-kernel processes only
@@ -16,12 +20,67 @@ extern "C" {
 // STACK   - 0xFFFFFFFF40000000 - 0xFFFFFFFF4FFFFFFF -> kernel stack, unique per ML4, 256MiB, fits in 1/16 of a Directory,
 // TEXT    - 0xFFFFFFFF80000000 - 0xFFFFFFFF8xxxxxxx -> kernel code physical location and the temp page, common, fits in x/16 of a Directory
 
+#define AREA_LOWMEM_START 0x0000000000000000
+#define AREA_LOWMEM_SIZE (256*1024*1024)
+#define AREA_SCRATCH_START 0xFFFFFFFF00000000
+#define AREA_STACK_START 0xFFFFFFFF40000000
+
 namespace cb {
+    template<typename T> class CPagingStructure {
+        public:
+            T m_Entries[512];
+            void * operator new(unsigned long Size, void * Memory) throw() {
+                return Memory;
+            }
+            CPagingStructure(void) {
+                kmemset(m_Entries, 0, sizeof(m_Entries));
+            }
+            T *GetEntry(u64 Index) {
+                ASSERT(Index < 0x200);
+                return m_Entries[Index];
+            }
+            bool IsEntryPresent(u64 Index) {
+                ASSERT(Index < 0x200);
+                return m_Entries[Index].Present;
+            }
+            u64 GetEntryPhysical(u64 Index) {
+                ASSERT(Index < 0x200);
+                return m_Entries[Index].Physical << 12;
+            }
+            template<typename C> void GetEntry(u64 Index, C **NewOut) {
+                ASSERT(Index < 0x200);
+                if (NewOut)
+                    *NewOut = (C *)(m_Entries[Index].Physical << 12);
+            }
+            void SetEntry(u64 Index, u64 Physical) {
+                ASSERT(Index < 0x200);
+                m_Entries[Index].Physical = (Physical >> 12);
+                m_Entries[Index].Present = 1;
+            }
+            template<typename C> void NewEntry(u64 Index, C **NewOut) {
+                ASSERT(Index < 0x200);
+                C *New = (C *)kmalloc_aligned_physical(sizeof(C));
+                new(New) C();
+                m_Entries[Index].Physical = (((u64)New) >> 12);
+                m_Entries[Index].Present = 1;
+                if (NewOut)
+                    *NewOut = New;
+            }
+            template<typename C> void GetOrNewEntry(u64 Index, C **NewOut) {
+                if (IsEntryPresent(Index))
+                    GetEntry(Index, NewOut);
+                else
+                    NewEntry(Index, NewOut);
+            }
+
+    };
     class CKernelML4 {
         private:
             // The paging direcotry structure
-            T_PAGING_ML4 *m_Directory;
-            bool m_ShouldFreeML4;
+            CPagingStructure<T_PAGING_ML4_ENTRY> *m_ML4;
+
+            // Are we running this mapping?
+            bool m_Running;
 
             // allocator and destructor for segments
             void *(*m_SegmentAllocator)(u64);
@@ -38,13 +97,25 @@ namespace cb {
             static u64 m_SCRATCH_Physical;
             static T_PAGING_DIR *m_TEXT;
             static u64 m_TEXT_Physical;
+        protected:
+            template<typename P, typename C> static C* GetOrCreateSubStructure(P *Parent);
+            
         public:
-            static void PopulateCommonPointers(void);
             // Creates a new page directory for a kernel task, with new stack and other internal stuff
             CKernelML4(void);
 
             // Destroys the structures and frees the segments, if needed
             ~CKernelML4(void);
+
+            // Maps a physical page
+            void Map(u64 Virtual, u64 Physical);
+            // Maps a physical area
+            void Map(u64 VirtualStart, u64 Physical, u64 Size);
+            // Resolves Virtual -> Physical
+            u64 Resolve(u64 Virtual);
+
+            // Use Mapping
+            void Use(void);
     };
 };
 

@@ -87,17 +87,17 @@ void kmain(u32 LoadContextAddress)
         PANIC("ACPI not supported! What is this, 1999?");
     
     smp_initialize();
-    // apic_enable_lapic();
+    apic_enable_lapic();
     heap_init_simple();
-    // // enable FPU/SSE...
-    // __asm__ volatile(
-    //                 "movq %cr0, %rax;"
-    //                 "and $0xfffb, %ax;"
-    //                 "or $0x2, %rax;"
-    //                 "movq %rax, %cr0;"
-    //                 "movq %cr4, %rax;"
-    //                 "orq $0x600, %rax;"
-    //                 "movq %rax, %cr4;");
+    // enable FPU/SSE...
+    __asm__ volatile(
+                    "movq %cr0, %rax;"
+                    "and $0xfffb, %ax;"
+                    "or $0x2, %rax;"
+                    "movq %rax, %cr0;"
+                    "movq %cr4, %rax;"
+                    "orq $0x600, %rax;"
+                    "movq %rax, %cr4;");
     
     cpp_call_ctors();
     cpp_start_ckernel();

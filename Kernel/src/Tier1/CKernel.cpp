@@ -35,18 +35,20 @@ CLogger &CKernel::Logger(void)
 
 void CKernel::Start(void)
 {
-    kprintf("[i] Hello from C++ land!\n");
-    for (;;) {}
     if (m_dwMagic != CKERNEL_MAGIC)
     {
         kprintf("[e] Error! My constructor wasn't called properly.\n");
         return;
     }
     
-    m_Logger = new CLogger();
-    Alentours::CPCIManager::Initialize();
-    CKernelML4::PopulateCommonPointers();
-    /*CTask *KernelTask = CreateKernelTask();
+    //m_Logger = new CLogger();
+    //Alentours::CPCIManager::Initialize();
+    CKernelML4 *ML4 = new CKernelML4();
+    for (;;) {}
+    ML4->Use();
+
+/*    CKernelML4::PopulateCommonPointers();
+    CTask *KernelTask = CreateKernelTask();
     kprintf("[i] Kernel task has TID %i.\n", KernelTask->GetPID());
     CScheduler::AddTask(KernelTask);
     CScheduler::Enable();
@@ -104,4 +106,3 @@ CTask *CKernel::CreateKernelTask(void)
     
     return Task;
 }*/
-

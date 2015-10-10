@@ -64,8 +64,8 @@ void apic_enable_lapic(void)
         system_msr_set(0x1B, APICMSR);
     }
     
-    // g_APIC.LAPIC = paging_scratch_map(0xFEE00000);
-    PANIC("nanananoapic");
+    paging_map_page(0xFEE00000, 0xFEE00000, 0);
+    g_APIC.LAPIC = (void*)0xFEE00000;
     kprintf("[i] LAPIC will be @0x%x.\n", g_APIC.LAPIC);
 
     // prepare interrupts ..
@@ -88,6 +88,7 @@ void apic_enable_lapic(void)
     kprintf("[i] LAPIC ready to calibrate timer.\n");
 
     // calibration time! let's use the PIT
+    interrupts_setup_isr(32, (void *)apic_calibration_interrupt, E_INTERRUPTS_RING0);
     // let's unmask IRQ0 only
     koutb(0x21, 0xFE);
     koutb(0xA1, 0xFF);
@@ -100,7 +101,6 @@ void apic_enable_lapic(void)
     g_APIC.CalibrationCounter = 0;
 
     // now let's program the PIT to run a channel0 (IRQ0) timer with a 100Hz loop
-    interrupts_setup_isr(32, (void *)apic_calibration_interrupt, E_INTERRUPTS_RING0);
     koutb(0x43, 0x36);
     koutb(0x40, 0x0B);
     koutb(0x40, 0xE9);

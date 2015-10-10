@@ -13,8 +13,7 @@ void cpp_call_ctors(void)
     kprintf("[i] Calling %i constructors before jumping to Tier1..\n", Number);
     for(u64 *C = (u64*)&_start_ctors; C < (u64*)&_end_ctors; ++C)
     {
-        kprintf("should've called %x\n", *C);
-        // ((void (*) (void)) (*C)) ();
+        ((void (*) (void)) (*C)) ();
     }
 }
 

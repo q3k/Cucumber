@@ -8,9 +8,10 @@ extern "C"
     #include "Tier0/system.h"
     #include "Tier0/panic.h"
     #include "Tier0/kstdio.h"
+    #include "Tier0/kstdlib.h"
 }
 
-#define ASSERT_ALIGNED(m) ASSERT(!(m & 0xFFF))
+#define ASSERT_ALIGNED(m) ASSERT(!(((u64)m) & 0xFFF))
 #define POPULATE_PAGING_ENTRY(Entry, address) do { Entry.Present = 0;\
     Entry.RW = 0; \
     Entry.User = 0; \
@@ -18,7 +19,87 @@ extern "C"
     Entry.Zero = 0; \
     Entry.Physical = address >> 12; } while(0)
 
-void CKernelML4::PopulateCommonPointers(void)
+#define align_new(Memory, Type, ...) do { Memory = (Type *)kmalloc_aligned_physical(sizeof(Type)); new(Memory) Type(__VA_ARGS__); } while(0)
+
+CKernelML4::CKernelML4(void)
 {
-    /* bullshit */
+    m_Running = false;
+    // Allocate directory
+    align_new(m_ML4, CPagingStructure<T_PAGING_ML4_ENTRY>);
+
+    // Map LOWMEM (TODO: share this, and actually limit this to RAM size)
+    Map(AREA_LOWMEM_START, 0x0, AREA_LOWMEM_SIZE);
+
+    // Map the SCRATCH directory from Tier0
+    u64 ScratchDirectory = paging_get_scratch_directory();
+    u64 ScratchVirtual = 0xFFFFFFFF00000000;
+    u64 ScratchPML4I = PAGING_GET_PML4_INDEX(ScratchVirtual);
+    u64 ScratchPDPI = PAGING_GET_PDP_INDEX(ScratchVirtual);
+    CPagingStructure<T_PAGING_PDP_ENTRY> *ScratchPDP;
+    m_ML4->GetEntry(ScratchPML4I, &ScratchPDP);
+    ScratchPDP->SetEntry(ScratchPDPI, ScratchDirectory);
+
+    // Allocate STACK
+    //TODO: unhardcode this
+    u64 StackSize = 4 * 1024 * 1024;
+    u64 StackStart = (u64)kmalloc_aligned_physical(StackSize);
+    Map(AREA_STACK_START, StackStart, StackSize);
+
+    // Map the TEXT directory from Tier0
+    u64 TextDirectory = paging_get_scratch_directory();
+    u64 TextVirtual = 0xFFFFFFFF00000000;
+    u64 TextPML4I = PAGING_GET_PML4_INDEX(TextVirtual);
+    u64 TextPDPI = PAGING_GET_PDP_INDEX(TextVirtual);
+    CPagingStructure<T_PAGING_PDP_ENTRY> *TextPDP;
+    m_ML4->GetEntry(TextPML4I, &TextPDP);
+    TextPDP->SetEntry(TextPDPI, TextDirectory);
+}
+
+u64 CKernelML4::Resolve(u64 Virtual)
+{
+    if (m_Running) {
+        PANIC("not implemented");
+    } else {
+        u64 Out;
+        ASSERT(_paging_resolve(Virtual, &Out) == 0);
+        return Out;
+    }
+    // dead code
+    return 0;
+}
+
+void CKernelML4::Use(void)
+{
+    u64 ML4 = (u64)m_ML4;
+    __asm__ volatile("movq %%rax, %%cr3" :: "a" (ML4));
+}
+
+void CKernelML4::Map(u64 Virtual, u64 Physical)
+{
+    ASSERT_ALIGNED(Virtual);
+    ASSERT_ALIGNED(Physical);
+
+    u64 PML4I = PAGING_GET_PML4_INDEX(Virtual);
+    u64 PDPI = PAGING_GET_PDP_INDEX(Virtual);
+    u64 DIRI = PAGING_GET_DIR_INDEX(Virtual);
+    u64 TABI = PAGING_GET_TAB_INDEX(Virtual);
+
+    CPagingStructure<T_PAGING_PDP_ENTRY> *PDP;
+    CPagingStructure<T_PAGING_DIR_ENTRY> *Dir;
+    CPagingStructure<T_PAGING_TAB_ENTRY> *Tab;
+
+    m_ML4->GetOrNewEntry(PML4I, &PDP);
+    PDP->GetOrNewEntry(PDPI, &Dir);
+    Dir->GetOrNewEntry(DIRI, &Tab);
+    Tab->SetEntry(TABI, Physical);
+}
+
+void CKernelML4::Map(u64 Virtual, u64 Physical, u64 Size)
+{
+    ASSERT_ALIGNED(Virtual);
+    ASSERT_ALIGNED(Physical);
+    ASSERT_ALIGNED(Size);
+
+    for (u64 i = 0; i < Size/0x1000; i++)
+        Map(Virtual+(i*0x1000), Physical+(i*0x1000));
 }

@@ -13,7 +13,7 @@ extern "C" {
 }
 
 volatile CScheduler g_Scheduler;
-u32 CScheduler::m_NumTicks = 0;
+u64 CScheduler::m_NumTicks = 0;
 
 CScheduler::CScheduler(void)
 {
@@ -47,32 +47,33 @@ void CScheduler::Enable(void)
     interrupts_setup_isr(CSCHEDULER_INTERRUPT_YIELD, (void*)Yield, E_INTERRUPTS_RING0);
 }
 
-__attribute__((optimize("O0"))) void CScheduler::Yield(u32 edi, u32 esi, u32 ebp, u32 esp, u32 ebx, u32 edx, u32 ecx, u32 eax, u32 eip)
+void CScheduler::Yield(T_ISR_REGISTERS Registers)
 {
 	__asm__ volatile("cli");
 	m_NumTicks = 0;
-	g_Scheduler.m_CurrentScheduler->NextTask(edi, esi, ebp, esp, ebx, edx, ecx, eax, eip);
+	g_Scheduler.m_CurrentScheduler->NextTask(Registers);
 	__asm__ volatile("sti");
 }
 
-__attribute__((optimize("O0"))) void CScheduler::TimerTick(u32 edi, u32 esi, u32 ebp, u32 esp, u32 ebx, u32 edx, u32 ecx, u32 eax, u32 eip)
+void CScheduler::TimerTick(T_ISR_REGISTERS Registers)
 {
 	if (m_NumTicks > 20)
 	{
 		m_NumTicks = 0;
-		g_Scheduler.m_CurrentScheduler->NextTask(edi, esi, ebp, esp, ebx, edx, ecx, eax, eip);
+		g_Scheduler.m_CurrentScheduler->NextTask(Registers);
 	}
 	m_NumTicks++;
 }
 
-__attribute__((optimize("O0"))) void CScheduler::NextTask(void)
+void CScheduler::NextTask(void)
 {
-	__asm__ volatile("pusha");
+	//__asm__ volatile("pusha");
 	__asm__ volatile ("int $0x99");
-	__asm__ volatile("popa");
+	//__asm__ volatile("popa");
 }
 
 void CScheduler::DispatchAvailableSemaphore(CSemaphore *Semaphore)
 {
     g_Scheduler.m_CurrentScheduler->SetSemaphoreAvailable(Semaphore);
 }
+

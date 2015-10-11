@@ -12,7 +12,7 @@ namespace cb {
         protected:
             T_ATOMIC m_Available;
         public:
-            CSemaphore(u32 Available = 1);
+            CSemaphore(u64 Available = 1);
             void Acquire(void);
             void Release(void);
     };

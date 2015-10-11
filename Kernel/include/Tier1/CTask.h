@@ -3,7 +3,7 @@
 
 #include "types.h"
 #include "Tier1/CKernel.h"
-//#include "Tier1/CPageDirectory.h"
+#include "Tier1/CKernelML4.h"
 #include "Tier1/CSemaphore.h"
 #include "Tier0/semaphore.h"
 
@@ -50,57 +50,40 @@ namespace cb {
         friend class CScheduler;
         protected:
             void *m_Owner; //TODO: Replace me with a real type
-            //CPageDirectory *m_Directory;            
+            CKernelML4 &m_ML4;
             ETaskPriority m_Priority;
             ETaskRing m_Ring;
-            bool m_User;
             volatile u64 m_PID;
             
             volatile u64 m_RSP, m_RIP, m_RBP;
             volatile ETaskStatus m_Status;
             volatile u64 m_StatusData;
-            
-            u64 m_HeapStart;
-            u64 m_HeapSize;
-            
-            u64 m_StackStart;
-            u64 m_StackSize;
-            
-            u64 m_ImageStart;
-            u64 m_ImageSize;
-            
-            u64 m_KernelStart;
-            u64 m_KernelSize;
-            
-            bool m_CreatedStack;
-            
-            void CreateStack(void);
-            void CreateDirectory(void);
-            
-            void CopyKernelMemory(void);
-            void CopyStack(CTask *Source);
         public:
-            CTask(bool User = 0, bool Empty = false);
+            //CTask(bool User = 0, bool Empty = false);
+            CTask(CKernelML4 &ML4);
             ~CTask(void);
             
+            CKernelML4 &GetML4(void) volatile {
+                return m_ML4;
+            }
             //CPageDirectory *GetPageDirectory(void);
             
             // Equivalent of the POSIX fork() call.
             CTask *Fork(void);
             
             inline u64 GetPID(void) { return m_PID; }
-            inline u64 GetESP(void) { return m_RSP; }
-            inline u64 GetEIP(void) { return m_RIP; }
-            inline u64 GetEBP(void) { return m_RBP; }
+            inline u64 GetRSP(void) { return m_RSP; }
+            inline u64 GetRIP(void) { return m_RIP; }
+            inline u64 GetRBP(void) { return m_RBP; }
             
             /*inline u64 GetPageDirectoryPhysicalAddress(void)
             {
                 return m_Directory->m_Directory->PhysicalAddress;
             }*/
             
-            inline void SetESP(u64 RSP) { m_RSP = RSP; }
-            inline void SetEIP(u64 RIP) { m_RIP = RIP; }
-            inline void SetEBP(u64 RBP) { m_RBP = RBP; }
+            inline void SetRSP(u64 RSP) { m_RSP = RSP; }
+            inline void SetRIP(u64 RIP) { m_RIP = RIP; }
+            inline void SetRBP(u64 RBP) { m_RBP = RBP; }
             
             /*inline void SetPageDirectory(CPageDirectory *Directory)
             {
@@ -122,14 +105,15 @@ namespace cb {
             
             // Used for waking up via a CTimer
             static bool WakeUp(u64 Extra); 
+
+            // Copy a stack from another Task
+            void CopyStack(CTask *Other);
             
-            inline ETaskStatus GetStatus(void)
-            {
+            inline ETaskStatus GetStatus(void) {
                 return m_Status;
             }
             
-            inline u64 GetStatusData(void)
-            {
+            inline u64 GetStatusData(void) {
                 return m_StatusData;
             }
     };

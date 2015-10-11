@@ -21,7 +21,7 @@ extern "C"
 
 #define align_new(Memory, Type, ...) do { Memory = (Type *)kmalloc_aligned_physical(sizeof(Type)); new(Memory) Type(__VA_ARGS__); } while(0)
 
-CKernelML4::CKernelML4(void)
+CKernelML4::CKernelML4(bool AllocateStack)
 {
     m_Running = false;
     // Allocate directory
@@ -36,42 +36,91 @@ CKernelML4::CKernelML4(void)
     u64 ScratchPML4I = PAGING_GET_PML4_INDEX(ScratchVirtual);
     u64 ScratchPDPI = PAGING_GET_PDP_INDEX(ScratchVirtual);
     CPagingStructure<T_PAGING_PDP_ENTRY> *ScratchPDP;
-    m_ML4->GetEntry(ScratchPML4I, &ScratchPDP);
+    m_ML4->GetOrNewEntry(ScratchPML4I, &ScratchPDP);
+    kprintf("[i] Setting SCRATCH directory to %X\n", ScratchDirectory);
     ScratchPDP->SetEntry(ScratchPDPI, ScratchDirectory);
 
-    // Allocate STACK
-    //TODO: unhardcode this
-    u64 StackSize = 4 * 1024 * 1024;
-    u64 StackStart = (u64)kmalloc_aligned_physical(StackSize);
-    Map(AREA_STACK_START, StackStart, StackSize);
+    if (AllocateStack) {
+        // Allocate STACK
+        //TODO: unhardcode this
+        u64 StackSize = 1 * 1024 * 1024;
+        u64 StackStart = (u64)kmalloc_aligned_physical(StackSize);
+        Map(AREA_STACK_START, StackStart, StackSize);
+    }
 
     // Map the TEXT directory from Tier0
-    u64 TextDirectory = paging_get_scratch_directory();
-    u64 TextVirtual = 0xFFFFFFFF00000000;
+    u64 TextDirectory = paging_get_text_directory();
+    u64 TextVirtual = 0xFFFFFFFF80000000;
     u64 TextPML4I = PAGING_GET_PML4_INDEX(TextVirtual);
     u64 TextPDPI = PAGING_GET_PDP_INDEX(TextVirtual);
     CPagingStructure<T_PAGING_PDP_ENTRY> *TextPDP;
     m_ML4->GetEntry(TextPML4I, &TextPDP);
+    kprintf("[i] Setting TEXT directory to %X\n", TextDirectory);
     TextPDP->SetEntry(TextPDPI, TextDirectory);
 }
 
 u64 CKernelML4::Resolve(u64 Virtual)
 {
-    if (m_Running) {
-        PANIC("not implemented");
-    } else {
-        u64 Out;
-        ASSERT(_paging_resolve(Virtual, &Out) == 0);
-        return Out;
-    }
-    // dead code
-    return 0;
+    u64 PML4I = PAGING_GET_PML4_INDEX(Virtual);
+    u64 PDPI = PAGING_GET_PDP_INDEX(Virtual);
+    u64 DIRI = PAGING_GET_DIR_INDEX(Virtual);
+    u64 TABI = PAGING_GET_TAB_INDEX(Virtual);
+    
+    CPagingStructure<T_PAGING_PDP_ENTRY> *PDP;
+    CPagingStructure<T_PAGING_DIR_ENTRY> *Dir;
+    CPagingStructure<T_PAGING_TAB_ENTRY> *Tab;
+
+    if (!m_ML4->IsEntryPresent(PML4I))
+        PANIC("No such PML4I");
+    m_ML4->GetEntry(PML4I, &PDP);
+    if (!PDP->IsEntryPresent(PDPI))
+        PANIC("No such PDPI");
+    PDP->GetEntry(PDPI, &Dir);
+    if (!Dir->IsEntryPresent(DIRI))
+        PANIC("No such DIRI");
+    Dir->GetEntry(DIRI, &Tab);
+    if (!Tab->IsEntryPresent(TABI))
+        PANIC("No such TABI");
+    return Tab->GetEntryPhysical(TABI);
 }
 
-void CKernelML4::Use(void)
+void CKernelML4::Apply(void)
 {
     u64 ML4 = (u64)m_ML4;
     __asm__ volatile("movq %%rax, %%cr3" :: "a" (ML4));
+}
+
+void CKernelML4::Dump(void)
+{
+    T_PAGING_ML4 *ML4 = (T_PAGING_ML4 *)m_ML4->m_Entries;
+    // We actually do this as bare structures to simulate processor behaviour as close as possible
+    for (u64 ML4I = 0; ML4I < 512; ML4I++) {
+        if (!ML4->Entries[ML4I].Present) {
+            continue;
+        }
+        kprintf("ML4: %X -> %X\n", ML4I << 39, ML4->Entries[ML4I].Physical<<12);
+        T_PAGING_PDP *PDP = (T_PAGING_PDP *)(ML4->Entries[ML4I].Physical<<12);
+        for (u64 PDPI = 0; PDPI < 512; PDPI++) {
+            if (!PDP->Entries[PDPI].Present) {
+                continue;
+            }
+            kprintf(" PDP: %X -> %X\n", (ML4I<<39)|(PDPI<<30), PDP->Entries[PDPI].Physical<<12);
+            T_PAGING_DIR *Dir = (T_PAGING_DIR *)(PDP->Entries[PDPI].Physical<<12);
+            for (u64 DirI = 0; DirI < 512; DirI++) {
+                if (!Dir->Entries[DirI].Present) {
+                    continue;
+                }
+                kprintf("  PDP: %X -> %X\n", (ML4I<<39)|(PDPI<<30)|(DirI<<21), Dir->Entries[DirI].Physical<<12);
+                T_PAGING_TAB *Tab = (T_PAGING_TAB *)(Dir->Entries[DirI].Physical<<12);
+                for (u64 TabI = 0; TabI < 512; TabI++) {
+                    if (!Tab->Entries[TabI].Present) {
+                        continue;
+                    }
+                    kprintf("  Tab: %X -> %X\n", (ML4I<<39)|(PDPI<<30)|(DirI<<21)|(TabI<<12), Tab->Entries[TabI].Physical<<12);
+                }
+            }
+        }
+    }
 }
 
 void CKernelML4::Map(u64 Virtual, u64 Physical)

@@ -8,7 +8,7 @@ extern "C" {
 }
 
 TTimerFastHook CTimer::m_FastHook = 0;
-volatile u32 CTimer::m_nTicks = 0;
+volatile u64 CTimer::m_nTicks = 0;
 bool CTimer::m_bInitialized = false;
 CLinearList<TCallbackInfo> CTimer::m_Callbacks;
 CSemaphore CTimer::m_GetTicksSemaphore;
@@ -21,7 +21,7 @@ void CTimer::Initialize(void)
     u8 High = (u8)((Divider >> 8) & 0xFF);
     koutb(0x40, Low);
     koutb(0x40, High);
-    
+
     interrupts_setup_irq(0x00, (void*)Dispatch);
     m_bInitialized = true;
 }
@@ -31,22 +31,24 @@ void CTimer::SetFastTimerHook(TTimerFastHook Hook)
 	__asm__ volatile("cli");
 
 	m_FastHook = Hook;
+    if (!m_bInitialized)
+        Initialize();
 
 	__asm__ volatile("sti");
 }
 
-void CTimer::Dispatch(u32 edi, u32 esi, u32 ebp, u32 esp, u32 ebx, u32 edx, u32 ecx, u32 eax, u32 eip)
+void CTimer::Dispatch(T_ISR_REGISTERS Registers)
 {
     __asm__ volatile("cli");
 
     if (m_FastHook)
-    	(*m_FastHook)(edi, esi, ebp, esp, ebx, edx, ecx, eax, eip);
+    	(*m_FastHook)(Registers);
 
     m_nTicks++;
     
-    if (m_nTicks > (0xFFFFFFFF - 1000)) // 1000 ticks margin
+    if (m_nTicks > (0xFFFFFFFFFFFFFFFF - 1000)) // 1000 ticks margin
         Reschedule();
-    for (u32 i = 0; i < m_Callbacks.GetSize(); i++)
+    for (u64 i = 0; i < m_Callbacks.GetSize(); i++)
     {
         TCallbackInfo &Callback = m_Callbacks[i];
         if (Callback.Times == -1 || Callback.Times > 0)
@@ -88,9 +90,9 @@ void CTimer::Dispatch(u32 edi, u32 esi, u32 ebp, u32 esp, u32 ebx, u32 edx, u32 
 
 void CTimer::Reschedule(void)
 {
-    u32 Amount = 0xFFFFFFFF - 1000;
+    u64 Amount = 0xFFFFFFFFFFFFFFFF - 1000;
     
-    for (u32 i = 0; i < m_Callbacks.GetSize(); i++)
+    for (u64 i = 0; i < m_Callbacks.GetSize(); i++)
     {
         TCallbackInfo &Callback = m_Callbacks[i];
         Callback.NextCall -= Amount;
@@ -99,7 +101,7 @@ void CTimer::Reschedule(void)
     m_nTicks -= Amount;
 }
 
-void CTimer::Create(u32 Interval, s32 Times, TTimerCallback Callback, u32 Extra)
+void CTimer::Create(u64 Interval, s64 Times, TTimerCallback Callback, u64 Extra)
 {
     if (!m_bInitialized)
         Initialize();

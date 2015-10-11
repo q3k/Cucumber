@@ -6,186 +6,140 @@ extern "C" {
     #include "Tier0/paging.h"
     #include "Tier0/panic.h"
     #include "Tier0/kstdio.h"
+    #include "Tier0/kstdlib.h"
+    #include "Tier0/system.h"
 };
 
-//#include "Tier1/CScheduler.h"
-//#include "Tier1/CTimer.h"
+#include "Tier1/CScheduler.h"
+#include "Tier1/CTimer.h"
 
 ///extern CPageDirectory *g_KernelPageDirectory;
 u32 CTaskNextPID = 0;
 
-CTask::CTask(bool User, bool Empty)
+CTask::CTask(CKernelML4 &ML4) : m_ML4(ML4)
 {
-    m_User = User;
-    if (!Empty)
-    {
-        // CreateDirectory();
-        // CreateStack();
-        // CopyKernelMemory();
-        
-        m_CreatedStack = true;
-    }
-    else
-        m_CreatedStack = false;
-    
     m_Status = ETS_RUNNING;
     m_PID = CTaskNextPID++;
     m_Priority = ETP_NORMAL;
     m_Owner = 0;
-    m_Ring = (User ? ETR_RING3 : ETR_RING0);
+    m_Ring = ETR_RING0;
 }
 
 CTask::~CTask(void)
 {
-    // if (m_CreatedStack)
-    //     physmem_free_page(m_StackStart / (4 * 1024));
 }
 
-// void CTask::CreateStack(void)
-// {
-//     m_StackStart = physmem_allocate_page() * 4 * 1024;
-//     m_StackSize = TASK_MAP_STACK_SIZE;
-    
-//     m_Directory->MapTable(TASK_MAP_STACK_START, m_StackStart, 1, 1);
-// }
+void CTask::CopyStack(CTask *Other)
+{
+    CKernelML4 &OtherML4 = Other->GetML4();
+    // Allocate new stack
+    u64 StackSize = 1024*1024;
+    u64 StackStart = (u64)kmalloc_aligned_physical(StackSize);
+    m_ML4.Map(AREA_STACK_START, StackStart, StackSize);
+    // Copy over from old stack
+    for (u64 i = 0; i < (StackSize/0x1000); i++) {
+        u64 Destination = m_ML4.Resolve(AREA_STACK_START + i*0x1000);
+        u64 Source = OtherML4.Resolve(AREA_STACK_START + i*0x1000);
+        kmemcpy((void *)Destination, (void *)Source, 0x1000);
+    }
+}
 
-// void CTask::CreateDirectory(void)
-// {
-//     m_Directory = new CPageDirectory();
-// }
+CTask *CTask::Fork(void)
+{
+    __asm__ volatile("cli");
+    volatile u64 RSP, RBP;
+ 
+    CTask *ParentTask = CScheduler::GetCurrentTask();
+    CKernelML4 *ML4 = new CKernelML4();
+    CTask *NewTask = new CTask(*ML4);
+ 
+    __asm__ volatile("mov %%rsp, %0" : "=r"(RSP));
+    __asm__ volatile("mov %%rbp, %0" : "=r"(RBP));
+ 
+    NewTask->CopyStack(this);
+    volatile u64 ForkPoint = ctask_getrip();
+ 
+    if (CScheduler::GetCurrentTask() == ParentTask)
+    {
+        NewTask->m_RSP = RSP;
+        NewTask->m_RBP = RBP;
+        NewTask->m_RIP = ForkPoint;
+        kprintf("[i] Forked: PID %i, RSP %x, RIP %x...\n", NewTask->m_PID,
+                RSP, ForkPoint);
+        CScheduler::AddTask(NewTask);
+     
+        __asm__ volatile("sti");
+     
+        return (CTask *)ParentTask;
+    }
+    else
+    {
+        __asm__ volatile("sti");
+        //for(;;){} 
+        return NewTask;
+    }
+}
 
-// void CTask::CopyKernelMemory(void)
-// {
-//     //Copy all the kernel tables...    
-//     m_KernelStart = 0xC0000000;
-//     m_KernelSize = 0x20000000;
-    
-//     u32 NumTables = m_KernelSize / (4 * 1024 * 1024);
-    
-//     for (u32 i = 0; i < NumTables; i++)
-//         m_Directory->LinkTable(m_KernelStart + i * 4 * 1024 * 1024,
-//                                g_KernelPageDirectory);
-    
-//     m_Directory->LinkTable(0x00000000, g_KernelPageDirectory);
-//     m_Directory->LinkTable(0x00400000, g_KernelPageDirectory);
-//     //m_Directory->LinkTable(0x00800000, g_KernelPageDirectory);
-//     //m_Directory->LinkTable(0x01000000, g_KernelPageDirectory);
-// }
+void CTask::Dump(void)
+{
+    kprintf("d:%x s:%x b:%x i:%x\n",m_ML4.GetPhysical(),
+                                      m_RSP, m_RBP, m_RIP);
+}
 
-// void CTask::CopyStack(CTask *Source)
-// {
-//     CPageDirectory *SourcePD = Source->GetPageDirectory();
-//     SourcePD->CopyPage(TASK_MAP_STACK_START, m_Directory, m_User, 1);
-// }
+void CTask::Yield(void)
+{
+	kprintf("Entering NextTask\n");
+    CScheduler::NextTask();
+    kprintf("returned from NextTask\n");
+}
 
-// CPageDirectory *CTask::GetPageDirectory(void)
-// {
-//     return m_Directory;
-// }
+void CTask::WaitForSemaphore(T_SEMAPHORE *Semaphore)
+{
+    __asm__ volatile ("cli");
+    m_Status = ETS_WAITING_FOR_SEMAPHORE;
+    m_StatusData = m_ML4.Resolve((u64)Semaphore);
+ 
+    Yield();
+    __asm__ volatile ("sti");
+}
 
-// CTask *CTask::Fork(void)
-// {
-//     __asm__ volatile("cli");
-//     volatile u32 ESP, EBP;
-    
-//     CTask *ParentTask = CScheduler::GetCurrentTask();
-//     CTask *NewTask = new CTask(m_User);
-//     NewTask->m_Owner = m_Owner;
-//     NewTask->m_Ring = m_Ring;
-//     if (m_User)
-//     {
-//         //TODO: Write code for userland
-//         PANIC("Cannot fork usermode program!");
-//     }
-    
-//     __asm__ volatile("mov %%esp, %0" : "=r"(ESP));
-//     __asm__ volatile("mov %%ebp, %0" : "=r"(EBP));
-    
-//     NewTask->CopyStack(this);
-//     volatile u32 ForkPoint = ctask_geteip();
-    
-    
-//     if (CScheduler::GetCurrentTask() == ParentTask)
-//     {
-//         NewTask->m_ESP = ESP;
-//         NewTask->m_EBP = EBP;
-//         NewTask->m_EIP = ForkPoint;
-//         kprintf("[i] Forked: TID %i, ESP %x, EBP %x, EIP %x...\n", NewTask->m_PID,
-//                 ESP, EBP, ForkPoint);
-//         CScheduler::AddTask(NewTask);
-        
-//         __asm__ volatile("sti");
-        
-//         return ParentTask;
-//     }
-//     else
-//     {
-//         __asm__ volatile("sti");
-//         //for(;;){} 
-//         return NewTask;
-//     }
-// }
+void CTask::WaitForSemaphore(CSemaphore *Semaphore)
+{
+    __asm__ volatile ("cli");
+    m_Status = ETS_WAITING_FOR_SEMAPHORE;
+    m_StatusData = m_ML4.Resolve((u64)Semaphore);
+ 
+    Yield();
+    __asm__ volatile ("sti");
+}
 
-// void CTask::Dump(void)
-// {
-//     kprintf("d:%x s:%x b:%x i:%x\n",m_Directory->m_Directory->PhysicalAddress,
-//                                       m_ESP, m_EBP, m_EIP);
-// }
+void CTask::Disable(void)
+{
+    __asm__ volatile ("cli");
+    m_Status = ETS_DISABLED;
+    Yield();
+    __asm__ volatile ("sti");
+}
 
-// __attribute__((optimize("O0"))) void CTask::Yield(void)
-// {
-// 	//kprintf("Entering NextTask\n");
-//     CScheduler::NextTask();
-//     //kprintf("returned from NextTask\n");
-// }
+void CTask::Enable(void)
+{
+    __asm__ volatile ("cli");
+    m_Status = ETS_RUNNING;
+    __asm__ volatile ("sti");
+}
 
-// void CTask::WaitForSemaphore(T_SEMAPHORE *Semaphore)
-// {
-//     __asm__ volatile ("cli");
-//     m_Status = ETS_WAITING_FOR_SEMAPHORE;
-//     m_StatusData = m_Directory->Translate((u32)Semaphore);
-    
-//     Yield();
-//     __asm__ volatile ("sti");
-// }
+void CTask::Sleep(u64 Ticks)
+{
+    __asm__ volatile ("cli");
+    m_Status = ETS_DISABLED;
+    CTimer::Create(Ticks, 1, WakeUp, (u64)this);
+    Yield();
+    __asm__ volatile ("sti");
+}
 
-// void CTask::WaitForSemaphore(CSemaphore *Semaphore)
-// {
-//     __asm__ volatile ("cli");
-//     m_Status = ETS_WAITING_FOR_SEMAPHORE;
-//     m_StatusData = m_Directory->Translate((u32)Semaphore);
-    
-//     Yield();
-//     __asm__ volatile ("sti");
-// }
-
-// void CTask::Disable(void)
-// {
-//     __asm__ volatile ("cli");
-//     m_Status = ETS_DISABLED;
-//     Yield();
-//     __asm__ volatile ("sti");
-// }
-
-// void CTask::Enable(void)
-// {
-//     __asm__ volatile ("cli");
-//     m_Status = ETS_RUNNING;
-//     __asm__ volatile ("sti");
-// }
-
-// void CTask::Sleep(u32 Ticks)
-// {
-//     __asm__ volatile ("cli");
-//     m_Status = ETS_DISABLED;
-//     CTimer::Create(Ticks, 1, WakeUp, (u32)this);
-//     Yield();
-//     __asm__ volatile ("sti");
-// }
-
-// bool CTask::WakeUp(u32 Extra)
-// {
-//     CTask *Task = (CTask*)Extra;
-//     Task->Enable();    
-//     return true;
-// }
+bool CTask::WakeUp(u64 Extra)
+{
+    CTask *Task = (CTask*)Extra;
+    Task->Enable();    
+    return true;
+}

@@ -9,7 +9,7 @@ namespace cb {
         public:
             void Enable(bool Enabled);
             void AddTask(CTask *Task);
-            void NextTask(u32 edi, u32 esi, u32 ebp, u32 esp, u32 ebx, u32 edx, u32 ecx, u32 eax, u32 eip);
+            void NextTask(T_ISR_REGISTERS Registers);
             CTask *GetCurrentTask(void);
             void SetSemaphoreAvailable(CSemaphore *Semaphore);
             void PrioritizeTask(CTask *Task);

@@ -15,8 +15,8 @@ CXFLAGS:= $(CFLAGS) -fno-rtti -fno-stack-protector -fno-exceptions -std=c++11
 
 LFLAGS:=-nostdlib -nostartfiles -nodefaultlibs -m elf_x86_64 -nostdinc -z nodefaultlib -n
 
-debug: CFLAGS += -DDEBUG -gdwarf-4 -fvar-tracking-assignments -O0
-debug: CXFLAGS += -DDEBUG -gdwarf-4 -fvar-tracking-assignments -O0
+#debug: CFLAGS += -DDEBUG -gdwarf-4 -fvar-tracking-assignments -O0
+#debug: CXFLAGS += -DDEBUG -gdwarf-4 -fvar-tracking-assignments -O0
 debug: kernel.bin
 
 .PHONY: all clean emulate hdd.img debug
@@ -112,7 +112,7 @@ emulate-nohdd: kernel.bin
 	@echo "[i] Building loader..."
 	@pushd ../Loader > /dev/null && $(MAKE) -f Makefile loader.bin && popd > /dev/null
 	@echo "[i] Starting QEMU..."
-	@qemu-system-x86_64 $(QEMU_FLAGS) --no-kvm -d int -smp 4 -kernel ../Loader/loader.bin -initrd kernel.bin
+	@qemu-system-x86_64 $(QEMU_FLAGS) --no-kvm -smp 4 -kernel ../Loader/loader.bin -initrd kernel.bin
 
 emulate: hdd.img
 	@echo "[i] Starting QEmu..."

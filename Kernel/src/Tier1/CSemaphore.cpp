@@ -2,7 +2,7 @@
 #include "Tier1/CScheduler.h"
 using namespace cb;
 
-CSemaphore::CSemaphore(u32 Available)
+CSemaphore::CSemaphore(u64 Available)
 {
     atomic_set(&m_Available, Available);
 }
@@ -18,7 +18,7 @@ void CSemaphore::Acquire(void)
     else
     {
         // Tell the scheduler we are waiting for the semaphore
-        CScheduler::GetCurrentTask()->WaitForSemaphore(this);
+        //CScheduler::GetCurrentTask()->WaitForSemaphore(this);
         
         // If we are here, try to acquire the semaphore again.
         Acquire();

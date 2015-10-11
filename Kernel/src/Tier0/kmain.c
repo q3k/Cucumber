@@ -87,7 +87,7 @@ void kmain(u32 LoadContextAddress)
         PANIC("ACPI not supported! What is this, 1999?");
     
     smp_initialize();
-    apic_enable_lapic();
+    //apic_enable_lapic();
     heap_init_simple();
     // enable FPU/SSE...
     __asm__ volatile(

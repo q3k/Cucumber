@@ -56,6 +56,7 @@ namespace cb {
                 ASSERT(Index < 0x200);
                 m_Entries[Index].Physical = (Physical >> 12);
                 m_Entries[Index].Present = 1;
+                m_Entries[Index].RW = 1;
             }
             template<typename C> void NewEntry(u64 Index, C **NewOut) {
                 ASSERT(Index < 0x200);
@@ -63,6 +64,7 @@ namespace cb {
                 new(New) C();
                 m_Entries[Index].Physical = (((u64)New) >> 12);
                 m_Entries[Index].Present = 1;
+                m_Entries[Index].RW = 1;
                 if (NewOut)
                     *NewOut = New;
             }
@@ -102,7 +104,7 @@ namespace cb {
             
         public:
             // Creates a new page directory for a kernel task, with new stack and other internal stuff
-            CKernelML4(void);
+            CKernelML4(bool AllocateStack = true);
 
             // Destroys the structures and frees the segments, if needed
             ~CKernelML4(void);
@@ -115,7 +117,41 @@ namespace cb {
             u64 Resolve(u64 Virtual);
 
             // Use Mapping
-            void Use(void);
+            void Apply(void);
+
+            // Use lambda in stack
+            template <typename F> void UseStack(F lambda) {
+                auto function = static_cast<void (*) (CKernelML4 *ML4)>(lambda);
+                u64 Stack = AREA_STACK_START + 1 * 1024 * 1024;
+                __asm__ __volatile__(
+                        "pushq %%rbp\n"
+                        "movq %%rsp, %%rax\n"
+
+                        "movq %0, %%rsp\n"
+                        "movq %0, %%rbp\n"
+                        "pushq %%rax\n"
+
+                        "pushq %2\n"
+                        "callq *%1\n"
+                        "addq $8, %%rsp\n"
+
+                        "popq %%rax\n"
+                        "movq %%rax, %%rsp\n"
+                        "popq %%rbp"
+                    :
+                    :"r"(Stack), "r"(function), "r"(this)
+                    :"%rax"
+                );
+
+            }
+
+            // Debug stdout dump
+            void Dump(void);
+
+            // Get physical address of top structure
+            u64 GetPhysical(void) {
+                return (u64)m_ML4;
+            }
     };
 };
 

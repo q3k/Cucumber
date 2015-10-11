@@ -1,11 +1,11 @@
 #include "Tier1/CKernel.h"
 //#include "Tier1/CPageFaultDispatcher.h"
 #include "Tier1/CKernelML4.h"
-//#include "Tier1/CTask.h"
-//#include "Tier1/CScheduler.h"
+#include "Tier1/CTask.h"
+#include "Tier1/CScheduler.h"
 #include "Tier1/Util/CVector.h"
 #include "Tier1/Util/CLinearList.h"
-//#include "Tier1/CTimer.h"
+#include "Tier1/CTimer.h"
 #include "Alentours/PCI.h"
 
 using namespace cb;
@@ -44,9 +44,35 @@ void CKernel::Start(void)
     //m_Logger = new CLogger();
     //Alentours::CPCIManager::Initialize();
     CKernelML4 *ML4 = new CKernelML4();
-    for (;;) {}
-    ML4->Use();
+    ML4->Apply();
+    ML4->UseStack([](CKernelML4 *ML4) {
+        kprintf("[i] Switched to Tier1 stack\n");
+        u64 RSP;
+        __asm__ __volatile__("movq %%rsp, %0" :"=r"(RSP));
+        kprintf("[i] RSP is %X\n", RSP);
 
+        CTask *KernelTask = new CTask(*ML4);
+        KernelTask->Dump();
+        kprintf("[i] Kernel task has PID %i.\n", KernelTask->GetPID());
+        
+        CScheduler::AddTask(KernelTask);
+        CScheduler::Enable();
+        kprintf("[i] Enabled scheduler.\n");
+        CTask *ParentTask = CScheduler::GetCurrentTask();
+        CTask *NewTask = ParentTask->Fork();
+        if (NewTask == ParentTask)
+        {
+            kprintf("Hello from parent!\n");
+            for (;;) {
+            }
+        }
+        else
+        {
+            kprintf("Hello from child!\n");
+            for (;;) {
+            }
+        }
+    });
 /*    CKernelML4::PopulateCommonPointers();
     CTask *KernelTask = CreateKernelTask();
     kprintf("[i] Kernel task has TID %i.\n", KernelTask->GetPID());

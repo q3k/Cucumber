@@ -42,16 +42,10 @@ void interrupts_create_stub(T_ISR_STUB *Destination, u64 Address)
     Destination->Code7 = 0x5b595a5d5e5f5841;
     Destination->Code8 = 0xcf48fb58;
 }
-/*
+
 void interrupts_setup_irq(u8 IRQ, void *Handler)
 {
-    if (g_interrupts_chip != E_INTERRUPTS_CHIP_PIC)
-    {
-        kprintf("[e] Sorry, but I only do PIC-based interrupts for now :(.\n");
-        return;
-    }
-    
-    u8 Interrupt = IRQ + PIC_IRQ_START;
+    u8 Interrupt = IRQ + 0x20;
     kprintf("[i] New handler for IRQ %i (Interrupt %i).\n", IRQ, Interrupt);
     interrupts_setup_isr(Interrupt, Handler, E_INTERRUPTS_RING0);
 
@@ -59,7 +53,31 @@ void interrupts_setup_irq(u8 IRQ, void *Handler)
     pic_unmask_irq(IRQ);
 }
 
-void interrupts_dump_idt_ptr(void)
+void pic_unmask_irq(u8 IRQ)
+{
+    u16 Port;
+    if (IRQ < 8)
+        Port = 0x21;
+    else {
+        Port = 0xA1;
+        IRQ -= 8;
+    }
+
+    u8 Value = kinb(Port) & ~(1 << IRQ);
+    koutb(Port, Value);
+}
+
+void interrupts_irq_finish(u8 IRQ)
+{
+    u16 Port;
+    if (IRQ < 8)
+        Port = 0x20;
+    else
+        Port = 0xA0;
+    koutb(Port, 0x20);
+}
+
+/*void interrupts_dump_idt_ptr(void)
 {
     kprintf("[i] IDT Pointer structure:\n");
     kprintf("   Base:  0x%x.\n", g_idt_ptr.Base);

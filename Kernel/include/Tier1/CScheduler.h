@@ -22,10 +22,10 @@ namespace cb {
         private:
             IScheduler *m_CurrentScheduler;
             
-            static void TimerTick(u32 edi, u32 esi, u32 ebp, u32 esp, u32 ebx, u32 edx, u32 ecx, u32 eax, u32 eip);
-            static void Yield(u32 edi, u32 esi, u32 ebp, u32 esp, u32 ebx, u32 edx, u32 ecx, u32 eax, u32 eip);
+            static void Yield(T_ISR_REGISTERS Registers);
+            static void TimerTick(T_ISR_REGISTERS Registers);
 
-            static u32 m_NumTicks;
+            static u64 m_NumTicks;
         public:
             CScheduler(void);
             static void Enable(void);

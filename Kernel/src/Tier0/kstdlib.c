@@ -13,6 +13,12 @@ void *kmemcpy(void* Destination, const void *Source, u64 Count)
     return Destination;
 }
 
+void *memcpy(void *dest, const void *src, u64 n)
+{
+    kmemcpy(dest, src, n);
+    return dest;
+}
+
 void *kmemset(void *Destination, u8 Value, u64 Count)
 {
     u8 *us = (u8 *)Destination;

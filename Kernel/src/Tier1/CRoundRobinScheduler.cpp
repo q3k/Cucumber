@@ -11,6 +11,8 @@ void CRoundRobinScheduler::Enable(bool Enabled)
 {
     m_iTaskQueuePosition = 0;
     m_PrioritizedTask = 0;
+
+    semaphore_init(&m_SchedulerLock);
 }
 
 void CRoundRobinScheduler::NextTask(T_ISR_REGISTERS Registers)
@@ -21,26 +23,22 @@ void CRoundRobinScheduler::NextTask(T_ISR_REGISTERS Registers)
         PANIC("No tasks in queue!");
     
     // Fetch next task.
-    CTask *NextTask;
-    /*if (m_PrioritizedTask != 0)
-    {
-    	NextTask = m_PrioritizedTask;
-    	m_PrioritizedTask = 0;
-    }
-    else
-	{*/
-		do {
-			m_iTaskQueuePosition++;
+    m_iTaskQueuePosition++;
+	if (m_iTaskQueuePosition >= m_TaskQueue.GetSize())
+	    //Something happened - restart the queue
+        m_iTaskQueuePosition = 0;
+    CTask *NextTask = m_TaskQueue[m_iTaskQueuePosition];
 
-			if (m_iTaskQueuePosition >= m_TaskQueue.GetSize())
-				// Something happened - restart the queue
-				m_iTaskQueuePosition = 0;
-			NextTask = m_TaskQueue[m_iTaskQueuePosition];
-		}
-		while (NextTask->GetStatus() != ETS_RUNNING);
-    //}
     if (m_CurrentTask->GetPID() == NextTask->GetPID())
+    {
+        interrupts_irq_finish(0);
         return;
+    }
+    if (NextTask->GetStatus() == ETS_DISABLED)
+    {
+        interrupts_irq_finish(0);
+        return;
+    }
     
     //kprintf("switching from %X %X %X (%i to %i)\n", Registers.rip, Registers.rsp,
     //        Registers.rbp, m_CurrentTask->GetPID(), NextTask->GetPID());
@@ -53,7 +51,8 @@ void CRoundRobinScheduler::NextTask(T_ISR_REGISTERS Registers)
     NewRIP = NextTask->GetRIP();
     if (!NewRIP || !NewRSP || !NewRBP)
     {
-        kprintf("null %X %X %X\n", NewRIP, NewRSP, NewRBP);
+        //kprintf("null %X %X %X\n", NewRIP, NewRSP, NewRBP);
+        interrupts_irq_finish(0);
         return;
     }
     
@@ -77,6 +76,7 @@ void CRoundRobinScheduler::NextTask(T_ISR_REGISTERS Registers)
                      "movq %2, %%rbp\n"
                      "movq %3, %%cr3\n"
                      "movq %0, %%rcx\n"
+                     "sti\n"
                      "jmp *%%rcx" ::
                         "r"(NewRIP),
                         "r"(NewRSP),
@@ -86,9 +86,11 @@ void CRoundRobinScheduler::NextTask(T_ISR_REGISTERS Registers)
 
 void CRoundRobinScheduler::AddTask(CTask *Task)
 {
+    semaphore_acquire(&m_SchedulerLock);
     m_TaskQueue.Push(Task);
     if (m_TaskQueue.GetSize() == 1)
         m_CurrentTask = Task;
+    semaphore_release(&m_SchedulerLock);
 }
 
 CTask *CRoundRobinScheduler::GetCurrentTask(void)

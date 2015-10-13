@@ -44,7 +44,7 @@ void CTask::CopyStack(CTask *Other)
     }
 }
 
-CTask *CTask::Fork(void)
+CTask *CTask::Fork(void) __attribute__ ((optnone))
 {
     __asm__ volatile("cli");
     volatile u64 RSP, RBP;
@@ -88,9 +88,7 @@ void CTask::Dump(void)
 
 void CTask::Yield(void)
 {
-	kprintf("Entering NextTask\n");
     CScheduler::NextTask();
-    kprintf("returned from NextTask\n");
 }
 
 void CTask::WaitForSemaphore(T_SEMAPHORE *Semaphore)
@@ -98,9 +96,9 @@ void CTask::WaitForSemaphore(T_SEMAPHORE *Semaphore)
     __asm__ volatile ("cli");
     m_Status = ETS_WAITING_FOR_SEMAPHORE;
     m_StatusData = m_ML4.Resolve((u64)Semaphore);
+    __asm__ volatile ("sti");
  
     Yield();
-    __asm__ volatile ("sti");
 }
 
 void CTask::WaitForSemaphore(CSemaphore *Semaphore)
@@ -108,17 +106,16 @@ void CTask::WaitForSemaphore(CSemaphore *Semaphore)
     __asm__ volatile ("cli");
     m_Status = ETS_WAITING_FOR_SEMAPHORE;
     m_StatusData = m_ML4.Resolve((u64)Semaphore);
- 
-    Yield();
     __asm__ volatile ("sti");
+    Yield();
 }
 
 void CTask::Disable(void)
 {
     __asm__ volatile ("cli");
     m_Status = ETS_DISABLED;
-    Yield();
     __asm__ volatile ("sti");
+    Yield();
 }
 
 void CTask::Enable(void)
@@ -133,8 +130,11 @@ void CTask::Sleep(u64 Ticks)
     __asm__ volatile ("cli");
     m_Status = ETS_DISABLED;
     CTimer::Create(Ticks, 1, WakeUp, (u64)this);
-    Yield();
     __asm__ volatile ("sti");
+    while (m_Status == ETS_DISABLED)
+    {
+        Yield();
+    }
 }
 
 bool CTask::WakeUp(u64 Extra)

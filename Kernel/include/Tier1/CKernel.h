@@ -18,6 +18,8 @@ namespace cb {
         private:
             u32 m_dwMagic;
             CLogger *m_Logger;
+
+            void SpawnThreads(void);
             
 //            CTask *CreateKernelTask(void);
     };

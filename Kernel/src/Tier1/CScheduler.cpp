@@ -23,10 +23,8 @@ CScheduler::CScheduler(void)
 
 void CScheduler::AddTask(CTask *Task)
 {
-    __asm__ volatile("cli");
     kprintf("[i] Adding task %i (%x)\n", Task->GetPID(), Task);
     g_Scheduler.m_CurrentScheduler->AddTask(Task);
-    __asm__ volatile("sti");
 }
 
 CTask *CScheduler::GetCurrentTask(void)
@@ -49,10 +47,8 @@ void CScheduler::Enable(void)
 
 void CScheduler::Yield(T_ISR_REGISTERS Registers)
 {
-	__asm__ volatile("cli");
 	m_NumTicks = 0;
 	g_Scheduler.m_CurrentScheduler->NextTask(Registers);
-	__asm__ volatile("sti");
 }
 
 void CScheduler::TimerTick(T_ISR_REGISTERS Registers)

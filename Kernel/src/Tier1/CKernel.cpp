@@ -41,8 +41,8 @@ void CKernel::Start(void)
         return;
     }
     
-    //m_Logger = new CLogger();
-    //Alentours::CPCIManager::Initialize();
+    m_Logger = new CLogger();
+    Alentours::CPCIManager::Initialize();
     CKernelML4 *ML4 = new CKernelML4();
     ML4->Apply();
     ML4->UseStack([](CKernelML4 *ML4) {
@@ -52,83 +52,35 @@ void CKernel::Start(void)
         kprintf("[i] RSP is %X\n", RSP);
 
         CTask *KernelTask = new CTask(*ML4);
-        KernelTask->Dump();
         kprintf("[i] Kernel task has PID %i.\n", KernelTask->GetPID());
         
         CScheduler::AddTask(KernelTask);
         CScheduler::Enable();
         kprintf("[i] Enabled scheduler.\n");
-        CTask *ParentTask = CScheduler::GetCurrentTask();
-        CTask *NewTask = ParentTask->Fork();
-        if (NewTask == ParentTask)
-        {
-            kprintf("Hello from parent!\n");
-            for (;;) {
-            }
-        }
-        else
-        {
-            kprintf("Hello from child!\n");
-            for (;;) {
-            }
-        }
+        g_Kernel.SpawnThreads();
     });
-/*    CKernelML4::PopulateCommonPointers();
-    CTask *KernelTask = CreateKernelTask();
-    kprintf("[i] Kernel task has TID %i.\n", KernelTask->GetPID());
-    CScheduler::AddTask(KernelTask);
-    CScheduler::Enable();
-    
-    CTask *ParentTask = CScheduler::GetCurrentTask();    
+}
+
+void CKernel::SpawnThreads(void)
+{
+    CTask *ParentTask = CScheduler::GetCurrentTask();
     CTask *NewTask = ParentTask->Fork();
-    CTimer::GetTicks();
     if (NewTask == ParentTask)
     {
-    
+        kprintf("Hello from parent!\n");
         for (;;) {
-            for (volatile u32 i = 0; i < 14000; i++)
-            {
-                for (volatile u32 j = 0; j < 650; j++){}
-            }
-            kprintf("[i] Hello! I'm the parent process %i.\n", CTimer::GetTicks());
+            CScheduler::GetCurrentTask()->Sleep(1000);
+            kprintf(" -> Parent @%i\n", CTimer::GetTicks());
         }
     }
     else
     {
+        kprintf("Hello from child!\n");
+        CScheduler::GetCurrentTask()->Sleep(500);
         for (;;) {
-            //CScheduler::GetCurrentTask()->Sleep(1000);
-        	for (volatile u32 i = 0; i < 14000; i++)
-        	            {
-        	                for (volatile u32 j = 0; j < 650; j++){}
-        	            }
-            kprintf("[i] Hello! I'm the child process %i.\n", CTimer::GetTicks());
+            CScheduler::GetCurrentTask()->Sleep(1000);
+            kprintf(" -> Child @%i\n", CTimer::GetTicks());
         }
-    }*/
-}
+    }
 
-/*extern T_PAGING_DIRECTORY g_kernel_page_directory;
-extern CPageDirectory *g_KernelPageDirectory;
-CTask *CKernel::CreateKernelTask(void)
-{
-    // Create the directory wrapper
-    CPageDirectory *Directory = new CPageDirectory(true);
-    // Every table already exists.
-    for (u8 i = 0; i < 32; i++)
-        Directory->m_OwnerBitmap[i] = 1;
-    Directory->m_Directory = &g_kernel_page_directory;
-    g_KernelPageDirectory = Directory;
-    
-    // Create the task wrapper
-    CTask *Task = new CTask(false, true);
-    Task->m_Directory = Directory;
-    
-    // Just say a stack is here, as it already is -- see kmain.c
-    Task->m_StackStart = Directory->Translate(TASK_MAP_STACK_START);
-    Task->m_StackSize = TASK_MAP_STACK_SIZE;
-    
-    // Same goes for kernel memory
-    Task->m_KernelStart = 0xC0000000;
-    Task->m_KernelSize = 0x20000000;
-    
-    return Task;
-}*/
+}

@@ -4,6 +4,10 @@
 #include "Tier1/IScheduler.h"
 #include "Tier1/Util/CLinearList.h"
 
+extern "C" {
+    #include "Tier0/semaphore.h"
+}
+
 namespace cb {
     class CRoundRobinScheduler : public IScheduler {
         public:
@@ -14,6 +18,7 @@ namespace cb {
             void SetSemaphoreAvailable(CSemaphore *Semaphore);
             void PrioritizeTask(CTask *Task);
         private:
+            T_SEMAPHORE m_SchedulerLock;
             CTask *m_CurrentTask;
             CLinearList<CTask *> m_TaskQueue;
             u32 m_iTaskQueuePosition;

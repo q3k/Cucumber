@@ -39,7 +39,7 @@ void CTimer::SetFastTimerHook(TTimerFastHook Hook)
 
 void CTimer::Dispatch(T_ISR_REGISTERS Registers)
 {
-    __asm__ volatile("cli");
+    //__asm__ volatile("cli");
 
     if (m_FastHook)
     	(*m_FastHook)(Registers);
@@ -61,6 +61,7 @@ void CTimer::Dispatch(T_ISR_REGISTERS Registers)
                 Callback.NextCall += Callback.Interval;
                 
                 // Call the callback
+                kprintf("Callback!\n");
                 bool Continue = (Callback.Callback)(Callback.Extra);
                 if (!Continue)
                 {
@@ -82,7 +83,7 @@ void CTimer::Dispatch(T_ISR_REGISTERS Registers)
         }
     }
     interrupts_irq_finish(0);
-    __asm__ volatile("sti");
+    //__asm__ volatile("sti");
 
     // Tough love for the current task.
     //CScheduler::GetCurrentTask()->Yield();

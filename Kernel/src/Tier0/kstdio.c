@@ -146,6 +146,7 @@ void kprintf(const s8 *szFormat, ...)
         }
     }
     
+    //for (volatile u64 i = 0; i < 0xffffff;i++){}
     va_end(ap);
     //semaphore_release(&ScreenWriteLock);
 }

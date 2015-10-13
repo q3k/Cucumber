@@ -70,6 +70,20 @@ namespace cb {
             
             // Equivalent of the POSIX fork() call.
             CTask *Fork(void);
+            // Fork and run lambda
+            template <typename F> CTask *Fork(F lambda) {
+                CTask *NewTask = Fork();
+                if (NewTask == this)
+                    return NewTask;
+                else
+                {
+                    lambda();
+                    m_Status = ETS_DISABLED;
+                    for (;;) {Yield();}
+                    // Should never reach
+                    return NewTask;
+                }
+            }
             
             inline u64 GetPID(void) { return m_PID; }
             inline u64 GetRSP(void) { return m_RSP; }

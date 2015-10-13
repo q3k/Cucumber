@@ -63,24 +63,17 @@ void CKernel::Start(void)
 
 void CKernel::SpawnThreads(void)
 {
-    CTask *ParentTask = CScheduler::GetCurrentTask();
-    CTask *NewTask = ParentTask->Fork();
-    if (NewTask == ParentTask)
-    {
-        kprintf("Hello from parent!\n");
-        for (;;) {
-            CScheduler::GetCurrentTask()->Sleep(1000);
-            kprintf(" -> Parent @%i\n", CTimer::GetTicks());
-        }
-    }
-    else
-    {
+    kprintf("Hello from parent!\n");
+    CScheduler::GetCurrentTask()->Fork([](){
         kprintf("Hello from child!\n");
-        CScheduler::GetCurrentTask()->Sleep(500);
         for (;;) {
             CScheduler::GetCurrentTask()->Sleep(1000);
             kprintf(" -> Child @%i\n", CTimer::GetTicks());
         }
+    });
+    for (;;) {
+        CScheduler::GetCurrentTask()->Sleep(1000);
+        kprintf(" -> Parent @%i\n", CTimer::GetTicks());
     }
 
 }

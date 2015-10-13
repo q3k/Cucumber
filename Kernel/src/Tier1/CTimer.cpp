@@ -61,7 +61,6 @@ void CTimer::Dispatch(T_ISR_REGISTERS Registers)
                 Callback.NextCall += Callback.Interval;
                 
                 // Call the callback
-                kprintf("Callback!\n");
                 bool Continue = (Callback.Callback)(Callback.Extra);
                 if (!Continue)
                 {

@@ -70,7 +70,7 @@ void CScheduler::SleepInterrupt(T_ISR_REGISTERS Registers)
 void CScheduler::SpawnInterrupt(T_ISR_REGISTERS Registers)
 {
     g_Scheduler.GetCurrentTask()->SetUserRegisters(Registers);
-    g_Scheduler.GetCurrentTask()->Spawn(Registers.rax);
+    g_Scheduler.GetCurrentTask()->Spawn(Registers.rax, Registers.rbx);
 }
 
 void CScheduler::TimerTick(T_ISR_REGISTERS Registers, void (*EOI)(void))

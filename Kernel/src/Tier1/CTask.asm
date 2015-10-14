@@ -28,5 +28,6 @@ ctask_spawnpoint:
     pop rcx
     pop rbx
     pop rax
+
     sti
     iretq

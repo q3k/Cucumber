@@ -116,6 +116,9 @@ namespace cb {
             // Resolves Virtual -> Physical
             u64 Resolve(u64 Virtual);
 
+            // Gets physical start ofs tack
+            u64 GetStackStartPhysical(void) { return m_StackStartPhysical; }
+
             // Use Mapping
             void Apply(void);
 

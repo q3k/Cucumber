@@ -58,8 +58,7 @@ void CRoundRobinScheduler::NextTask(T_ISR_REGISTERS Registers, void (*EOI)(void)
     
     // Save current task details
     m_CurrentTask->SetUserRegisters(Registers);
-    m_CurrentTask->SetKernelRegisters(Registers.rip, Registers.rsp, Registers.rbp);
-    
+    m_CurrentTask->PrepareReturnStack();
     // Switch to next task
     m_CurrentTask = NewTask;
     

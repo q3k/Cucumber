@@ -45,6 +45,7 @@ CKernelML4::CKernelML4(bool AllocateStack)
         //TODO: unhardcode this
         u64 StackSize = 1 * 1024 * 1024;
         u64 StackStart = (u64)kmalloc_aligned_physical(StackSize);
+        m_StackStartPhysical = StackStart;
         Map(AREA_STACK_START, StackStart, StackSize);
     }
 

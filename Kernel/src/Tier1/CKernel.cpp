@@ -66,13 +66,15 @@ const char *derp = "\xeb\xfe";
 void CKernel::SpawnThreads(void)
 {
     kprintf("Hello from parent!\n");
-    CScheduler::Spawn([](){
-        kprintf("Hello from child!\n");
-        for (;;) {
-            CScheduler::Sleep(100);
-            kprintf(" -> Child @%i\n", CTimer::GetTicks());
-        }
-    });
+    for (u64 i = 0; i < 3; i++) {
+        CScheduler::Spawn([](u64 Data){
+            kprintf("Hello from child %i!\n", Data);
+            for (;;) {
+                CScheduler::Sleep(100);
+                kprintf(" -> Child %i @%i\n", Data, CTimer::GetTicks());
+            }
+        }, i);
+    }
     for (;;) {
         CScheduler::Sleep(100);
         kprintf(" -> Parent @%i\n", CTimer::GetTicks());

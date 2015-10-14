@@ -23,6 +23,8 @@ CTask::CTask(CKernelML4 &ML4) : m_ML4(ML4)
     m_Priority = ETP_NORMAL;
     m_Owner = 0;
     m_Ring = ETR_RING0;
+
+    m_KernelStack = (u64)kmalloc_aligned_physical(0x1000);
 }
 
 CTask::~CTask(void)
@@ -44,13 +46,12 @@ void CTask::CopyStack(CTask *Other)
     }
 }
 
-CTask *CTask::Spawn(u64 NewEntry)
+CTask *CTask::Spawn(u64 NewEntry, u64 Data)
 {
     __asm__ volatile("cli");
  
-    CKernelML4 *ML4 = new CKernelML4(false);
-    u64 StackStartPhysical = (u64)kmalloc_aligned_physical(1024*1024);
-    ML4->Map(AREA_STACK_START, StackStartPhysical, 1024*1024);
+    CKernelML4 *ML4 = new CKernelML4();
+    u64 StackStartPhysical = ML4->GetStackStartPhysical();
     CTask *Task = new CTask(*ML4);
 
     // TODO: unhardcode this
@@ -60,7 +61,7 @@ CTask *CTask::Spawn(u64 NewEntry)
     NewRegisters.rbp = AREA_STACK_START + 1 * 1024 * 1024;
     NewRegisters.rsp = AREA_STACK_START + 1 * 1024 * 1024;
     NewRegisters.rip = NewEntry;
-    NewRegisters.r13 = 0xdeadbeefcafebabe;
+    NewRegisters.rdi = Data;
     Task->SetUserRegisters(NewRegisters);
 
     u64 RSP = NewRegisters.rsp - sizeof(T_ISR_REGISTERS);
@@ -72,6 +73,14 @@ CTask *CTask::Spawn(u64 NewEntry)
 
     __asm__ __volatile__("sti");
     return Task;
+}
+
+void CTask::PrepareReturnStack(void)
+{
+    kmemcpy((void *)m_KernelStack, &m_UserRegisters, sizeof(m_UserRegisters));
+    m_KernelRIP = (u64)ctask_spawnpoint;
+    m_KernelRSP = m_KernelStack;
+    m_KernelRBP = m_KernelStack;
 }
 
 void CTask::Dump(void)

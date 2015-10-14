@@ -41,10 +41,11 @@ namespace cb {
             static void Sleep(u64 Ticks);
             static void PrioritizeTask(CTask *Task);
             static void DispatchAvailableSemaphore(CSemaphore *Semaphore);
-            static void Spawn(void(*lambda)(void)) {
+            static void Spawn(void(*lambda)(u64), u64 Data) {
                 __asm__ __volatile__ ("mov %0, %%rax\n"
+                                      "mov %1, %%rbx\n"
                                       "int $0x97"
-                                      ::"r"(lambda):"rax");
+                                      ::"r"(lambda),"r"(Data):"rax","rbx");
             }
     };
 };

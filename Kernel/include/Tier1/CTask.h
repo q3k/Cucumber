@@ -55,6 +55,7 @@ namespace cb {
             ETaskPriority m_Priority;
             ETaskRing m_Ring;
             volatile u64 m_PID;
+            u64 m_KernelStack;
 
             // Registers from user program (iret et al)
             T_ISR_REGISTERS m_UserRegisters;
@@ -63,7 +64,9 @@ namespace cb {
 
             volatile ETaskStatus m_Status;
             volatile u64 m_StatusData;
+
         public:
+            void PrepareReturnStack(void);
             //CTask(bool User = 0, bool Empty = false);
             CTask(CKernelML4 &ML4);
             ~CTask(void);
@@ -71,11 +74,11 @@ namespace cb {
             CKernelML4 &GetML4(void) volatile {
                 return m_ML4;
             }
-           
             // Clone into new task
-            CTask *Spawn(u64 NewEntry);
+            CTask *Spawn(u64 NewEntry, u64 Data);
                         
             inline u64 GetPID(void) { return m_PID; }
+            inline const T_ISR_REGISTERS *GetUserRegisters(void) { return &m_UserRegisters; }
             inline void GetUserRegisters(T_ISR_REGISTERS *Out) { *Out = m_UserRegisters; }
             inline void SetUserRegisters(T_ISR_REGISTERS Registers) { m_UserRegisters = Registers; }
             inline void GetKernelRegisters(u64 *RIP, u64 *RSP, u64 *RBP) {

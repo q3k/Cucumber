@@ -61,18 +61,20 @@ void CKernel::Start(void)
     });
 }
 
+const char *derp = "\xeb\xfe";
+
 void CKernel::SpawnThreads(void)
 {
     kprintf("Hello from parent!\n");
-    CScheduler::GetCurrentTask()->Fork([](){
+    CScheduler::Spawn([](){
         kprintf("Hello from child!\n");
         for (;;) {
-            CScheduler::GetCurrentTask()->Sleep(1000);
+            CScheduler::Sleep(100);
             kprintf(" -> Child @%i\n", CTimer::GetTicks());
         }
     });
     for (;;) {
-        CScheduler::GetCurrentTask()->Sleep(1000);
+        CScheduler::Sleep(100);
         kprintf(" -> Parent @%i\n", CTimer::GetTicks());
     }
 

@@ -2,6 +2,7 @@
 #define __APIC_H__
 
 #include "types.h"
+#include "interrupts.h"
 
 // To write to the IMCR (interrupt mode configuration register), you need two
 // IO ports: APIC_IMCR_CTRL, and APIC_IMCR_DATA. First you output APIC_IMCR_SEL
@@ -16,6 +17,7 @@
 
 void apic_enable_lapic(void);
 void apic_eoi(void);
+void apic_periodic(u64 Frequency, void (*Callback)(T_ISR_REGISTERS));
 
 #define APIC_ID 0x0020
 #define APIC_Version 0x0030

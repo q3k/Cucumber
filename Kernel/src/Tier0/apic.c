@@ -10,11 +10,12 @@
 #define APIC_SET32A(field, value) do { APIC_SET32(field, value); ASSERT(APIC_GET32(field) == (value));} while(0)
 
 #define APIC_CALIBRATION_SAMPLES 8
+#define APIC_TIMER_INTERRUPT 200
 struct {
     volatile void *LAPIC;
     volatile u32 CalibrationCounter;
     volatile u32 CalibrationSamples[APIC_CALIBRATION_SAMPLES];
-    u32 BusSpeed;
+    u32 TicksPerSecond;
 } g_APIC;
 
 void apic_eoi(void)
@@ -29,7 +30,6 @@ void apic_spurious_interrupt(T_ISR_REGISTERS Registers)
 
 void apic_timer_interrupt(T_ISR_REGISTERS Registers)
 {
-    kprintf("ohai\n");
     apic_eoi();
 }
 
@@ -70,7 +70,7 @@ void apic_enable_lapic(void)
 
     // prepare interrupts ..
     interrupts_setup_isr(39, (void *)apic_spurious_interrupt, E_INTERRUPTS_RING0);
-    interrupts_setup_isr(200, (void *)apic_timer_interrupt, E_INTERRUPTS_RING0);
+    interrupts_setup_isr(APIC_TIMER_INTERRUPT, (void *)apic_timer_interrupt, E_INTERRUPTS_RING0);
 
     // reset APIC to a kinda known state
     APIC_SET32(APIC_DFR, 0xFFFFFFFF);
@@ -100,10 +100,10 @@ void apic_enable_lapic(void)
     APIC_SET32(APIC_TimerICR, 0xFFFFFFFF);
     g_APIC.CalibrationCounter = 0;
 
-    // now let's program the PIT to run a channel0 (IRQ0) timer with a 100Hz loop
+    // now let's program the PIT to run a channel0 (IRQ0) timer with a 1000Hz loop
     koutb(0x43, 0x36);
-    koutb(0x40, 0x0B);
-    koutb(0x40, 0xE9);
+    koutb(0x40, 0x9C);
+    koutb(0x40, 0x2E);
 
     // the timer is now running!
     while (g_APIC.CalibrationCounter < APIC_CALIBRATION_SAMPLES) {};
@@ -121,8 +121,25 @@ void apic_enable_lapic(void)
         Average += (g_APIC.CalibrationSamples[i] - g_APIC.CalibrationSamples[i + 1]);
 
     Average /= (APIC_CALIBRATION_SAMPLES - 1);
-    g_APIC.BusSpeed = (Average * 16 * 50)/(1000000);
-    kprintf("[i] Bus speed %iMHz.\n", g_APIC.BusSpeed);
+    g_APIC.TicksPerSecond = (Average * 100);
+    kprintf("[i] APIC is running at %i ticks per second.\n", g_APIC.TicksPerSecond);
+}
+
+void apic_periodic(u64 Frequency, void (*Callback)(T_ISR_REGISTERS))
+{
+    u64 Counter = g_APIC.TicksPerSecond / Frequency;
+    if (Counter > 0xFFFFFFFF) {
+        PANIC("Can't fit frequency in counter range!");
+    }
+    // Set divider to 1/1th of bus speed
+    //APIC_SET32A(APIC_TimerDCR, 0b1011);
+    
+    // Setup callback ISR
+    interrupts_setup_isr(APIC_TIMER_INTERRUPT, Callback, E_INTERRUPTS_RING0);
+    // Enable periodic timer in LVT on ISR 0x98
+    APIC_SET32A(APIC_LVTTimer, 0x20000 | APIC_TIMER_INTERRUPT);
+    // Set initial counter to counter (timer should now be running)
+    APIC_SET32A(APIC_TimerICR, Counter);
 }
 
 #undef APIC_SET

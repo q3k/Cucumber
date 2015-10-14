@@ -8,6 +8,8 @@
 #include "Tier1/CSemaphore.h"
 
 #define CSCHEDULER_INTERRUPT_YIELD 0x99
+#define CSCHEDULER_INTERRUPT_SLEEP 0x98
+#define CSCHEDULER_INTERRUPT_SPAWN 0x97
 
 extern "C" {
     #include "Tier0/interrupts.h"
@@ -22,8 +24,11 @@ namespace cb {
         private:
             IScheduler *m_CurrentScheduler;
             
-            static void Yield(T_ISR_REGISTERS Registers);
-            static void TimerTick(T_ISR_REGISTERS Registers);
+            static void YieldInterrupt(T_ISR_REGISTERS Registers);
+            static void SleepInterrupt(T_ISR_REGISTERS Registers);
+            static void SpawnInterrupt(T_ISR_REGISTERS Registers);
+
+            static void TimerTick(T_ISR_REGISTERS Registers, void (*eoi)(void));
 
             static u64 m_NumTicks;
         public:
@@ -31,10 +36,16 @@ namespace cb {
             static void Enable(void);
             static void AddTask(CTask *Task);
             static CTask *GetCurrentTask(void);
-            static void NextTask();
+            static void ResetTicks(void);
+            static void Yield();
+            static void Sleep(u64 Ticks);
             static void PrioritizeTask(CTask *Task);
-            
             static void DispatchAvailableSemaphore(CSemaphore *Semaphore);
+            static void Spawn(void(*lambda)(void)) {
+                __asm__ __volatile__ ("mov %0, %%rax\n"
+                                      "int $0x97"
+                                      ::"r"(lambda):"rax");
+            }
     };
 };
 

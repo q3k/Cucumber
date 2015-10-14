@@ -57,6 +57,9 @@ CKernelML4::CKernelML4(bool AllocateStack)
     m_ML4->GetEntry(TextPML4I, &TextPDP);
     kprintf("[i] Setting TEXT directory to %X\n", TextDirectory);
     TextPDP->SetEntry(TextPDPI, TextDirectory);
+
+    // Map the APIC
+    Map(0xFEE00000, 0xFEE00000);
 }
 
 u64 CKernelML4::Resolve(u64 Virtual)

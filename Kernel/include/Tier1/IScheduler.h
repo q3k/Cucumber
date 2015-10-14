@@ -13,10 +13,11 @@ namespace cb {
         public:
             virtual void Enable(bool Enabled) = 0;
             virtual void AddTask(CTask *Task) = 0;
-            virtual void NextTask(T_ISR_REGISTERS Registers) = 0;
+            virtual void NextTask(T_ISR_REGISTERS Registers, void(*EOI)(void)) = 0;
             virtual CTask *GetCurrentTask(void) = 0;
             virtual void SetSemaphoreAvailable(CSemaphore *Semaphore) = 0;
             virtual void PrioritizeTask(CTask *Task) = 0;
+            virtual bool InScheduler(void) = 0;
     };
 };
 

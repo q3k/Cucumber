@@ -10,7 +10,6 @@ struct {
     T_IDT_PTR IDTPointer;
     T_IDT_ENTRY IDTEntries[256];
     T_ISR_STUB ISRStubs[256];
-
 } __attribute__((packed)) g_Interrupts;
 
 void interrupts_lidt(void)
@@ -181,10 +180,4 @@ void interrupts_init_simple(void)
     __asm__ __volatile__("sti;");
     kprintf("[i] Hardware interrupts enabled.\n");
 }
-/*
-void interrupts_irq_finish(u8 IRQ)
-{
-    if (g_interrupts_chip == E_INTERRUPTS_CHIP_PIC)
-        pic_eoi(IRQ);
-}
-*/
+

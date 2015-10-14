@@ -21,6 +21,7 @@
 
 extern "C" {
     u64 ctask_getrip(void);
+    u64 ctask_spawnpoint(void);
 }
 
 namespace cb {
@@ -54,8 +55,12 @@ namespace cb {
             ETaskPriority m_Priority;
             ETaskRing m_Ring;
             volatile u64 m_PID;
-            
-            volatile u64 m_RSP, m_RIP, m_RBP;
+
+            // Registers from user program (iret et al)
+            T_ISR_REGISTERS m_UserRegisters;
+            // Registers of the kernel stack/code
+            u64 m_KernelRIP; u64 m_KernelRSP; u64 m_KernelRBP;
+
             volatile ETaskStatus m_Status;
             volatile u64 m_StatusData;
         public:
@@ -66,44 +71,24 @@ namespace cb {
             CKernelML4 &GetML4(void) volatile {
                 return m_ML4;
             }
-            //CPageDirectory *GetPageDirectory(void);
-            
-            // Equivalent of the POSIX fork() call.
-            CTask *Fork(void);
-            // Fork and run lambda
-            template <typename F> CTask *Fork(F lambda) {
-                CTask *NewTask = Fork();
-                if (NewTask == this)
-                    return NewTask;
-                else
-                {
-                    lambda();
-                    m_Status = ETS_DISABLED;
-                    for (;;) {Yield();}
-                    // Should never reach
-                    return NewTask;
-                }
-            }
-            
+           
+            // Clone into new task
+            CTask *Spawn(u64 NewEntry);
+                        
             inline u64 GetPID(void) { return m_PID; }
-            inline u64 GetRSP(void) { return m_RSP; }
-            inline u64 GetRIP(void) { return m_RIP; }
-            inline u64 GetRBP(void) { return m_RBP; }
-            
-            /*inline u64 GetPageDirectoryPhysicalAddress(void)
-            {
-                return m_Directory->m_Directory->PhysicalAddress;
-            }*/
-            
-            inline void SetRSP(u64 RSP) { m_RSP = RSP; }
-            inline void SetRIP(u64 RIP) { m_RIP = RIP; }
-            inline void SetRBP(u64 RBP) { m_RBP = RBP; }
-            
-            /*inline void SetPageDirectory(CPageDirectory *Directory)
-            {
-                m_Directory = Directory;
-            }*/
-            
+            inline void GetUserRegisters(T_ISR_REGISTERS *Out) { *Out = m_UserRegisters; }
+            inline void SetUserRegisters(T_ISR_REGISTERS Registers) { m_UserRegisters = Registers; }
+            inline void GetKernelRegisters(u64 *RIP, u64 *RSP, u64 *RBP) {
+                *RIP = m_KernelRIP;
+                *RSP = m_KernelRSP;
+                *RBP = m_KernelRBP;
+            }
+            inline void SetKernelRegisters(u64 RIP, u64 RSP, u64 RBP) {
+                m_KernelRIP = RIP;
+                m_KernelRSP = RSP;
+                m_KernelRBP = RBP;
+            }
+           
             void Dump(void);
             
             void Yield(void);

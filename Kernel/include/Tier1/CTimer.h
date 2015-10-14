@@ -13,7 +13,7 @@ extern "C" {
 
 namespace cb {
     typedef bool(*TTimerCallback)(u64);
-    typedef void(*TTimerFastHook)(T_ISR_REGISTERS);
+    typedef void(*TTimerFastHook)(T_ISR_REGISTERS, void (*)(void));
     typedef struct {
                 TTimerCallback Callback;
                 u64 Interval;
@@ -37,11 +37,12 @@ namespace cb {
                 m_GetTicksSemaphore.Release();
                 return Ticks;
             }
+            static void Dispatch(T_ISR_REGISTERS Registers);
+            static void DispatchCallbacks(T_ISR_REGISTERS Registers);
         private:
             static CLinearList<TCallbackInfo> m_Callbacks;
             volatile static u64 m_nTicks;
             static void Initialize(void);
-            static void Dispatch(T_ISR_REGISTERS Registers);
             static bool m_bInitialized;
             static TTimerFastHook m_FastHook;
             

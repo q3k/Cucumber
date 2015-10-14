@@ -1,3 +1,6 @@
+#include "Tier1/CTask.h"
+#include "Tier1/CTimer.h"
+#include "Tier1/CScheduler.h"
 #include "Tier1/CRoundRobinScheduler.h"
 using namespace cb;
 
@@ -11,76 +14,72 @@ void CRoundRobinScheduler::Enable(bool Enabled)
 {
     m_iTaskQueuePosition = 0;
     m_PrioritizedTask = 0;
+    m_InScheduler = false;
 
     semaphore_init(&m_SchedulerLock);
 }
 
-void CRoundRobinScheduler::NextTask(T_ISR_REGISTERS Registers)
+void CRoundRobinScheduler::NextTask(T_ISR_REGISTERS Registers, void (*EOI)(void))
 {
-    volatile u64 NewRBP, NewRSP, NewRIP, ML4;
+    __asm__ volatile("cli");
+    m_InScheduler = true;
+    volatile u64 ML4;
     
     if (m_TaskQueue.GetSize() < 1)
         PANIC("No tasks in queue!");
-    
+
+    EOI();
     // Fetch next task.
-    m_iTaskQueuePosition++;
-	if (m_iTaskQueuePosition >= m_TaskQueue.GetSize())
-	    //Something happened - restart the queue
-        m_iTaskQueuePosition = 0;
-    CTask *NextTask = m_TaskQueue[m_iTaskQueuePosition];
+    CTask *NewTask = 0;
 
-    if (m_CurrentTask->GetPID() == NextTask->GetPID())
+    __asm__ volatile("sti");
+    while (NewTask == 0)
     {
-        interrupts_irq_finish(0);
-        return;
-    }
-    if (NextTask->GetStatus() == ETS_DISABLED)
-    {
-        interrupts_irq_finish(0);
-        return;
-    }
-    
-    //kprintf("switching from %X %X %X (%i to %i)\n", Registers.rip, Registers.rsp,
-    //        Registers.rbp, m_CurrentTask->GetPID(), NextTask->GetPID());
+        m_iTaskQueuePosition++;
+	    if (m_iTaskQueuePosition >= m_TaskQueue.GetSize())
+	        //Something happened - restart the queue
+            m_iTaskQueuePosition = 0;
 
-    //kprintf("[i] %i -> %i (%x)\n", m_CurrentTask->GetPID(), NextTask->GetPID(), NextTask);
-    
-    // Read task details
-    NewRBP = NextTask->GetRBP();
-    NewRSP = NextTask->GetRSP();
-    NewRIP = NextTask->GetRIP();
-    if (!NewRIP || !NewRSP || !NewRBP)
-    {
-        //kprintf("null %X %X %X\n", NewRIP, NewRSP, NewRBP);
-        interrupts_irq_finish(0);
+        // skip disabled
+        if (m_TaskQueue[m_iTaskQueuePosition]->GetStatus() == ETS_DISABLED)
+            continue;
+
+        NewTask = m_TaskQueue[m_iTaskQueuePosition];
+    }
+    __asm__ volatile("cli");
+
+    // We should just return if we're to switch to our own task
+    if (NewTask->GetPID() == m_CurrentTask->GetPID()) {
+        EOI();
+        m_InScheduler = false;
+        __asm__ volatile("sti");
         return;
     }
     
     // Save current task details
-    m_CurrentTask->SetRBP(Registers.rbp);
-    m_CurrentTask->SetRSP(Registers.rsp);
+    m_CurrentTask->SetUserRegisters(Registers);
+    m_CurrentTask->SetKernelRegisters(Registers.rip, Registers.rsp, Registers.rbp);
     
-    // Return point
-    volatile u64 ReturnPoint = Registers.rip;
-    m_CurrentTask->SetRIP(ReturnPoint);
-
     // Switch to next task
-    m_CurrentTask = NextTask;
+    m_CurrentTask = NewTask;
     
-    ML4 = NextTask->GetML4().GetPhysical();
-    //kprintf("[i] I was told to jump to %X (%X %X); %X\n", NewRIP, NewRSP,
-    //                                                      NewRBP, ML4);
-    interrupts_irq_finish(0);
-    
+    ML4 = m_CurrentTask->GetML4().GetPhysical();
+    u64 RIP, RSP, RBP;
+    m_CurrentTask->GetKernelRegisters(&RIP, &RSP, &RBP);
+
+    m_InScheduler = false;
+    CScheduler::ResetTicks();
+    EOI();
+
     __asm__ volatile("movq %1, %%rsp\n"
                      "movq %2, %%rbp\n"
                      "movq %3, %%cr3\n"
                      "movq %0, %%rcx\n"
                      "sti\n"
                      "jmp *%%rcx" ::
-                        "r"(NewRIP),
-                        "r"(NewRSP),
-                        "r"(NewRBP),
+                        "r"(RIP),
+                        "r"(RSP),
+                        "r"(RBP),
                         "r"(ML4));
 }
 

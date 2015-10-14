@@ -42,30 +42,63 @@ void CScheduler::Enable(void)
     CTimer::SetFastTimerHook(TimerTick);
 
     // Add the Yield interrupt
-    interrupts_setup_isr(CSCHEDULER_INTERRUPT_YIELD, (void*)Yield, E_INTERRUPTS_RING0);
+    interrupts_setup_isr(CSCHEDULER_INTERRUPT_YIELD, (void*)YieldInterrupt, E_INTERRUPTS_RING0);
+    // Add the Sleep interrupt
+    interrupts_setup_isr(CSCHEDULER_INTERRUPT_SLEEP, (void*)SleepInterrupt, E_INTERRUPTS_RING0);
+    // Add the Spawn interrupt
+    interrupts_setup_isr(CSCHEDULER_INTERRUPT_SPAWN, (void*)SpawnInterrupt, E_INTERRUPTS_RING0);
 }
 
-void CScheduler::Yield(T_ISR_REGISTERS Registers)
+static void NullEOI(void)
+{
+
+}
+
+void CScheduler::YieldInterrupt(T_ISR_REGISTERS Registers)
 {
 	m_NumTicks = 0;
-	g_Scheduler.m_CurrentScheduler->NextTask(Registers);
+	g_Scheduler.m_CurrentScheduler->NextTask(Registers, NullEOI);
 }
 
-void CScheduler::TimerTick(T_ISR_REGISTERS Registers)
+void CScheduler::SleepInterrupt(T_ISR_REGISTERS Registers)
 {
-	if (m_NumTicks > 20)
-	{
+	m_NumTicks = 0;
+	g_Scheduler.GetCurrentTask()->Sleep(Registers.rax);
+	g_Scheduler.m_CurrentScheduler->NextTask(Registers, NullEOI);
+}
+
+void CScheduler::SpawnInterrupt(T_ISR_REGISTERS Registers)
+{
+    g_Scheduler.GetCurrentTask()->SetUserRegisters(Registers);
+    g_Scheduler.GetCurrentTask()->Spawn(Registers.rax);
+}
+
+void CScheduler::TimerTick(T_ISR_REGISTERS Registers, void (*EOI)(void))
+{
+	if (m_NumTicks > 20) {
 		m_NumTicks = 0;
-		g_Scheduler.m_CurrentScheduler->NextTask(Registers);
+        if (!g_Scheduler.m_CurrentScheduler->InScheduler()) {
+            g_Scheduler.m_CurrentScheduler->NextTask(Registers, EOI);
+        }
 	}
 	m_NumTicks++;
 }
 
-void CScheduler::NextTask(void)
+void CScheduler::ResetTicks(void)
 {
-	//__asm__ volatile("pusha");
+    m_NumTicks = 0;
+}
+
+void CScheduler::Sleep(u64 Ticks)
+{
+	__asm__ volatile ("mov %0, %%rax\n"
+                      "int $0x98"
+                      ::"r"(Ticks):"rax");
+}
+
+void CScheduler::Yield(void)
+{
 	__asm__ volatile ("int $0x99");
-	//__asm__ volatile("popa");
 }
 
 void CScheduler::DispatchAvailableSemaphore(CSemaphore *Semaphore)

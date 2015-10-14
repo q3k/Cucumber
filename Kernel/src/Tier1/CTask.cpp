@@ -44,51 +44,40 @@ void CTask::CopyStack(CTask *Other)
     }
 }
 
-CTask *CTask::Fork(void) __attribute__ ((optnone))
+CTask *CTask::Spawn(u64 NewEntry)
 {
     __asm__ volatile("cli");
-    volatile u64 RSP, RBP;
  
-    CTask *ParentTask = CScheduler::GetCurrentTask();
-    CKernelML4 *ML4 = new CKernelML4();
-    CTask *NewTask = new CTask(*ML4);
- 
-    __asm__ volatile("mov %%rsp, %0" : "=r"(RSP));
-    __asm__ volatile("mov %%rbp, %0" : "=r"(RBP));
- 
-    NewTask->CopyStack(this);
-    volatile u64 ForkPoint = ctask_getrip();
- 
-    if (CScheduler::GetCurrentTask() == ParentTask)
-    {
-        NewTask->m_RSP = RSP;
-        NewTask->m_RBP = RBP;
-        NewTask->m_RIP = ForkPoint;
-        kprintf("[i] Forked: PID %i, RSP %x, RIP %x...\n", NewTask->m_PID,
-                RSP, ForkPoint);
-        CScheduler::AddTask(NewTask);
-     
-        __asm__ volatile("sti");
-     
-        return (CTask *)ParentTask;
-    }
-    else
-    {
-        __asm__ volatile("sti");
-        //for(;;){} 
-        return NewTask;
-    }
+    CKernelML4 *ML4 = new CKernelML4(false);
+    u64 StackStartPhysical = (u64)kmalloc_aligned_physical(1024*1024);
+    ML4->Map(AREA_STACK_START, StackStartPhysical, 1024*1024);
+    CTask *Task = new CTask(*ML4);
+
+    // TODO: unhardcode this
+    T_ISR_REGISTERS NewRegisters;
+    // Copy from previous task, just to be sure everything is sane
+    GetUserRegisters(&NewRegisters);
+    NewRegisters.rbp = AREA_STACK_START + 1 * 1024 * 1024;
+    NewRegisters.rsp = AREA_STACK_START + 1 * 1024 * 1024;
+    NewRegisters.rip = NewEntry;
+    NewRegisters.r13 = 0xdeadbeefcafebabe;
+    Task->SetUserRegisters(NewRegisters);
+
+    u64 RSP = NewRegisters.rsp - sizeof(T_ISR_REGISTERS);
+    u64 RBP = NewRegisters.rbp - sizeof(T_ISR_REGISTERS);
+    // oh, this is ugly
+    kmemcpy((void*)(StackStartPhysical+1024*1024-sizeof(T_ISR_REGISTERS)), &NewRegisters, sizeof(T_ISR_REGISTERS));
+    Task->SetKernelRegisters((u64)ctask_spawnpoint, RSP, RBP);
+    CScheduler::AddTask(Task);
+
+    __asm__ __volatile__("sti");
+    return Task;
 }
 
 void CTask::Dump(void)
 {
     kprintf("d:%x s:%x b:%x i:%x\n",m_ML4.GetPhysical(),
-                                      m_RSP, m_RBP, m_RIP);
-}
-
-void CTask::Yield(void)
-{
-    CScheduler::NextTask();
+        m_UserRegisters.rsp, m_UserRegisters.rbp, m_UserRegisters.rip);
 }
 
 void CTask::WaitForSemaphore(T_SEMAPHORE *Semaphore)
@@ -97,8 +86,6 @@ void CTask::WaitForSemaphore(T_SEMAPHORE *Semaphore)
     m_Status = ETS_WAITING_FOR_SEMAPHORE;
     m_StatusData = m_ML4.Resolve((u64)Semaphore);
     __asm__ volatile ("sti");
- 
-    Yield();
 }
 
 void CTask::WaitForSemaphore(CSemaphore *Semaphore)
@@ -107,7 +94,6 @@ void CTask::WaitForSemaphore(CSemaphore *Semaphore)
     m_Status = ETS_WAITING_FOR_SEMAPHORE;
     m_StatusData = m_ML4.Resolve((u64)Semaphore);
     __asm__ volatile ("sti");
-    Yield();
 }
 
 void CTask::Disable(void)
@@ -115,7 +101,6 @@ void CTask::Disable(void)
     __asm__ volatile ("cli");
     m_Status = ETS_DISABLED;
     __asm__ volatile ("sti");
-    Yield();
 }
 
 void CTask::Enable(void)
@@ -131,10 +116,6 @@ void CTask::Sleep(u64 Ticks)
     m_Status = ETS_DISABLED;
     CTimer::Create(Ticks, 1, WakeUp, (u64)this);
     __asm__ volatile ("sti");
-    while (m_Status == ETS_DISABLED)
-    {
-        Yield();
-    }
 }
 
 bool CTask::WakeUp(u64 Extra)

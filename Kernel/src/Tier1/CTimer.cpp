@@ -3,6 +3,7 @@
 using namespace cb;
 
 extern "C" {
+    #include "Tier0/apic.h"
     #include "Tier0/kstdio.h"
     #include "Tier0/interrupts.h"
 }
@@ -15,14 +16,7 @@ CSemaphore CTimer::m_GetTicksSemaphore;
 
 void CTimer::Initialize(void)
 {
-    u32 Divider = 1193180 / 1000; // microseconds
-    koutb(0x43, 0x36);
-    u8 Low = (u8)(Divider & 0xFF);
-    u8 High = (u8)((Divider >> 8) & 0xFF);
-    koutb(0x40, Low);
-    koutb(0x40, High);
-
-    interrupts_setup_irq(0x00, (void*)Dispatch);
+    apic_periodic(100, Dispatch);
     m_bInitialized = true;
 }
 
@@ -40,10 +34,13 @@ void CTimer::SetFastTimerHook(TTimerFastHook Hook)
 void CTimer::Dispatch(T_ISR_REGISTERS Registers)
 {
     //__asm__ volatile("cli");
-
     if (m_FastHook)
-    	(*m_FastHook)(Registers);
+    	(*m_FastHook)(Registers, apic_eoi);
+    DispatchCallbacks(Registers);
+}
 
+void CTimer::DispatchCallbacks(T_ISR_REGISTERS Registers)
+{
     m_nTicks++;
     
     if (m_nTicks > (0xFFFFFFFFFFFFFFFF - 1000)) // 1000 ticks margin
@@ -81,7 +78,7 @@ void CTimer::Dispatch(T_ISR_REGISTERS Registers)
             continue;
         }
     }
-    interrupts_irq_finish(0);
+    apic_eoi();
     //__asm__ volatile("sti");
 
     // Tough love for the current task.

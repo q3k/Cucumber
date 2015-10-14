@@ -51,7 +51,6 @@ CTask *CTask::Spawn(u64 NewEntry, u64 Data)
     __asm__ volatile("cli");
  
     CKernelML4 *ML4 = new CKernelML4();
-    u64 StackStartPhysical = ML4->GetStackStartPhysical();
     CTask *Task = new CTask(*ML4);
 
     // TODO: unhardcode this
@@ -63,12 +62,8 @@ CTask *CTask::Spawn(u64 NewEntry, u64 Data)
     NewRegisters.rip = NewEntry;
     NewRegisters.rdi = Data;
     Task->SetUserRegisters(NewRegisters);
+    Task->PrepareReturnStack();
 
-    u64 RSP = NewRegisters.rsp - sizeof(T_ISR_REGISTERS);
-    u64 RBP = NewRegisters.rbp - sizeof(T_ISR_REGISTERS);
-    // oh, this is ugly
-    kmemcpy((void*)(StackStartPhysical+1024*1024-sizeof(T_ISR_REGISTERS)), &NewRegisters, sizeof(T_ISR_REGISTERS));
-    Task->SetKernelRegisters((u64)ctask_spawnpoint, RSP, RBP);
     CScheduler::AddTask(Task);
 
     __asm__ __volatile__("sti");

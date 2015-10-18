@@ -25,21 +25,31 @@ CTask::CTask(CKernelML4 &ML4) : m_ML4(ML4)
     m_Ring = ETR_RING0;
 
     m_KernelStack = (u64)kmalloc_aligned_physical(0x1000);
+    // Map LOWMEM (TODO: share this, and actually limit this to RAM size)
+    m_ML4.Map(AREA_LOWMEM_START, 0x0, AREA_LOWMEM_SIZE);
+    // Map the SCRATCH directory from Tier0
+    m_ML4.SetDirectory(0xFFFFFFFF00000000, paging_get_scratch_directory());
+    // Map the TEXT directory from Tier0
+    m_ML4.SetDirectory(0xFFFFFFFF80000000, paging_get_text_directory());
+    // Map the APIC
+    m_ML4.Map(0xFEE00000, 0xFEE00000);
+
+    // Allocate new stack
+    m_UserStackSize = 1024 * 1024;
+    m_UserStackStart = (u64)kmalloc_aligned_physical(m_UserStackSize);
+    m_ML4.Map(AREA_STACK_START, m_UserStackStart, m_UserStackSize);
 }
 
 CTask::~CTask(void)
 {
+    // Deallocate everything here
 }
 
 void CTask::CopyStack(CTask *Other)
 {
     CKernelML4 &OtherML4 = Other->GetML4();
-    // Allocate new stack
-    u64 StackSize = 1024*1024;
-    u64 StackStart = (u64)kmalloc_aligned_physical(StackSize);
-    m_ML4.Map(AREA_STACK_START, StackStart, StackSize);
     // Copy over from old stack
-    for (u64 i = 0; i < (StackSize/0x1000); i++) {
+    for (u64 i = 0; i < (m_UserStackSize/0x1000); i++) {
         u64 Destination = m_ML4.Resolve(AREA_STACK_START + i*0x1000);
         u64 Source = OtherML4.Resolve(AREA_STACK_START + i*0x1000);
         kmemcpy((void *)Destination, (void *)Source, 0x1000);
@@ -53,17 +63,14 @@ CTask *CTask::Spawn(u64 NewEntry, u64 Data)
     CKernelML4 *ML4 = new CKernelML4();
     CTask *Task = new CTask(*ML4);
 
-    // TODO: unhardcode this
     T_ISR_REGISTERS NewRegisters;
-    // Copy from previous task, just to be sure everything is sane
     GetUserRegisters(&NewRegisters);
-    NewRegisters.rbp = AREA_STACK_START + 1 * 1024 * 1024;
-    NewRegisters.rsp = AREA_STACK_START + 1 * 1024 * 1024;
+    NewRegisters.rbp = AREA_STACK_START + m_UserStackSize;
+    NewRegisters.rsp = AREA_STACK_START + m_UserStackSize;
     NewRegisters.rip = NewEntry;
     NewRegisters.rdi = Data;
     Task->SetUserRegisters(NewRegisters);
     Task->PrepareReturnStack();
-
     CScheduler::AddTask(Task);
 
     __asm__ __volatile__("sti");

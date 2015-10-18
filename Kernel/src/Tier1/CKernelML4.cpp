@@ -21,46 +21,20 @@ extern "C"
 
 #define align_new(Memory, Type, ...) do { Memory = (Type *)kmalloc_aligned_physical(sizeof(Type)); new(Memory) Type(__VA_ARGS__); } while(0)
 
-CKernelML4::CKernelML4(bool AllocateStack)
+
+CKernelML4::CKernelML4(void)
 {
-    m_Running = false;
     // Allocate directory
     align_new(m_ML4, CPagingStructure<T_PAGING_ML4_ENTRY>);
+}
 
-    // Map LOWMEM (TODO: share this, and actually limit this to RAM size)
-    Map(AREA_LOWMEM_START, 0x0, AREA_LOWMEM_SIZE);
-
-    // Map the SCRATCH directory from Tier0
-    u64 ScratchDirectory = paging_get_scratch_directory();
-    u64 ScratchVirtual = 0xFFFFFFFF00000000;
-    u64 ScratchPML4I = PAGING_GET_PML4_INDEX(ScratchVirtual);
-    u64 ScratchPDPI = PAGING_GET_PDP_INDEX(ScratchVirtual);
-    CPagingStructure<T_PAGING_PDP_ENTRY> *ScratchPDP;
-    m_ML4->GetOrNewEntry(ScratchPML4I, &ScratchPDP);
-    kprintf("[i] Setting SCRATCH directory to %X\n", ScratchDirectory);
-    ScratchPDP->SetEntry(ScratchPDPI, ScratchDirectory);
-
-    if (AllocateStack) {
-        // Allocate STACK
-        //TODO: unhardcode this
-        u64 StackSize = 1 * 1024 * 1024;
-        u64 StackStart = (u64)kmalloc_aligned_physical(StackSize);
-        m_StackStartPhysical = StackStart;
-        Map(AREA_STACK_START, StackStart, StackSize);
-    }
-
-    // Map the TEXT directory from Tier0
-    u64 TextDirectory = paging_get_text_directory();
-    u64 TextVirtual = 0xFFFFFFFF80000000;
-    u64 TextPML4I = PAGING_GET_PML4_INDEX(TextVirtual);
-    u64 TextPDPI = PAGING_GET_PDP_INDEX(TextVirtual);
-    CPagingStructure<T_PAGING_PDP_ENTRY> *TextPDP;
-    m_ML4->GetEntry(TextPML4I, &TextPDP);
-    kprintf("[i] Setting TEXT directory to %X\n", TextDirectory);
-    TextPDP->SetEntry(TextPDPI, TextDirectory);
-
-    // Map the APIC
-    Map(0xFEE00000, 0xFEE00000);
+void CKernelML4::SetDirectory(u64 Virtual, u64 DirectoryPhysical)
+{
+    u64 PML4I = PAGING_GET_PML4_INDEX(Virtual);
+    u64 PDPI = PAGING_GET_PDP_INDEX(Virtual);
+    CPagingStructure<T_PAGING_PDP_ENTRY> *PDP;
+    m_ML4->GetOrNewEntry(PML4I, &PDP);
+    PDP->SetEntry(PDPI, DirectoryPhysical);
 }
 
 u64 CKernelML4::Resolve(u64 Virtual)

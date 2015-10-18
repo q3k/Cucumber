@@ -10,6 +10,7 @@
 #define CSCHEDULER_INTERRUPT_YIELD 0x99
 #define CSCHEDULER_INTERRUPT_SLEEP 0x98
 #define CSCHEDULER_INTERRUPT_SPAWN 0x97
+#define CSCHEDULER_INTERRUPT_EXIT 0x96
 
 extern "C" {
     #include "Tier0/interrupts.h"
@@ -27,6 +28,7 @@ namespace cb {
             static void YieldInterrupt(T_ISR_REGISTERS Registers);
             static void SleepInterrupt(T_ISR_REGISTERS Registers);
             static void SpawnInterrupt(T_ISR_REGISTERS Registers);
+            static void ExitInterrupt(T_ISR_REGISTERS Registers);
 
             static void TimerTick(T_ISR_REGISTERS Registers, void (*eoi)(void));
 
@@ -46,6 +48,9 @@ namespace cb {
                                       "mov %1, %%rbx\n"
                                       "int $0x97"
                                       ::"r"(lambda),"r"(Data):"rax","rbx");
+            }
+            static void Exit(void) {
+                asm volatile("int $0x96");
             }
     };
 };

@@ -26,10 +26,8 @@ extern "C" {
 
 namespace cb {
     enum ETaskPriority {
-        ETP_STALL,
-        ETP_LOW,
+        ETP_IDLE,
         ETP_NORMAL,
-        ETP_HIGH,
         ETP_REALTIME
     };
     enum ETaskRing {
@@ -51,16 +49,25 @@ namespace cb {
         friend class CScheduler;
         protected:
             void *m_Owner; //TODO: Replace me with a real type
-            CKernelML4 &m_ML4;
             ETaskPriority m_Priority;
             ETaskRing m_Ring;
             volatile u64 m_PID;
-            u64 m_KernelStack;
 
+            /// Context switching data
             // Registers from user program (iret et al)
             T_ISR_REGISTERS m_UserRegisters;
             // Registers of the kernel stack/code
             u64 m_KernelRIP; u64 m_KernelRSP; u64 m_KernelRBP;
+            // Physical address of the kernel stack to use when in interrupt
+            u64 m_KernelStack;
+
+            /// Memory data
+            // Paging structure
+            CKernelML4 &m_ML4;
+            // User STACK segment
+            u64 m_UserStackStart;
+            // User STACK size
+            u64 m_UserStackSize;
 
             volatile ETaskStatus m_Status;
             volatile u64 m_StatusData;

@@ -3,6 +3,8 @@ Kernel/kernel.bin
 Kernel/src/Lua/*.o
 Kernel/src/Lua/liblua.a
 Kernel/dump
+Kernel/gdbcommands
+Kernel/ksyms.elf
 Loader/obj
 Loader/loader.bin
 Loader/dump
@@ -13,3 +15,6 @@ dump
 *~
 *gch
 tags
+*pyc
+*.swp
+*.swo

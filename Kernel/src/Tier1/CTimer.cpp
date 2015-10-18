@@ -22,18 +22,13 @@ void CTimer::Initialize(void)
 
 void CTimer::SetFastTimerHook(TTimerFastHook Hook)
 {
-	__asm__ volatile("cli");
-
 	m_FastHook = Hook;
     if (!m_bInitialized)
         Initialize();
-
-	__asm__ volatile("sti");
 }
 
 void CTimer::Dispatch(T_ISR_REGISTERS Registers)
 {
-    //__asm__ volatile("cli");
     if (m_FastHook)
     	(*m_FastHook)(Registers, apic_eoi);
     DispatchCallbacks(Registers);

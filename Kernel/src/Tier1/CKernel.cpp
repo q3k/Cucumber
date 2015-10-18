@@ -55,6 +55,7 @@ void CKernel::Start(void)
         kprintf("[i] RSP is %X\n", RSP);
 
         CScheduler::Enable();
+        // After enabling, only CScheduler::* calls are allowed for API
         kprintf("[i] Enabled scheduler.\n");
         g_Kernel.SpawnThreads();
         for(;;) { asm volatile("hlt"); }
@@ -64,7 +65,17 @@ void CKernel::Start(void)
 void CKernel::SpawnThreads(void)
 {
     CScheduler::Spawn([](u64 foo) {
-        kprintf("child!\n");
+        for (;;) {
+            kprintf("child 1!\n");
+            CScheduler::Sleep(100);
+        }
+        CScheduler::Exit();
+    }, 0);
+    CScheduler::Spawn([](u64 foo) {
+        for (;;) {
+            kprintf("child 2!\n");
+            CScheduler::Sleep(100);
+        }
         CScheduler::Exit();
     }, 0);
 }

@@ -58,8 +58,6 @@ void CTask::CopyStack(CTask *Other)
 
 CTask *CTask::Spawn(u64 NewEntry, u64 Data)
 {
-    __asm__ volatile("cli");
- 
     CKernelML4 *ML4 = new CKernelML4();
     CTask *Task = new CTask(*ML4);
 
@@ -73,7 +71,6 @@ CTask *CTask::Spawn(u64 NewEntry, u64 Data)
     Task->PrepareReturnStack();
     CScheduler::AddTask(Task);
 
-    __asm__ __volatile__("sti");
     return Task;
 }
 
@@ -93,40 +90,30 @@ void CTask::Dump(void)
 
 void CTask::WaitForSemaphore(T_SEMAPHORE *Semaphore)
 {
-    __asm__ volatile ("cli");
     m_Status = ETS_WAITING_FOR_SEMAPHORE;
     m_StatusData = m_ML4.Resolve((u64)Semaphore);
-    __asm__ volatile ("sti");
 }
 
 void CTask::WaitForSemaphore(CSemaphore *Semaphore)
 {
-    __asm__ volatile ("cli");
     m_Status = ETS_WAITING_FOR_SEMAPHORE;
     m_StatusData = m_ML4.Resolve((u64)Semaphore);
-    __asm__ volatile ("sti");
 }
 
 void CTask::Disable(void)
 {
-    __asm__ volatile ("cli");
     m_Status = ETS_DISABLED;
-    __asm__ volatile ("sti");
 }
 
 void CTask::Enable(void)
 {
-    __asm__ volatile ("cli");
     m_Status = ETS_RUNNING;
-    __asm__ volatile ("sti");
 }
 
 void CTask::Sleep(u64 Ticks)
 {
-    __asm__ volatile ("cli");
     m_Status = ETS_DISABLED;
     CTimer::Create(Ticks, 1, WakeUp, (u64)this);
-    __asm__ volatile ("sti");
 }
 
 bool CTask::WakeUp(u64 Extra)

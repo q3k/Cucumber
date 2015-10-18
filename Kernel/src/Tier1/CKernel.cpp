@@ -1,5 +1,4 @@
 #include "Tier1/CKernel.h"
-//#include "Tier1/CPageFaultDispatcher.h"
 #include "Tier1/CKernelML4.h"
 #include "Tier1/CTask.h"
 #include "Tier1/CScheduler.h"
@@ -44,6 +43,10 @@ void CKernel::Start(void)
     m_Logger = new CLogger();
     Alentours::CPCIManager::Initialize();
     CKernelML4 *ML4 = new CKernelML4();
+    CTask *KernelTask = new CTask(*ML4);
+    kprintf("[i] Kernel task has PID %i.\n", KernelTask->GetPID());
+    CScheduler::AddTask(KernelTask);
+        
     ML4->Apply();
     ML4->UseStack([](CKernelML4 *ML4) {
         kprintf("[i] Switched to Tier1 stack\n");
@@ -51,33 +54,17 @@ void CKernel::Start(void)
         __asm__ __volatile__("movq %%rsp, %0" :"=r"(RSP));
         kprintf("[i] RSP is %X\n", RSP);
 
-        CTask *KernelTask = new CTask(*ML4);
-        kprintf("[i] Kernel task has PID %i.\n", KernelTask->GetPID());
-        
-        CScheduler::AddTask(KernelTask);
         CScheduler::Enable();
         kprintf("[i] Enabled scheduler.\n");
         g_Kernel.SpawnThreads();
+        for(;;) { asm volatile("hlt"); }
     });
 }
 
-const char *derp = "\xeb\xfe";
-
 void CKernel::SpawnThreads(void)
 {
-    kprintf("Hello from parent!\n");
-    for (u64 i = 0; i < 3; i++) {
-        CScheduler::Spawn([](u64 Data){
-            kprintf("Hello from child %i!\n", Data);
-            for (;;) {
-                CScheduler::Sleep(100);
-                kprintf(" -> Child %i @%i\n", Data, CTimer::GetTicks());
-            }
-        }, i);
-    }
-    for (;;) {
-        CScheduler::Sleep(100);
-        kprintf(" -> Parent @%i\n", CTimer::GetTicks());
-    }
-
+    CScheduler::Spawn([](u64 foo) {
+        kprintf("child!\n");
+        CScheduler::Exit();
+    }, 0);
 }

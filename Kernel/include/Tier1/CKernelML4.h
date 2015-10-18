@@ -81,9 +81,6 @@ namespace cb {
             // The paging direcotry structure
             CPagingStructure<T_PAGING_ML4_ENTRY> *m_ML4;
 
-            // Are we running this mapping?
-            bool m_Running;
-
             // allocator and destructor for segments
             void *(*m_SegmentAllocator)(u64);
             void (*m_SegmentDestructor)(void *);
@@ -103,8 +100,8 @@ namespace cb {
             template<typename P, typename C> static C* GetOrCreateSubStructure(P *Parent);
             
         public:
-            // Creates a new page directory for a kernel task, with new stack and other internal stuff
-            CKernelML4(bool AllocateStack = true);
+            // Creates a new paging structure
+            CKernelML4(void);
 
             // Destroys the structures and frees the segments, if needed
             ~CKernelML4(void);
@@ -147,6 +144,9 @@ namespace cb {
                 );
 
             }
+
+            // Set directory to existing structure
+            void SetDirectory(u64 Virtual, u64 DirectoryPhysical);
 
             // Debug stdout dump
             void Dump(void);

@@ -82,9 +82,9 @@ src/Lua/liblua.a:
 LUA := src/Lua/liblua.a
 Lua: $(LUA)
 
-kernel.bin: version-gen Tier0 Tier1 Lua Alentours
+kernel.bin: version-gen Tier0 Tier1 Alentours
 	@echo "[i] Linking kernel.bin..."
-	@$(LD) $(LFLAGS) -T src/kernel.ld -o kernel.bin $(TIER0) $(TIER1) $(ALENTOURS) -Lsrc/Lua -llua
+	@$(LD) $(LFLAGS) -T src/kernel.ld -o kernel.bin $(TIER0) $(TIER1) $(ALENTOURS) -Lsrc/Lua
 	@echo "[i] Creating debug symbols."
 	@cp kernel.bin ksyms.elf
 	#@strip --only-keep-debug ksyms.elf

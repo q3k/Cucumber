@@ -47,6 +47,8 @@ void CScheduler::Enable(void)
     interrupts_setup_isr(CSCHEDULER_INTERRUPT_SLEEP, (void*)SleepInterrupt, E_INTERRUPTS_RING0);
     // Add the Spawn interrupt
     interrupts_setup_isr(CSCHEDULER_INTERRUPT_SPAWN, (void*)SpawnInterrupt, E_INTERRUPTS_RING0);
+    // Add the Exit interrupt
+    interrupts_setup_isr(CSCHEDULER_INTERRUPT_EXIT, (void*)ExitInterrupt, E_INTERRUPTS_RING0);
 }
 
 static void NullEOI(void)
@@ -71,6 +73,13 @@ void CScheduler::SpawnInterrupt(T_ISR_REGISTERS Registers)
 {
     g_Scheduler.GetCurrentTask()->SetUserRegisters(Registers);
     g_Scheduler.GetCurrentTask()->Spawn(Registers.rax, Registers.rbx);
+}
+
+void CScheduler::ExitInterrupt(T_ISR_REGISTERS Registers)
+{
+    // TODO: actually remove the task
+    g_Scheduler.GetCurrentTask()->m_Status = ETS_DISABLED;
+	g_Scheduler.m_CurrentScheduler->NextTask(Registers, NullEOI);
 }
 
 void CScheduler::TimerTick(T_ISR_REGISTERS Registers, void (*EOI)(void))

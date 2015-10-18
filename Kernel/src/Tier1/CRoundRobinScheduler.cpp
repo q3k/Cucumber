@@ -21,7 +21,6 @@ void CRoundRobinScheduler::Enable(bool Enabled)
 
 void CRoundRobinScheduler::NextTask(T_ISR_REGISTERS Registers, void (*EOI)(void))
 {
-    __asm__ volatile("cli");
     m_InScheduler = true;
     volatile u64 ML4;
     
@@ -48,14 +47,6 @@ void CRoundRobinScheduler::NextTask(T_ISR_REGISTERS Registers, void (*EOI)(void)
     }
     __asm__ volatile("cli");
 
-    // We should just return if we're to switch to our own task
-    if (NewTask->GetPID() == m_CurrentTask->GetPID()) {
-        EOI();
-        m_InScheduler = false;
-        __asm__ volatile("sti");
-        return;
-    }
-    
     // Save current task details
     m_CurrentTask->SetUserRegisters(Registers);
     m_CurrentTask->PrepareReturnStack();

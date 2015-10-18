@@ -1,7 +1,0 @@
-#Sun May 08 17:23:22 CEST 2011
-eclipse.preferences.version=1
-environment/project/cdt.managedbuild.toolchain.gnu.mingw.base.561123667/PATH/delimiter=;
-environment/project/cdt.managedbuild.toolchain.gnu.mingw.base.561123667/PATH/operation=replace
-environment/project/cdt.managedbuild.toolchain.gnu.mingw.base.561123667/PATH/value=C\:\\Development\\qemu;C\:\\cygwin\\bin;C\:\\Windows\\system32;C\:\\Windows;
-environment/project/cdt.managedbuild.toolchain.gnu.mingw.base.561123667/append=true
-environment/project/cdt.managedbuild.toolchain.gnu.mingw.base.561123667/appendContributed=true

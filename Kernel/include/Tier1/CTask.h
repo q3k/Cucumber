@@ -7,18 +7,6 @@
 #include "Tier1/CSemaphore.h"
 #include "Tier0/semaphore.h"
 
-/*#define TASK_MAP_CODE_START 0x10000000
-#define TASK_MAP_CODE_SIZE 0x10000000
-
-#define TASK_MAP_HEAP_START 0x20000000
-#define TASK_MAP_HEAP_SIZE 0x40000000
-
-#define TASK_MAP_STACK_START 0xA0000000
-#define TASK_MAP_STACK_SIZE 0x10000000
-
-#define TASK_MAP_KERNEL_START 0xC0000000
-#define TASK_MAP_KERNEL_SIZE 0x20000000*/
-
 extern "C" {
     u64 ctask_getrip(void);
     u64 ctask_spawnpoint(void);
@@ -117,6 +105,8 @@ namespace cb {
 
             // Copy a stack from another Task
             void CopyStack(CTask *Other);
+            // Run function in task stack
+            void UseStack(void (*Function) (CTask *Task));
             
             inline ETaskStatus GetStatus(void) {
                 return m_Status;

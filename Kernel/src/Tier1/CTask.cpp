@@ -122,3 +122,27 @@ bool CTask::WakeUp(u64 Extra)
     Task->Enable();    
     return true;
 }
+
+void CTask::UseStack(void (*Function) (CTask *Task))
+{
+    u64 Stack = AREA_STACK_START + m_UserStackSize;
+    __asm__ __volatile__(
+            "pushq %%rbp\n"
+            "movq %%rsp, %%rax\n"
+
+            "movq %0, %%rsp\n"
+            "movq %0, %%rbp\n"
+            "pushq %%rax\n"
+
+            "pushq %2\n"
+            "callq *%1\n"
+            "addq $8, %%rsp\n"
+
+            "popq %%rax\n"
+            "movq %%rax, %%rsp\n"
+            "popq %%rbp"
+        :
+        :"r"(Stack), "r"(Function), "r"(this)
+        :"%rax"
+    );
+}

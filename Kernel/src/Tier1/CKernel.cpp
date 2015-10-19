@@ -39,6 +39,7 @@ void CKernel::Start(void)
         kprintf("[e] Error! My constructor wasn't called properly.\n");
         return;
     }
+    kprintf("wat\n");
     
     m_Logger = new CLogger();
     Alentours::CPCIManager::Initialize();
@@ -57,24 +58,19 @@ void CKernel::Start(void)
         kprintf("[i] Enabled scheduler.\n");
 
         g_Kernel.SpawnThreads();
-        for(;;) { asm volatile("hlt"); }
+        CScheduler::Exit();
     });
 }
 
 void CKernel::SpawnThreads(void)
 {
-    CScheduler::Spawn([](u64 foo) {
-        for (;;) {
-            kprintf("child 1!\n");
-            CScheduler::Sleep(100);
-        }
-        CScheduler::Exit();
-    }, 0);
-    CScheduler::Spawn([](u64 foo) {
-        for (;;) {
-            kprintf("child 2!\n");
-            CScheduler::Sleep(100);
-        }
-        CScheduler::Exit();
-    }, 0);
+    for (u64 i = 0; i < 10; i++) {
+        CScheduler::Spawn([](u64 ID) {
+            for (;;) {
+                kprintf("%i", ID);
+                CScheduler::Sleep(10*ID);
+            }
+            CScheduler::Exit();
+        }, i);
+    }
 }

@@ -127,19 +127,17 @@ s64 _heap_find_smallest_hole(T_HEAP *Heap, u64 Size, u8 Aligned)
 
 void _heap_expand(T_HEAP *Heap, u64 Size)
 {
-    /*u32 NumPages = Size / 0x1000; 
+    u32 NumPages = Size / 0x1000; 
     if (Size % 0x1000 != 0)
         NumPages++;
 
     for (u64 i = 0; i < NumPages; i++)
     {
-        u64 Page = physmem_allocate_page();
-        u64 Physical = physmem_page_to_physical(Page);
-        paging_map_kernel_page(Heap->End + i * 0x1000, Physical);
+        u64 Physical = physmem_allocate_physical();
+        paging_map_page(Heap->End + i * 0x1000, Physical, 0);
     }
     
-    Heap->End = Heap->Start + NumPages * 0x1000;*/
-    PANIC("Heap expansion not implemented.");
+    Heap->End = Heap->Start + NumPages * 0x1000;
 }
 
 u32 _heap_contract(T_HEAP *Heap, u64 Size)

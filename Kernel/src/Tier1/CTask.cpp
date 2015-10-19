@@ -23,6 +23,7 @@ CTask::CTask(CKernelML4 &ML4) : m_ML4(ML4)
     m_Priority = ETP_NORMAL;
     m_Owner = 0;
     m_Ring = ETR_RING0;
+    m_UserRegistersSet = false;
 
     m_KernelStack = (u64)kmalloc_aligned_physical(0x1000);
     // Map LOWMEM (TODO: share this, and actually limit this to RAM size)
@@ -31,7 +32,7 @@ CTask::CTask(CKernelML4 &ML4) : m_ML4(ML4)
     m_ML4.SetDirectory(0xFFFFFFFF00000000, paging_get_scratch_directory());
     // Map the TEXT directory from Tier0
     m_ML4.SetDirectory(0xFFFFFFFF80000000, paging_get_text_directory());
-    // Map the APIC
+    // Map the LAPIC
     m_ML4.Map(0xFEE00000, 0xFEE00000);
 
     // Allocate new stack
@@ -62,7 +63,9 @@ CTask *CTask::Spawn(u64 NewEntry, u64 Data)
     CTask *Task = new CTask(*ML4);
 
     T_ISR_REGISTERS NewRegisters;
-    GetUserRegisters(&NewRegisters);
+    if (!GetUserRegisters(&NewRegisters)) {
+        PANIC("Tried to spawn task from parent with no user context!");
+    }
     NewRegisters.rbp = AREA_STACK_START + m_UserStackSize;
     NewRegisters.rsp = AREA_STACK_START + m_UserStackSize;
     NewRegisters.rip = NewEntry;

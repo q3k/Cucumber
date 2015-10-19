@@ -61,8 +61,8 @@ void CRoundRobinScheduler::NextTask(T_ISR_REGISTERS Registers, void (*EOI)(void)
             break;
         }
 
+        // Wrap queue index around
         if (m_iTaskQueuePosition >= m_TaskQueue.GetSize())
-            //Something happened - restart the queue
             m_iTaskQueuePosition = 0;
 
         CTask *Task = m_TaskQueue[m_iTaskQueuePosition];

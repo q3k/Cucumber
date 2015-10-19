@@ -56,6 +56,13 @@ static void NullEOI(void)
 
 }
 
+void CScheduler::Spawn(void(*lambda)(u64), u64 Data) {
+    __asm__ __volatile__ ("mov %0, %%rax\n"
+                          "mov %1, %%rbx\n"
+                          "int $0x97"
+                          ::"r"(lambda),"r"(Data):"rax","rbx");
+}
+
 void CScheduler::YieldInterrupt(T_ISR_REGISTERS Registers)
 {
 	m_NumTicks = 0;

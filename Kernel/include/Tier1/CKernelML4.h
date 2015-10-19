@@ -85,10 +85,6 @@ namespace cb {
             void *(*m_SegmentAllocator)(u64);
             void (*m_SegmentDestructor)(void *);
 
-            // kernel stack segment physical memory
-            u64 m_StackStartPhysical;
-            u64 m_StackSize;
-
             // static pointers to common areas
             static T_PAGING_TAB *m_LOWMEM;
             static u64 m_LOWMEM_Physical;
@@ -113,37 +109,8 @@ namespace cb {
             // Resolves Virtual -> Physical
             u64 Resolve(u64 Virtual);
 
-            // Gets physical start ofs tack
-            u64 GetStackStartPhysical(void) { return m_StackStartPhysical; }
-
             // Use Mapping
             void Apply(void);
-
-            // Use lambda in stack
-            template <typename F> void UseStack(F lambda) {
-                auto function = static_cast<void (*) (CKernelML4 *ML4)>(lambda);
-                u64 Stack = AREA_STACK_START + 1 * 1024 * 1024;
-                __asm__ __volatile__(
-                        "pushq %%rbp\n"
-                        "movq %%rsp, %%rax\n"
-
-                        "movq %0, %%rsp\n"
-                        "movq %0, %%rbp\n"
-                        "pushq %%rax\n"
-
-                        "pushq %2\n"
-                        "callq *%1\n"
-                        "addq $8, %%rsp\n"
-
-                        "popq %%rax\n"
-                        "movq %%rax, %%rsp\n"
-                        "popq %%rbp"
-                    :
-                    :"r"(Stack), "r"(function), "r"(this)
-                    :"%rax"
-                );
-
-            }
 
             // Set directory to existing structure
             void SetDirectory(u64 Virtual, u64 DirectoryPhysical);

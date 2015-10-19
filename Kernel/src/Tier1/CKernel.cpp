@@ -42,21 +42,20 @@ void CKernel::Start(void)
     
     m_Logger = new CLogger();
     Alentours::CPCIManager::Initialize();
+
     CKernelML4 *ML4 = new CKernelML4();
     CTask *KernelTask = new CTask(*ML4);
-    kprintf("[i] Kernel task has PID %i.\n", KernelTask->GetPID());
     CScheduler::AddTask(KernelTask);
+    kprintf("[i] Kernel task has PID %i.\n", KernelTask->GetPID());
         
     ML4->Apply();
-    ML4->UseStack([](CKernelML4 *ML4) {
+    KernelTask->UseStack([](CTask *Task) {
         kprintf("[i] Switched to Tier1 stack\n");
-        u64 RSP;
-        __asm__ __volatile__("movq %%rsp, %0" :"=r"(RSP));
-        kprintf("[i] RSP is %X\n", RSP);
 
-        CScheduler::Enable();
         // After enabling, only CScheduler::* calls are allowed for API
+        CScheduler::Enable();
         kprintf("[i] Enabled scheduler.\n");
+
         g_Kernel.SpawnThreads();
         for(;;) { asm volatile("hlt"); }
     });

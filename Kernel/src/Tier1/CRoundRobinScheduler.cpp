@@ -10,11 +10,30 @@ extern "C" {
     #include "Tier0/heap.h"
 }
 
+static void IdleTaskFunction(u64 Data)
+{
+    // Spin forever in a halt
+    for (;;) {
+        asm volatile("hlt");
+    }
+}
+
 void CRoundRobinScheduler::Enable(bool Enabled)
 {
     m_iTaskQueuePosition = 0;
     m_PrioritizedTask = 0;
     m_InScheduler = false;
+
+    // Hack: we want to fork an idle task, but our current task might not
+    // yet have any saved registers... If so, yield now. The scheduler will
+    // work fine for this one cycle without an idle task.
+    T_ISR_REGISTERS Registers;
+    if (!m_CurrentTask->GetUserRegisters(&Registers))
+        asm volatile("int $0x99");
+
+    // Create idle task
+    m_IdleTask = m_CurrentTask->Spawn((u64)IdleTaskFunction, 0);
+    m_IdleTask->SetPriority(ETP_IDLE);
 
     semaphore_init(&m_SchedulerLock);
 }
@@ -29,33 +48,44 @@ void CRoundRobinScheduler::NextTask(T_ISR_REGISTERS Registers, void (*EOI)(void)
 
     EOI();
     // Fetch next task.
+    u64 Iterations = 0;
     CTask *NewTask = 0;
-
-    __asm__ volatile("sti");
     while (NewTask == 0)
     {
         m_iTaskQueuePosition++;
+        Iterations++;
+
+        // Have we looped around the whole list? Run Idle task.
+        if (Iterations > m_TaskQueue.GetSize()) {
+            NewTask = m_IdleTask;
+            break;
+        }
+
 	    if (m_iTaskQueuePosition >= m_TaskQueue.GetSize())
 	        //Something happened - restart the queue
             m_iTaskQueuePosition = 0;
 
-        // skip disabled
-        if (m_TaskQueue[m_iTaskQueuePosition]->GetStatus() == ETS_DISABLED)
+        CTask *Task = m_TaskQueue[m_iTaskQueuePosition];
+        // Skip idle task
+        if (Task->GetPriority() == ETP_IDLE)
             continue;
-
+        // Skip disabled.
+        if (Task->GetStatus() == ETS_DISABLED)
+            continue;
         NewTask = m_TaskQueue[m_iTaskQueuePosition];
     }
-    __asm__ volatile("cli");
 
     // Save current task details
     m_CurrentTask->SetUserRegisters(Registers);
     m_CurrentTask->PrepareReturnStack();
     // Switch to next task
+    //kprintf("%i -> %i\n", m_CurrentTask->GetPID(), NewTask->GetPID());
     m_CurrentTask = NewTask;
     
     ML4 = m_CurrentTask->GetML4().GetPhysical();
     u64 RIP, RSP, RBP;
     m_CurrentTask->GetKernelRegisters(&RIP, &RSP, &RBP);
+
 
     m_InScheduler = false;
     CScheduler::ResetTicks();
@@ -75,11 +105,9 @@ void CRoundRobinScheduler::NextTask(T_ISR_REGISTERS Registers, void (*EOI)(void)
 
 void CRoundRobinScheduler::AddTask(CTask *Task)
 {
-    semaphore_acquire(&m_SchedulerLock);
     m_TaskQueue.Push(Task);
     if (m_TaskQueue.GetSize() == 1)
         m_CurrentTask = Task;
-    semaphore_release(&m_SchedulerLock);
 }
 
 CTask *CRoundRobinScheduler::GetCurrentTask(void)

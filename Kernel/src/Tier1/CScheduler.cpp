@@ -18,7 +18,6 @@ u64 CScheduler::m_NumTicks = 0;
 CScheduler::CScheduler(void)
 {
     m_CurrentScheduler = new CRoundRobinScheduler();
-    m_CurrentScheduler->Enable(true);
 }
 
 void CScheduler::AddTask(CTask *Task)
@@ -39,8 +38,6 @@ void CScheduler::PrioritizeTask(CTask *Task)
 
 void CScheduler::Enable(void)
 {
-    CTimer::SetFastTimerHook(TimerTick);
-
     // Add the Yield interrupt
     interrupts_setup_isr(CSCHEDULER_INTERRUPT_YIELD, (void*)YieldInterrupt, E_INTERRUPTS_RING0);
     // Add the Sleep interrupt
@@ -49,6 +46,9 @@ void CScheduler::Enable(void)
     interrupts_setup_isr(CSCHEDULER_INTERRUPT_SPAWN, (void*)SpawnInterrupt, E_INTERRUPTS_RING0);
     // Add the Exit interrupt
     interrupts_setup_isr(CSCHEDULER_INTERRUPT_EXIT, (void*)ExitInterrupt, E_INTERRUPTS_RING0);
+
+    g_Scheduler.m_CurrentScheduler->Enable(true);
+    CTimer::SetFastTimerHook(TimerTick);
 }
 
 static void NullEOI(void)

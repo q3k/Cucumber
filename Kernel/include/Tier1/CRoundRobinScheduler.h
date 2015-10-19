@@ -28,6 +28,7 @@ namespace cb {
             u32 m_iTaskQueuePosition;
 
             CTask *m_PrioritizedTask;
+            CTask *m_IdleTask;
     };
 };
 

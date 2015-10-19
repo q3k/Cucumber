@@ -44,6 +44,7 @@ namespace cb {
             /// Context switching data
             // Registers from user program (iret et al)
             T_ISR_REGISTERS m_UserRegisters;
+            bool m_UserRegistersSet;
             // Registers of the kernel stack/code
             u64 m_KernelRIP; u64 m_KernelRSP; u64 m_KernelRBP;
             // Physical address of the kernel stack to use when in interrupt
@@ -74,17 +75,37 @@ namespace cb {
                         
             inline u64 GetPID(void) { return m_PID; }
             inline const T_ISR_REGISTERS *GetUserRegisters(void) { return &m_UserRegisters; }
-            inline void GetUserRegisters(T_ISR_REGISTERS *Out) { *Out = m_UserRegisters; }
-            inline void SetUserRegisters(T_ISR_REGISTERS Registers) { m_UserRegisters = Registers; }
-            inline void GetKernelRegisters(u64 *RIP, u64 *RSP, u64 *RBP) {
+            inline bool GetUserRegisters(T_ISR_REGISTERS *Out)
+            {
+                if (!m_UserRegistersSet)
+                    return false;
+                *Out = m_UserRegisters;
+                return true;
+            }
+            inline void SetUserRegisters(T_ISR_REGISTERS Registers)
+            {
+                m_UserRegistersSet = true;
+                m_UserRegisters = Registers;
+            }
+            inline void GetKernelRegisters(u64 *RIP, u64 *RSP, u64 *RBP)
+            {
                 *RIP = m_KernelRIP;
                 *RSP = m_KernelRSP;
                 *RBP = m_KernelRBP;
             }
-            inline void SetKernelRegisters(u64 RIP, u64 RSP, u64 RBP) {
+            inline void SetKernelRegisters(u64 RIP, u64 RSP, u64 RBP)
+            {
                 m_KernelRIP = RIP;
                 m_KernelRSP = RSP;
                 m_KernelRBP = RBP;
+            }
+            inline void SetPriority(ETaskPriority NewPriority)
+            {
+                m_Priority = NewPriority;
+            }
+            inline ETaskPriority GetPriority(void)
+            {
+                return m_Priority;
             }
            
             void Dump(void);

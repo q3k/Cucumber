@@ -42,7 +42,7 @@ void CRoundRobinScheduler::NextTask(T_ISR_REGISTERS Registers, void (*EOI)(void)
 {
     m_InScheduler = true;
     volatile u64 ML4;
-    
+
     if (m_TaskQueue.GetSize() < 1)
         PANIC("No tasks in queue!");
 
@@ -61,8 +61,8 @@ void CRoundRobinScheduler::NextTask(T_ISR_REGISTERS Registers, void (*EOI)(void)
             break;
         }
 
-	    if (m_iTaskQueuePosition >= m_TaskQueue.GetSize())
-	        //Something happened - restart the queue
+        if (m_iTaskQueuePosition >= m_TaskQueue.GetSize())
+            //Something happened - restart the queue
             m_iTaskQueuePosition = 0;
 
         CTask *Task = m_TaskQueue[m_iTaskQueuePosition];
@@ -81,7 +81,7 @@ void CRoundRobinScheduler::NextTask(T_ISR_REGISTERS Registers, void (*EOI)(void)
     // Switch to next task
     //kprintf("%i -> %i\n", m_CurrentTask->GetPID(), NewTask->GetPID());
     m_CurrentTask = NewTask;
-    
+
     ML4 = m_CurrentTask->GetML4().GetPhysical();
     u64 RIP, RSP, RBP;
     m_CurrentTask->GetKernelRegisters(&RIP, &RSP, &RBP);
@@ -117,7 +117,7 @@ CTask *CRoundRobinScheduler::GetCurrentTask(void)
 
 void CRoundRobinScheduler::PrioritizeTask(CTask *Task)
 {
-	m_PrioritizedTask = Task;
+    m_PrioritizedTask = Task;
 }
 
 void CRoundRobinScheduler::SetSemaphoreAvailable(CSemaphore *Semaphore)

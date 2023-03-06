@@ -19,8 +19,10 @@ SECTIONS
         . = ALIGN(8);
 
         _start_ctors = .;
-            *(.ctors)
+        *(.init_array)
         _end_ctors = .;
+        *(.fini_array)
+        *(.got)
     }
 
     . = ALIGN(4096);
@@ -29,6 +31,7 @@ SECTIONS
    {
         _data = .;
         *(.data)
+        *(.data.*)
    }
 
    . = ALIGN(4096);

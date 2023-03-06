@@ -1,19 +1,20 @@
 default: emulate-nohdd
 
-SHELL:=/bin/bash
+SHELL:=/usr/bin/env bash
 CC:=clang
 CX:=clang++
 AS:=nasm
-LD:=ld
+LD:=ld.lld
 
 # -O2 sets -foptimize-sibling-calls which breaks code...
-CFLAGS:= -mcmodel=large -Wall -Werror -nostdlib -ffreestanding -std=c99 -g
+CFLAGS:= -mcmodel=large -Wall -nostdlib -ffreestanding -std=c99 -g
 CFLAGS+=-I ./include -nostdinc -O2 -fno-optimize-sibling-calls -mcmodel=kernel
 CFLAGS+= -mno-red-zone -ffreestanding -I ./include/Lua -I ./src/Lua -target x86_64-elf -mno-sse
+CFLAGS+= -fno-stack-protector
 
 CXFLAGS:= $(CFLAGS) -fno-rtti -fno-stack-protector -fno-exceptions -std=c++11
 
-LFLAGS:=-nostdlib -nostartfiles -nodefaultlibs -m elf_x86_64 -nostdinc -z nodefaultlib -n
+LFLAGS:=-nostdlib -m elf_x86_64 -z nodefaultlib -n
 
 #debug: CFLAGS += -DDEBUG -gdwarf-4 -fvar-tracking-assignments -O0
 #debug: CXFLAGS += -DDEBUG -gdwarf-4 -fvar-tracking-assignments -O0
@@ -43,8 +44,9 @@ version-gen:
 include/Alentours/PCIDB.h:
 	@echo "[i] Downloading pcidatabase.com header file..."
 	@echo "[w] WARNING: Please check include/Alentours/PCIDB.h for possible rootkits and stuff."
-	@curl http://www.pcidatabase.com/pci_c_header.php > include/Alentours/PCIDB.h
-	python2 contrib/fix-pci-db.py
+	touch include/Alentours/PCIDB.h
+	#@curl http://www.pcidatabase.com/pci_c_header.php > include/Alentours/PCIDB.h
+	#python3 contrib/fix-pci-db.py
 
 
 obj/src/%.xo : src/%.cpp
@@ -106,13 +108,13 @@ emulate-nohdd-debug: debug
 	@echo -e "file kernel.bin\nsymbol-file ksyms.elf\ntarget remote localhost:1234\n" > gdbcommands
 	xterm -e /bin/bash -c "sleep 1 && gdb -tui -x gdbcommands && rm gdbcommands" &
 	@echo "[i] Starting QEmu..."
-	@qemu-system-x86_64 --no-kvm -S -gdb tcp::1234 -d int -smp 4 -kernel ../Loader/loader.bin -initrd kernel.bin
+	@qemu-system-x86_64 -S -gdb tcp::1234 -d int -smp 4 -kernel ../Loader/loader.bin -initrd kernel.bin
 
 emulate-nohdd: kernel.bin
 	@echo "[i] Building loader..."
 	@pushd ../Loader > /dev/null && $(MAKE) -f Makefile loader.bin && popd > /dev/null
 	@echo "[i] Starting QEMU..."
-	@qemu-system-x86_64 $(QEMU_FLAGS) --no-kvm -smp 4 -kernel ../Loader/loader.bin -initrd kernel.bin
+	@qemu-system-x86_64 $(QEMU_FLAGS) -smp 4 -kernel ../Loader/loader.bin -initrd kernel.bin
 
 emulate: hdd.img
 	@echo "[i] Starting QEmu..."

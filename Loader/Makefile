@@ -1,16 +1,17 @@
 default: emulate-nohdd
 
-SHELL:=/bin/bash
+SHELL:=/usr/bin/env bash
 CC:=clang
 AS:=nasm
-LD:=ld
+LD:=ld.lld
 
 # -O2 sets -foptimize-sibling-calls which breaks code...
-CFLAGS:=-Wall -Werror -nostdlib -std=c99 -g -ffreestanding
+CFLAGS:=-Wall -nostdlib -std=c99 -g -ffreestanding
 CFLAGS+=-I ./include -O1 -fno-optimize-sibling-calls
 CFLAGS+= -fno-builtin -nostdinc -target i586-elf -nostdlib
+CFLAGS+= -fno-stack-protector
 
-LFLAGS:=-nostdlib -nostartfiles -nodefaultlibs -m elf_i386
+LFLAGS:=-nostdlib -m elf_i386
 
 .PHONY: all clean loader.bin emulate hdd.img
 
@@ -40,11 +41,11 @@ emulate-nohdd-debug: loader.bin
 	@echo "[i] Starting GDB..."
 	@gnome-terminal -x /bin/bash -c "gdb"
 	@echo "[i] Starting QEmu..."
-	@qemu-system-x86_64 --no-kvm -kernel loader.bin -S -gdb tcp::1234
+	@qemu-system-x86_64 -kernel loader.bin -S -gdb tcp::1234
 
 emulate-nohdd: loader.bin
 	@echo "[i] Starting QEMU..."
-	@qemu-system-x86_64 --no-kvm -kernel loader.bin
+	@qemu-system-x86_64 -kernel loader.bin
 
 clean:
 	@rm -Rf obj

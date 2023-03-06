@@ -1,7 +1,7 @@
 This is Cucumber.
 
-It doesn't do much yet. If you're browsing this right now, you should
-probably leave as there is nothing remotely interesting here to be seen - I
-just needed a repo to protect against data loss.
+This was my little pet OS/Kernel that I started in 2011 as I first got into 'serious' low-level programming.
 
-But yeah. x86. Microkernel. Paged. 64-bit. Pre-emptive multitasking. POSIX-compliant by using services. Messaging 'ERRYWHERE.
+It has received a number of updates over the years: built-in Lua, 64-bit support.. but it never even got to privilege separated tasks.
+
+Its architecture is quite broken, and this is likely a project with no future, and no use other than a snapshot of my chutzpah :).

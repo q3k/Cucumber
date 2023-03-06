@@ -145,12 +145,12 @@ u32 load(void *Multiboot, unsigned int Magic)
         if (VirtualAddress)
         {
             // allocate space for that section...
+            printf(" -> %s at %X", Name, VirtualAddress);
             u64 SizeAligned = Size;
             if (SizeAligned % 0x1000)
                 SizeAligned = (SizeAligned + 0x1000) & 0xFFFFF000;
             u8 *Destination = paging_allocate(VirtualAddress, SizeAligned);
 
-            printf(" -> %s at %X", Name, VirtualAddress);
             if (!(Sections[i].Type & SHT_NOBITS))
             {
                 // not .bss - copy data

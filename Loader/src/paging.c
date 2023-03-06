@@ -34,9 +34,15 @@ void paging_setup(u32 AllocateFramesFrom)
 
 void paging_map_page(u64 Virtual, u64 Physical)
 {
-    if (Virtual % 0x1000 || Physical % 0x1000)
+    if (Virtual % 0x1000)
     {
-        puts("BUG: Requsted allocation of unaligned address.\n");
+        puts("BUG: Requested allocation of unaligned virtual address.\n");
+        print_hex(Virtual);
+        for (;;) {}
+    }
+    if (Physical % 0x1000)
+    {
+        puts("BUG: Requested allocation of unaligned physical address.\n");
         print_hex(Virtual);
         for (;;) {}
     }
@@ -74,7 +80,7 @@ void paging_map_address(u64 PhysicalStart, u64 VirtualStart, u64 Size)
 {
     if (VirtualStart % 0x1000 || PhysicalStart % 0x1000)
     {
-        puts("BUG: Requsted allocation of unaligned address.\n");
+        puts("BUG: Requested allocation of unaligned address.\n");
         for (;;) {}
     }
     u64 AlignedSize = Size;
